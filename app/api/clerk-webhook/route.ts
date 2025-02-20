@@ -1,14 +1,16 @@
 // app/api/clerk-webhook/route.ts
-import { Webhook } from 'svix'; // Svixライブラリ for Clerk webhook verification
+import { Webhook } from 'svix';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { WebhookEvent } from '@clerk/nextjs/server';
 import Stripe from 'stripe';
 import { api } from '@/convex/_generated/api';
 import { fetchMutation, fetchQuery } from 'convex/nextjs';
+import * as Sentry from "@sentry/nextjs";
+import { clerkWebhookSchema } from '@/lib/validations';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { 
-  apiVersion: '2025-01-27.acacia' 
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2025-01-27.acacia'
 });
 
 export async function POST(req: Request) {
@@ -26,6 +28,7 @@ export async function POST(req: Request) {
   const svixTimestamp = headerPayload.get('svix-timestamp');
   const svixSignature = headerPayload.get('svix-signature');
   if (!svixId || !svixTimestamp || !svixSignature) {
+    Sentry.captureMessage("Clerk signing secret not configured", { level: "error" });
     return NextResponse.json({ error: 'Missing svix headers' }, { status: 400 });
   }
 
@@ -34,24 +37,31 @@ export async function POST(req: Request) {
   const payloadString = JSON.stringify(payload);
 
   // 2. 署名検証
-  let evt: WebhookEvent;
   try {
-    evt = wh.verify(payloadString, {
+    wh.verify(payloadString, {
       'svix-id': svixId,
       'svix-timestamp': svixTimestamp,
       'svix-signature': svixSignature,
     }) as WebhookEvent;
   } catch (err) {
+    Sentry.captureMessage("Missing svix headers", { level: "error" });
     console.error("Clerk webhook signature verification failed:", err);
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
+  const validPayload = clerkWebhookSchema.safeParse(payload);
+  if (!validPayload.success) {
+    Sentry.captureMessage("Clerk webhook payload のバリデーションエラー", { level: "error" });
+    console.error("Clerk webhook payload のバリデーションエラー:", validPayload.error);
+    return NextResponse.json({ error: "Invalid webhook payload" }, { status: 400 });
+  }
+
   // 3. イベントタイプに応じた処理
-  const eventType = evt.type;
-  const data = evt.data;
+  const eventType = validPayload.data.type;
+  const data = validPayload.data.data;
 
   if (eventType === 'user.created') {
-    const { id, email_addresses } = data as { id: string; email_addresses: Array<{ email_address: string }> };
+    const { id, email_addresses } = data;
     const clerkUserId = id;
     const email = email_addresses[0]?.email_address ?? "no-email";
 
@@ -71,7 +81,7 @@ export async function POST(req: Request) {
     }
   }
   else if (eventType === 'user.updated') {
-    const { id, email_addresses } = data as { id: string; email_addresses: Array<{ email_address: string }> };
+    const { id, email_addresses } = data;
     const clerkUserId = id;
     const email = email_addresses[0]?.email_address;
     await fetchMutation(api.users.registerUser, { clerkId: clerkUserId, email: email ?? "no-email", stripeCustomerId: "" });
@@ -85,6 +95,7 @@ export async function POST(req: Request) {
       try {
         await stripe.customers.del(userRecord.stripeCustomerId);
       } catch (err) {
+        Sentry.captureMessage("Stripe customer deletion failed", { level: "error" });
         console.error("Stripe customer deletion failed:", err);
       }
     }

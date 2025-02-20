@@ -3,49 +3,82 @@ import Stripe from 'stripe';
 import { NextResponse } from 'next/server';
 import { api } from '@/convex/_generated/api';
 import { fetchMutation } from 'convex/nextjs';
+import * as Sentry from '@sentry/nextjs';
+import { normalizeSubscriptionStatus, formatTimestampToDate } from '@/lib/utils';
+import { stripeWebhookSchema } from '@/lib/validations';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-01-27.acacia',
 });
 
-// ヘルパー関数: Unix秒を日付文字列（例："YYYY/M/D"）に変換
-function formatTimestampToDate(timestamp: number): string {
-    const date = new Date(timestamp * 1000);
-    return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
-  }
-  
-
 export async function POST(req: Request) {
   const sig = req.headers.get('stripe-signature');
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!sig || !webhookSecret) {
+    Sentry.captureMessage("Missing Stripe signature or webhook secret", { level: "error" });
     return NextResponse.json({ error: 'Missing Stripe signature' }, { status: 400 });
   }
 
   // 生のボディ文字列を取得（署名検証に使用）
-  let event;
   const body = await req.text();
+  let event: Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
   } catch (err: unknown) {
-    if (err instanceof Error) {
-      console.error('Stripe webhook signature verification failed:', err.message);
-      return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
-    } else {
-      console.error('Stripe webhook signature verification failed:', err);
-      return NextResponse.json({ error: 'Unknown webhook error' }, { status: 400 });
-    }
+    const errMsg = err instanceof Error ? err.message : "Unknown error";
+    Sentry.captureException(err);
+    console.error("Stripe webhook signature verification failed:", errMsg);
+    return NextResponse.json({ error: `Webhook Error: ${errMsg}` }, { status: 400 });
   }
 
-  const eventType = event.type;
-  const dataObject = event.data.object;
+  // Zod による型チェック
+  const validationResult = stripeWebhookSchema.safeParse(event);
+  if (!validationResult.success) {
+    Sentry.captureException(validationResult.error);
+    console.error("Stripe webhook payload validation error:", validationResult.error);
+    return NextResponse.json({ error: 'Invalid webhook payload' }, { status: 400 });
+  }
+
+  // 型チェック済みのイベントを利用
+  const validatedEvent = validationResult.data;
+  const eventType = validatedEvent.type;
+  const dataObject = validatedEvent.data.object;
 
   switch (eventType) {
     case 'customer.subscription.created':
     case 'customer.subscription.updated': {
-        const subscription = dataObject as Stripe.Subscription;
-         // もし status が "incomplete" なら、支払い成功なので "active" とみなす
-         const finalStatus = subscription.status === 'incomplete' ? 'active' : subscription.status;
+      const subscription = dataObject as Stripe.Subscription;
+      const formattedDate = formatTimestampToDate(subscription.current_period_end);
+      await fetchMutation(api.subscriptions.syncSubscription, {
+        subscription: {
+          id: subscription.id,
+          customer:
+            typeof subscription.customer === 'string'
+              ? subscription.customer
+              : subscription.customer.id,
+          status: normalizeSubscriptionStatus(subscription),
+          priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID!,
+          currentPeriodEnd: formattedDate,
+        },
+      });
+      await fetchMutation(api.users.updateSubscription, {
+        customerId:
+          typeof subscription.customer === 'string'
+            ? subscription.customer
+            : subscription.customer.id,
+        subscriptionId: subscription.id,
+        subscriptionStatus: normalizeSubscriptionStatus(subscription),
+      });
+      break;
+    }
+    case 'invoice.payment_succeeded': {
+      const invoice = dataObject as Stripe.Invoice;
+      const subId =
+        typeof invoice.subscription === 'string'
+          ? invoice.subscription
+          : invoice.subscription?.toString();
+      if (subId) {
+        const subscription = await stripe.subscriptions.retrieve(subId);
         const formattedDate = formatTimestampToDate(subscription.current_period_end);
         await fetchMutation(api.subscriptions.syncSubscription, {
           subscription: {
@@ -54,56 +87,24 @@ export async function POST(req: Request) {
               typeof subscription.customer === 'string'
                 ? subscription.customer
                 : subscription.customer.id,
-            status: finalStatus,
+            status: normalizeSubscriptionStatus(subscription),
             priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID!,
             currentPeriodEnd: formattedDate,
           },
         });
         await fetchMutation(api.users.updateSubscription, {
-          customerId: typeof subscription.customer === 'string'
-          ? subscription.customer
-          : subscription.customer.id,
-          subscriptionId: subscription.id,
-          subscriptionStatus: finalStatus,
-        });
-        break;
-      }
-      case 'invoice.payment_succeeded': {
-        const invoice = dataObject as Stripe.Invoice;
-        const subId =
-          typeof invoice.subscription === 'string'
-            ? invoice.subscription
-            : invoice.subscription?.toString();
-        if (subId) {
-          const subscription = await stripe.subscriptions.retrieve(subId);
-          // もし status が "incomplete" なら、支払い成功なので "active" とみなす
-          const finalStatus = subscription.status === 'incomplete' ? 'active' : subscription.status;
-          const formattedDate = formatTimestampToDate(subscription.current_period_end);
-          await fetchMutation(api.subscriptions.syncSubscription, {
-            subscription: {
-              id: subscription.id,
-              customer:
-                typeof subscription.customer === 'string'
-                  ? subscription.customer
-                  : subscription.customer.id,
-              status: finalStatus,
-              priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID!,
-              currentPeriodEnd: formattedDate,
-            },
-          });
-          await fetchMutation(api.users.updateSubscription, {
-            customerId: typeof subscription.customer === 'string'
+          customerId:
+            typeof subscription.customer === 'string'
               ? subscription.customer
               : subscription.customer.id,
-            subscriptionId: subscription.id,
-            subscriptionStatus: finalStatus,
-          });
-        }
-        break;
+          subscriptionId: subscription.id,
+          subscriptionStatus: normalizeSubscriptionStatus(subscription),
+        });
       }
+      break;
+    }
     case 'customer.subscription.deleted': {
       const canceledSub = dataObject as Stripe.Subscription;
-      // キャンセル時は明示的に "canceled" として更新
       const formattedDate = formatTimestampToDate(canceledSub.current_period_end);
       await fetchMutation(api.subscriptions.syncSubscription, {
         subscription: {
@@ -112,17 +113,18 @@ export async function POST(req: Request) {
             typeof canceledSub.customer === 'string'
               ? canceledSub.customer
               : canceledSub.customer.id,
-          status: "canceled",
+          status: normalizeSubscriptionStatus(canceledSub),
           priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID!,
           currentPeriodEnd: formattedDate,
         },
       });
       await fetchMutation(api.users.updateSubscription, {
-        customerId: typeof canceledSub.customer === 'string'
-        ? canceledSub.customer
-        : canceledSub.customer.id,
+        customerId:
+          typeof canceledSub.customer === 'string'
+            ? canceledSub.customer
+            : canceledSub.customer.id,
         subscriptionId: canceledSub.id,
-        subscriptionStatus: "canceled",
+        subscriptionStatus: normalizeSubscriptionStatus(canceledSub),
       });
       break;
     }
