@@ -9,11 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { z } from "zod";
-
-const formSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-});
+import { signInSignUpSchema } from "@/lib/validations";
 
 export default function SignInPage() {
   const { isLoaded, signIn, setActive } = useSignIn();
@@ -26,7 +22,7 @@ export default function SignInPage() {
     e.preventDefault();
     if (!isLoaded) return;
     try {
-      formSchema.parse({ email, password });
+      signInSignUpSchema.parse({ email, password });
       const result = await signIn.create({ identifier: email, password });
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });

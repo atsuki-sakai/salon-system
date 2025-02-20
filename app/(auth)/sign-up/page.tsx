@@ -9,11 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { z } from "zod";
-
-const formSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-});
+import { signInSignUpSchema } from "@/lib/validations";
 
 export default function SignUpPage() {
   const { isLoaded, signUp, setActive } = useSignUp();
@@ -29,7 +25,7 @@ export default function SignUpPage() {
     if (!isLoaded) return;
 
     try {
-      formSchema.parse({ email, password });
+      signInSignUpSchema.parse({ email, password });
       await signUp.create({ emailAddress: email, password });
 
       // メール確認コードを送信
