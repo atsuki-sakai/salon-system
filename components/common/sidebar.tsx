@@ -33,7 +33,6 @@ import { useClerk } from "@clerk/nextjs";
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
-
 export default function Sidebar({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { signOut } = useClerk();
@@ -314,4 +313,4 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
       </div>
     </>
   );
-}
+};

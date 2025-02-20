@@ -1,4 +1,5 @@
-import { atom, useAtom } from 'jotai';
+import { atomWithStorage } from 'jotai/utils';
+import { useAtom } from 'jotai';
 import { useUser } from '@clerk/nextjs';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -13,29 +14,37 @@ export type UserDetails = {
   subscriptionStatus?: string;
 } | null;
 
-// Atomの定義
-export const userDetailsAtom = atom<UserDetails>(null);
+// Atomの定義：localStorageに保存してキャッシュを有効化
+export const userDetailsAtom = atomWithStorage<UserDetails>('userDetails', null);
 
 // カスタムフック
 export function useUserDetails() {
   const { user } = useUser();
-  const [userDetails, setUserDetails] = useAtom(userDetailsAtom);
+  const [cachedUserDetails, setCachedUserDetails] = useAtom(userDetailsAtom);
   
-  // Convexからユーザー情報を取得
-  const convexUser = useQuery(api.users.getUserByClerkId, {
-    clerkId: user?.id ?? "",
-  });
+  const clerkId = user?.id ?? "";
+  const convexUser = useQuery(api.users.getUserByClerkId, { clerkId });
 
-  // ユーザー情報が更新されたらatomを更新
+  // Convexから取得したデータがキャッシュと異なる場合のみキャッシュを更新する
   useEffect(() => {
     if (convexUser) {
-      setUserDetails(convexUser);
+      const cachedStr = JSON.stringify(cachedUserDetails);
+      const convexStr = JSON.stringify(convexUser);
+      if (cachedStr !== convexStr) {
+        setCachedUserDetails(convexUser);
+      }
     }
-  }, [convexUser, setUserDetails]);
+  }, [convexUser, cachedUserDetails, setCachedUserDetails]);
+
+  // キャッシュがあれば優先的に利用
+  const userDetails = cachedUserDetails || convexUser;
+
+  // ユーザーが存在している場合、キャッシュがあればローディング状態にならないようにする
+  const isLoading = !user ? true : (cachedUserDetails ? false : !convexUser);
 
   return {
-    user,        // Clerkのユーザー情報
-    userDetails, // Convexのユーザー情報
-    isLoading: !user || !userDetails,
+    user,         // Clerkのユーザー情報
+    userDetails,  // キャッシュまたはConvexから取得したユーザー情報
+    isLoading,    // キャッシュがあればfalse、なければConvexの取得状況で判定
   };
-} 
+}
