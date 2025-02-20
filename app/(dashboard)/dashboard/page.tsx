@@ -18,7 +18,6 @@ export default function RedirectDashboardPage() {
       redirect(`/dashboard/${user.id}`);
     }
   }, [router, user, signOut]);
-  console.log(user);
 
   return <div>Redirecting...</div>;
 }

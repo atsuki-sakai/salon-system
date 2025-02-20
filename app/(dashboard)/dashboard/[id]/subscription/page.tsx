@@ -2,14 +2,14 @@
 "use client";
 
 import { useState } from "react";
-import { useUser } from "@clerk/nextjs";
-import { useAction, useQuery } from "convex/react";
+import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useUserDetails } from "@/lib/atoms/userAtom";
 
 export default function SubscriptionPage() {
-  const { user, isLoaded } = useUser();
+  const { userDetails, isLoading } = useUserDetails();
   const [error, setError] = useState("");
   // Convex側の Stripe Checkout セッション作成 Mutation を利用
   const createSession = useAction(api.subscriptions.createSubscriptionSession);
@@ -17,20 +17,22 @@ export default function SubscriptionPage() {
     api.subscriptions.createBillingPortalSession
   );
 
-  const userDetails = useQuery(api.users.getUserByClerkId, {
-    clerkId: user?.id ?? "",
-  });
-
   const handleSubscribe = async () => {
-    if (!isLoaded || !user) {
-      setError("ユーザー情報の読み込みに失敗しました");
+    if (isLoading) {
+      setError("ユーザー情報の読み込み中です");
+      return;
+    }
+
+    if (!userDetails?.stripeCustomerId) {
+      setError("Stripeの顧客情報が見つかりません");
       return;
     }
 
     try {
-      console.log("Creating subscription for user:", user.id);
+      console.log("Creating subscription for user:", userDetails?.clerkId);
       const result = await createSession({
-        clerkUserId: user.id,
+        stripeCustomerId: userDetails.stripeCustomerId,
+        clerkUserId: userDetails?.clerkId ?? "",
         priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID!,
         baseUrl: process.env.NEXT_PUBLIC_URL!,
       });
@@ -48,8 +50,7 @@ export default function SubscriptionPage() {
     }
   };
 
-  console.log(user);
-  console.log(userDetails);
+  console.log("userDetails", userDetails);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">

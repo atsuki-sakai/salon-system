@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useUser } from "@clerk/nextjs";
+import { useUserDetails } from "@/lib/atoms/userAtom";
 import {
   Dialog,
   DialogBackdrop,
@@ -37,7 +38,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { signOut } = useClerk();
   const { user } = useUser();
-
+  const { userDetails, isLoading } = useUserDetails();
   const navigation = [
     {
       name: "Dashboard",
@@ -276,7 +277,9 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                     <MenuButton className="-m-1.5 flex items-center p-1.5">
                       <span className="sr-only">Open user menu</span>
                       <span className="hidden lg:flex lg:items-center">
-                        <h5>{"User Name"}</h5>
+                        <h5 className="text-sm font-semibold text-gray-700">
+                          {isLoading ? "Loading..." : userDetails?.email}
+                        </h5>
                         <ChevronDownIcon
                           aria-hidden="true"
                           className="ml-2 size-5 text-gray-400"

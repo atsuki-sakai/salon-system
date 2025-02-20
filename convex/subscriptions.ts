@@ -11,18 +11,20 @@ export const syncSubscription = mutation({
       customer: v.string(),
       status: v.string(),
       priceId: v.string(),
+      currentPeriodEnd: v.string(),
     }),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("subscriptions")
-      .filter(q => q.eq("subscriptionId", args.subscription.id))
+      .withIndex("by_subscription_id", (q) => q.eq("subscriptionId", args.subscription.id))
       .first();
 
     if (existing) {
       console.log("Updating subscription status:", args.subscription.id);
       return await ctx.db.patch(existing._id, {
         status: args.subscription.status,
+        currentPeriodEnd: args.subscription.currentPeriodEnd,
       });
     }
 
@@ -32,6 +34,7 @@ export const syncSubscription = mutation({
       customerId: args.subscription.customer,
       status: args.subscription.status,
       priceId: args.subscription.priceId,
+      currentPeriodEnd: args.subscription.currentPeriodEnd,
     });
   },
 });
@@ -51,7 +54,8 @@ export const markFailed = mutation({
 
 export const createSubscriptionSession = action({
   args: { 
-    clerkUserId: v.string(), 
+    clerkUserId: v.string(),
+    stripeCustomerId: v.string(),
     priceId: v.string(),
     baseUrl: v.string()
   },
@@ -63,6 +67,7 @@ export const createSubscriptionSession = action({
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
+      customer: args.stripeCustomerId,
       line_items: [{ price: args.priceId, quantity: 1 }],
       success_url: `${args.baseUrl}/dashboard/${args.clerkUserId}/subscription/success`,
       cancel_url: `${args.baseUrl}/dashboard/${args.clerkUserId}/subscription/cancel`,
