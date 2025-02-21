@@ -40,5 +40,5 @@ export default clerkMiddleware(
 
 // matcher に公開パスも追加して、ミドルウェアを適用する
 export const config = {
-  matcher: ["/dashboard/:path*", "/sign-in", "/sign-up"],
+  matcher: ["/", "/dashboard/:path*", "/sign-in", "/sign-up"],
 };
