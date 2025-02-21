@@ -15,7 +15,7 @@ export const clerkWebhookSchema = z.object({
       })
     ),
   }).passthrough(), // data 内のその他の項目を許容する
-});
+}).passthrough();
 
 
 export const stripeWebhookSchema = z.object({
