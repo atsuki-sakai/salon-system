@@ -109,7 +109,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
               {/* Sidebar component, swap this element with another sidebar if you like */}
               <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4">
                 <div className="flex h-16 shrink-0 items-center">
-                  <h1 className="text-2xl font-bold">ダッシュボード</h1>
+                  <h1 className="text-2xl font-bold">予約管理</h1>
                 </div>
                 <nav className="flex flex-1 flex-col">
                   <ul role="list" className="flex flex-1 flex-col gap-y-7">
@@ -166,7 +166,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
           {/* Sidebar component, swap this element with another sidebar if you like */}
           <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6 pb-4">
             <div className="flex h-16 shrink-0 items-center">
-              <h1 className="text-2xl font-bold">ダッシュボード</h1>
+              <h1 className="text-2xl font-bold">予約管理</h1>
             </div>
             <nav className="flex flex-1 flex-col">
               <ul role="list" className="flex flex-1 flex-col gap-y-7">
@@ -253,9 +253,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                   />
                 </form> */}
                 <div className="flex items-center justify-start w-full">
-                  <h3 className="text-xl font-bold tracking-wide">
-                    ダッシュボード
-                  </h3>
+                  <h3 className="text-xl font-bold tracking-wide">予約管理</h3>
                 </div>
                 <div className="flex items-center gap-x-4 lg:gap-x-6">
                   {userDetails?.subscriptionStatus === "active" ? (

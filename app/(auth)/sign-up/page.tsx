@@ -100,7 +100,7 @@ export default function SignUpPage() {
           </form>
         ) : (
           <form onSubmit={onPressVerify} className="space-y-4">
-            <p className="mb-4">
+            <p className="mb-4 text-center text-sm text-gray-600">
               登録したメールアドレスに認証コードを送信しました。
               メールの受信ボックスを確認して、認証コード(6桁の数字)を入力してください。
             </p>
