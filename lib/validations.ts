@@ -6,12 +6,16 @@ export const signInSignUpSchema = z.object({
 });
 
 export const clerkWebhookSchema = z.object({
-    type: z.string().min(1, { message: "イベントタイプが空です" }),
-    data: z.object({
-      id: z.string().min(1, { message: "ユーザーIDが空です" }),
-      email_addresses: z.array(z.object({ email_address: z.string().email({ message: "メールアドレスが無効です" }) })),
-    }),
-  });
+  type: z.string().min(1, { message: "イベントタイプが空です" }),
+  data: z.object({
+    id: z.string().min(1, { message: "ユーザーIDが空です" }),
+    email_addresses: z.array(
+      z.object({
+        email_address: z.string().email({ message: "メールアドレスが無効です" })
+      })
+    ),
+  }).passthrough(), // data 内のその他の項目を許容する
+});
 
 
 export const stripeWebhookSchema = z.object({
