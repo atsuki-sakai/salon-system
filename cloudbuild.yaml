@@ -1,0 +1,52 @@
+steps:
+  # Docker イメージのビルド
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', 
+    '--platform', 'linux/amd64', 
+    '--build-arg', 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${_NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}',
+    '--build-arg', 'CLERK_SECRET_KEY=${_CLERK_SECRET_KEY}',
+    '--build-arg', 'CLERK_WEBHOOK_SECRET=${_CLERK_WEBHOOK_SECRET}',
+    '--build-arg', 'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${_NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}',
+    '--build-arg', 'STRIPE_SECRET_KEY=${_STRIPE_SECRET_KEY}',
+    '--build-arg', 'NEXT_PUBLIC_STRIPE_PRICE_ID=${_NEXT_PUBLIC_STRIPE_PRICE_ID}',
+    '--build-arg', 'NEXT_PUBLIC_CONVEX_URL=${_NEXT_PUBLIC_CONVEX_URL}',
+    '--build-arg', 'NEXT_PUBLIC_URL=${_NEXT_PUBLIC_URL}',
+    '-t', 'gcr.io/$PROJECT_ID/salon-system',
+    '.'
+  ]
+  id: Build
+
+  # Docker イメージのプッシュ
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'push', 'gcr.io/$PROJECT_ID/salon-system' ]
+  id: Push
+
+  # Cloud Run へのデプロイ
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: 'gcloud'
+  args:
+    - 'run'
+    - 'deploy'
+    - 'salon-system'
+    - '--image'
+    - 'gcr.io/$PROJECT_ID/salon-system'
+    - '--platform'
+    - 'managed'
+    - '--region'
+    - 'asia-northeast1'
+    - '--allow-unauthenticated'
+    - '--set-env-vars'
+    - 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${_NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY},CLERK_SECRET_KEY=${_CLERK_SECRET_KEY},CLERK_WEBHOOK_SECRET=${_CLERK_WEBHOOK_SECRET},NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${_NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY},STRIPE_SECRET_KEY=${_STRIPE_SECRET_KEY},NEXT_PUBLIC_STRIPE_PRICE_ID=${_NEXT_PUBLIC_STRIPE_PRICE_ID},NEXT_PUBLIC_CONVEX_URL=${_NEXT_PUBLIC_CONVEX_URL},NEXT_PUBLIC_URL=${_NEXT_PUBLIC_URL}'
+
+images:
+  - 'gcr.io/$PROJECT_ID/salon-system'
+
+substitutions:
+  _NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ''
+  _CLERK_SECRET_KEY: ''
+  _CLERK_WEBHOOK_SECRET: ''
+  _NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ''
+  _STRIPE_SECRET_KEY: ''
+  _NEXT_PUBLIC_STRIPE_PRICE_ID: ''
+  _NEXT_PUBLIC_CONVEX_URL: ''
+  _NEXT_PUBLIC_URL: ''
