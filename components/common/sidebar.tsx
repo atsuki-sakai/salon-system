@@ -15,7 +15,6 @@ import {
 } from "@headlessui/react";
 import {
   Bars3Icon,
-  BellIcon,
   CalendarIcon,
   Cog6ToothIcon,
   DocumentDuplicateIcon,
@@ -24,10 +23,7 @@ import {
   XMarkIcon,
   CreditCardIcon,
 } from "@heroicons/react/24/outline";
-import {
-  ChevronDownIcon,
-  MagnifyingGlassIcon,
-} from "@heroicons/react/20/solid";
+import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import { useClerk } from "@clerk/nextjs";
 
 function classNames(...classes: string[]) {
@@ -40,31 +36,31 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
   const { userDetails, isLoading } = useUserDetails();
   const navigation = [
     {
-      name: "Dashboard",
+      name: "ダッシュボード",
       href: `/dashboard/${user?.id}`,
       icon: HomeIcon,
       current: true,
     },
     {
-      name: "Calender",
+      name: "予約カレンダー",
       href: `/dashboard/${user?.id}/calender`,
       icon: CalendarIcon,
       current: false,
     },
     {
-      name: "Staff",
+      name: "スタッフ一覧",
       href: `/dashboard/${user?.id}/staff`,
       icon: FolderIcon,
       current: false,
     },
     {
-      name: "Menu",
+      name: "メニュー一覧",
       href: `/dashboard/${user?.id}/menu`,
       icon: DocumentDuplicateIcon,
       current: false,
     },
     {
-      name: "Subscription",
+      name: "サブスクリプション",
       href: `/dashboard/${user?.id}/subscription`,
       icon: CreditCardIcon,
       current: false,
@@ -102,7 +98,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                     onClick={() => setSidebarOpen(false)}
                     className="-m-2.5 p-2.5"
                   >
-                    <span className="sr-only">Close sidebar</span>
+                    <span className="sr-only">閉じる</span>
                     <XMarkIcon
                       aria-hidden="true"
                       className="size-6 text-white"
@@ -113,7 +109,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
               {/* Sidebar component, swap this element with another sidebar if you like */}
               <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4">
                 <div className="flex h-16 shrink-0 items-center">
-                  <h1 className="text-2xl font-bold">Dashboard</h1>
+                  <h1 className="text-2xl font-bold">ダッシュボード</h1>
                 </div>
                 <nav className="flex flex-1 flex-col">
                   <ul role="list" className="flex flex-1 flex-col gap-y-7">
@@ -155,7 +151,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                           aria-hidden="true"
                           className="size-6 shrink-0 text-gray-400 group-hover:text-indigo-600"
                         />
-                        Settings
+                        設定
                       </a>
                     </li>
                   </ul>
@@ -170,7 +166,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
           {/* Sidebar component, swap this element with another sidebar if you like */}
           <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6 pb-4">
             <div className="flex h-16 shrink-0 items-center">
-              <h1 className="text-2xl font-bold">Dashboard</h1>
+              <h1 className="text-2xl font-bold">ダッシュボード</h1>
             </div>
             <nav className="flex flex-1 flex-col">
               <ul role="list" className="flex flex-1 flex-col gap-y-7">
@@ -212,7 +208,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                       aria-hidden="true"
                       className="size-6 shrink-0 text-gray-400 group-hover:text-indigo-600"
                     />
-                    Settings
+                    設定
                   </a>
                 </li>
               </ul>
@@ -221,14 +217,14 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
         </div>
 
         <div className="lg:pl-72">
-          <div className="sticky top-0 z-40 lg:mx-auto lg:max-w-7xl lg:px-8">
+          <div className="sticky top-0 z-40 lg:mx-auto lg:px-8">
             <div className="flex h-16 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-xs sm:gap-x-6 sm:px-6 lg:px-0 lg:shadow-none">
               <button
                 type="button"
                 onClick={() => setSidebarOpen(true)}
                 className="-m-2.5 p-2.5 text-gray-700 lg:hidden"
               >
-                <span className="sr-only">Open sidebar</span>
+                <span className="sr-only">サイドバーを開く</span>
                 <Bars3Icon aria-hidden="true" className="size-6" />
               </button>
 
@@ -239,7 +235,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
               />
 
               <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-                <form
+                {/* <form
                   action="#"
                   method="GET"
                   className="grid flex-1 grid-cols-1"
@@ -255,16 +251,20 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                     aria-hidden="true"
                     className="pointer-events-none col-start-1 row-start-1 size-5 self-center text-gray-400"
                   />
-                </form>
+                </form> */}
+                <div className="flex items-center justify-start w-full">
+                  <h3 className="text-xl font-bold tracking-wide">
+                    ダッシュボード
+                  </h3>
+                </div>
                 <div className="flex items-center gap-x-4 lg:gap-x-6">
-                  <button
-                    type="button"
-                    className="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500"
-                  >
-                    <span className="sr-only">View notifications</span>
-                    <BellIcon aria-hidden="true" className="size-6" />
-                  </button>
-
+                  {userDetails?.subscriptionStatus === "active" ? (
+                    <div className="flex items-center gap-x-4 lg:gap-x-6">
+                      <p className="text-xs w-32 text-center font-bold border border-green-700 rounded-full px-2 py-1 bg-green-100 text-green-700">
+                        プレミアムプラン
+                      </p>
+                    </div>
+                  ) : null}
                   {/* Separator */}
                   <div
                     aria-hidden="true"
@@ -274,10 +274,10 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                   {/* Profile dropdown */}
                   <Menu as="div" className="relative">
                     <MenuButton className="-m-1.5 flex items-center p-1.5">
-                      <span className="sr-only">Open user menu</span>
+                      <span className="sr-only">ユーザーメニューを開く</span>
                       <span className="hidden lg:flex lg:items-center">
-                        <h5 className="text-sm font-semibold text-gray-700">
-                          {isLoading ? "Loading..." : userDetails?.email}
+                        <h5 className="text-sm  text-gray-700">
+                          {isLoading ? "" : userDetails?.email}
                         </h5>
                         <ChevronDownIcon
                           aria-hidden="true"
@@ -294,7 +294,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                           onClick={handleSignOut}
                           className="block px-3 py-1 text-sm/6 text-gray-900 data-focus:bg-gray-50 data-focus:outline-hidden"
                         >
-                          Sign Out
+                          ログアウト
                         </a>
                       </MenuItem>
                     </MenuItems>
@@ -305,9 +305,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
           </div>
 
           <main className="py-10">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-              {children}
-            </div>
+            <div className="mx-auto px-4 sm:px-6 lg:px-8">{children}</div>
           </main>
         </div>
       </div>
