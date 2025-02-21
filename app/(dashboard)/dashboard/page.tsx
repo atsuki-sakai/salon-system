@@ -5,7 +5,7 @@ import { useUser } from "@clerk/nextjs";
 import { useEffect } from "react";
 import { useClerk } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-
+import Loading from "@/components/common/Loading";
 export default function RedirectDashboardPage() {
   const { user } = useUser();
   const router = useRouter();
@@ -19,5 +19,5 @@ export default function RedirectDashboardPage() {
     }
   }, [router, user, signOut]);
 
-  return <div>Redirecting...</div>;
+  return <Loading />;
 }
