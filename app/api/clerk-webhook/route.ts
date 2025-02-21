@@ -8,7 +8,6 @@ import { api } from '@/convex/_generated/api';
 import { fetchMutation, fetchQuery } from 'convex/nextjs';
 import * as Sentry from "@sentry/nextjs";
 import { clerkWebhookSchema } from '@/lib/validations';
-
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-01-27.acacia'
 });
@@ -37,8 +36,9 @@ export async function POST(req: Request) {
   const payloadString = JSON.stringify(payload);
 
   // 2. 署名検証
+  let evt: WebhookEvent;
   try {
-    wh.verify(payloadString, {
+    evt = wh.verify(payloadString, {
       'svix-id': svixId,
       'svix-timestamp': svixTimestamp,
       'svix-signature': svixSignature,
@@ -56,8 +56,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid webhook payload" }, { status: 400 });
   }
 
+
   // 3. イベントタイプに応じた処理
-  const eventType = validPayload.data.type;
+  const eventType = validPayload.data.type ?? evt.type;
   const data = validPayload.data.data;
 
   if (eventType === 'user.created') {
@@ -94,12 +95,12 @@ export async function POST(req: Request) {
     if (userRecord && userRecord.stripeCustomerId) {
       try {
         await stripe.customers.del(userRecord.stripeCustomerId);
+        await fetchMutation(api.users.deleteUser, { clerkId: clerkUserId });
       } catch (err) {
         Sentry.captureMessage("Stripe customer deletion failed", { level: "error" });
         console.error("Stripe customer deletion failed:", err);
       }
     }
-    await fetchMutation(api.users.deleteUser, { clerkId: clerkUserId });
   }
 
   return NextResponse.json({ status: 'success' }, { status: 200 });
