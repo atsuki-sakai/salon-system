@@ -2,7 +2,7 @@ import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 // 認証不要なパス
-const publicPaths = ["/sign-in", "/sign-up"];
+const publicPaths = ["/sign-in", "/sign-up", "/api/:path*"];
 
 const isPublicPath = (pathname: string): boolean =>
   publicPaths.some(
@@ -40,5 +40,5 @@ export default clerkMiddleware(
 
 // matcher に公開パスも追加して、ミドルウェアを適用する
 export const config = {
-  matcher: ["/","/dashboard/:path*", "/api/:path*", "/sign-in", "/sign-up"],
+  matcher: ["/","/dashboard/:path*", "/sign-in", "/sign-up"],
 };
