@@ -1,6 +1,8 @@
+import animate from "tailwindcss-animate";
 import type { Config } from "tailwindcss";
+import type { PluginAPI } from 'tailwindcss/types/config';
 
-export default {
+const config: Config = {
     darkMode: ["class"],
     content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
@@ -55,8 +57,39 @@ export default {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
-  		}
+  		},
+  		keyframes: {
+  			wave: {
+  				'0%, 100%': { transform: 'scaleY(1)' },
+  				'50%': { transform: 'scaleY(2)' },
+  			},
+			
+  		},
+  		animation: {
+  			'wave': 'wave 1.3s ease-in-out infinite',
+  		},
+  		animationDelay: {
+  			'0': '0s',
+  			'200': '0.2s',
+  			'400': '0.4s',
+  			'600': '0.6s',
+  			'800': '0.8s',
+  		},
   	}
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    animate,
+    function({ addUtilities }: PluginAPI) {
+      const delays = {
+        '.animation-delay-0': { 'animation-delay': '0s' },
+        '.animation-delay-200': { 'animation-delay': '0.2s' },
+        '.animation-delay-400': { 'animation-delay': '0.4s' },
+        '.animation-delay-600': { 'animation-delay': '0.6s' },
+        '.animation-delay-800': { 'animation-delay': '0.8s' },
+      };
+      addUtilities(delays);
+    },
+  ],
 } satisfies Config;
+
+export default config;
