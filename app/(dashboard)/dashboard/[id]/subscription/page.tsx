@@ -6,9 +6,11 @@ import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useUserDetails } from "@/lib/atoms/userAtom";
+import { useUserDetails } from "@/hooks/useUserDetail";
 import { CheckCircleIcon } from "@heroicons/react/24/outline";
 import Loading from "@/components/common/Loading";
+import { toast } from "sonner";
+
 const features = [
   "予約カレンダーを作成、編集できます。",
   "カットメニューを作成、編集できます。",
@@ -48,6 +50,7 @@ export default function SubscriptionPage() {
       if (result?.checkoutUrl) {
         window.location.href = result.checkoutUrl;
       }
+      toast.success("サブスクリプションの更新が完了しました");
     } catch (err: unknown) {
       console.error("Subscription error:", err);
       if (err instanceof Error) {
@@ -55,6 +58,7 @@ export default function SubscriptionPage() {
       } else {
         setError("サブスクリプションの開始に失敗しました。");
       }
+      toast.error("サブスクリプションの更新に失敗しました");
     }
   };
   const handleBillingPortal = async () => {

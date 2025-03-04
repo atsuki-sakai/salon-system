@@ -2,7 +2,7 @@
 
 import { ClerkProvider } from "@clerk/nextjs";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
-import Sidebar from "@/components/common/sidebar";
+import { Sidebar } from "@/components/common";
 
 const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
