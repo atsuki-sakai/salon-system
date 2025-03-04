@@ -1,4 +1,3 @@
-
 export { default as ReservationInfoBanner } from "./ReservationInfoBanner";
 export { default as NextTreatment } from "./NextTreatment";
 export { default as AvailableStaffList } from "./AvailableStaffList";
