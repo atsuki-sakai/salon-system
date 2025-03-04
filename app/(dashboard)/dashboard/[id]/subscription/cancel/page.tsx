@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useUserDetails } from "@/lib/atoms/userAtom";
+import { useUserDetails } from "@/hooks/useUserDetail";
 import { XCircleIcon } from "@heroicons/react/24/outline";
 import Loading from "@/components/common/Loading";
 export default function CancelSubscriptionPage() {

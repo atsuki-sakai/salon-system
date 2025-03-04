@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 const staff = [
   {
     name: "山田 花子",
@@ -87,9 +89,11 @@ export default function StaffPage() {
                     <td className="py-5 pr-3 pl-4 text-sm whitespace-nowrap sm:pl-0">
                       <div className="flex items-center">
                         <div className="size-11 shrink-0">
-                          <img
-                            alt={person.name}
+                          <Image
                             src={person.image}
+                            alt={person.name}
+                            width={44}
+                            height={44}
                             className="size-11 rounded-full"
                           />
                         </div>
