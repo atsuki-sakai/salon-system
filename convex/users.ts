@@ -89,5 +89,6 @@ export const deleteUser = mutation({
       .first();
     if (!user) return null;
     await ctx.db.delete(user._id);
+    return true;
   },
 });
