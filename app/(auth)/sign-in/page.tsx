@@ -1,43 +1,64 @@
 // app/sign-in/page.tsx
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useSignIn } from "@clerk/nextjs";
+import { useZodForm } from "@/hooks/useZodForm";
+import * as Sentry from "@sentry/nextjs";
+import { AppError, ErrorType, handleError } from "@/lib/errors";
+import { signInSchema } from "@/lib/validations";
+
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { z } from "zod";
-import { signInSignUpSchema } from "@/lib/validations";
+import { toast } from "sonner";
 
 export default function SignInPage() {
   const { isLoaded, signIn, setActive } = useSignIn();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useZodForm(signInSchema);
+
+  const onSubmit = async (data: { email: string; password: string }) => {
     if (!isLoaded) return;
+
     try {
-      signInSignUpSchema.parse({ email, password });
-      const result = await signIn.create({ identifier: email, password });
+      // まず既存のサインインセッションを作成
+      const signInAttempt = await signIn.create({
+        identifier: data.email,
+      });
+
+      // 次にパスワードで認証
+      const result = await signInAttempt.attemptFirstFactor({
+        strategy: "password",
+        password: data.password,
+      });
+
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
         router.push(`/dashboard`);
+        toast.success("ログインに成功しました");
       } else {
-        router.push("/verify-email");
+        throw new AppError(
+          `予期しない認証状態: ${result.status}`,
+          ErrorType.AUTHENTICATION
+        );
       }
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else if (err instanceof z.ZodError) {
-        setError(err.message);
-      } else {
-        setError("サインインに失敗しました");
+      const appError = handleError(err);
+      if (
+        appError.type === ErrorType.SERVER ||
+        appError.type === ErrorType.UNKNOWN
+      ) {
+        Sentry.captureException(err);
       }
+      console.log(appError.message);
+      toast.error("ログインに失敗しました");
     }
   };
 
@@ -45,31 +66,34 @@ export default function SignInPage() {
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
       <div className="w-full max-w-md p-6 bg-white rounded shadow">
         <h2 className="text-2xl font-bold mb-4 text-center">ログイン</h2>
-        {error && <p className="mb-4 text-red-600">{error}</p>}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <Label htmlFor="email">メールアドレス</Label>
             <Input
               id="email"
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              {...register("email")}
               placeholder="メールアドレスを入力"
               required
             />
+            {errors.email && (
+              <p className="mb-4 text-red-600">{errors.email.message}</p>
+            )}
           </div>
           <div>
             <Label htmlFor="password">パスワード</Label>
             <Input
               id="password"
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              {...register("password")}
               placeholder="パスワードを入力"
               required
             />
+            {errors.password && (
+              <p className="mb-4 text-red-600">{errors.password.message}</p>
+            )}
           </div>
-          <Button type="submit" className="w-full">
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
             ログイン
           </Button>
         </form>
