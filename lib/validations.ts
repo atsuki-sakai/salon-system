@@ -58,3 +58,39 @@ export const appointmentSchema = z.object({
     .max(500, { message: "備考は500文字以内で入力してください" })
     .optional(),
 });
+
+// Clerk Webhook
+export const clerkWebhookSchema = z.object({
+  type: z.string().min(1, { message: "イベントタイプが空です" }),
+  data: z.object({
+    id: z.string().min(1, { message: "ユーザーIDが空です" }),
+    email_addresses: z.array(z.object({ email_address: z.string().email({ message: "メールアドレスが無効です" }) })),
+  }),
+});
+
+// Stripe Webhook
+export const stripeWebhookSchema = z.object({
+  id: z.string().min(1, { message: "IDが空です" }),
+  object: z.string().min(1, { message: "オブジェクトが空です" }),
+  type: z.string().min(1, { message: "イベントタイプが空です" }),
+  data: z.object({
+    object: z.any(),
+  }),
+});
+
+// サブスクリプション関連の型定義
+export const subscriptionSchema = z.object({
+  customerId: z.string(),
+  priceId: z.string(),
+  subscriptionId: z.string().optional(),
+  status: z.string().optional(),
+});
+
+// ユーザー関連の型定義
+export const userSchema = z.object({
+  clerkId: z.string(),
+  email: z.string().email(),
+  stripeCustomerId: z.string(),
+  subscriptionId: z.string().optional(),
+  subscriptionStatus: z.string().optional(),
+});
