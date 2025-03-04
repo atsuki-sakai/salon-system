@@ -2,14 +2,11 @@
 
 import { Button } from "@/components/ui/button";
 import { useLiff } from "@/components/providers/liff-provider";
+import { useParams } from "next/navigation";
 
-type Props = {
-  params: {
-    id: string;
-  };
-};
-
-export default function ReservePage({ params }: Props) {
+export default function ReservePage() {
+  const params = useParams();
+  const id = params.id as string;
   const { liff, isLoggedIn, profile } = useLiff();
 
   const handleLogin = () => {
@@ -18,7 +15,7 @@ export default function ReservePage({ params }: Props) {
     console.log("profile", profile);
     console.log("liff?.isInClient()", liff?.isInClient());
 
-    console.log("salonId: ", params.id);
+    console.log("salonId: ", id);
 
     // 現在のURLを複製
     const currentUrl = new URL(window.location.href);
@@ -28,22 +25,18 @@ export default function ReservePage({ params }: Props) {
     currentUrl.search = "";
 
     // パスの一部としてsalonIdを含める（liff.stateとの重複を避けるため）
-    // 例: /reserve/salonId123 のようなパス形式
     let pathWithoutTrailingSlash = currentUrl.pathname;
     if (pathWithoutTrailingSlash.endsWith("/")) {
       pathWithoutTrailingSlash = pathWithoutTrailingSlash.slice(0, -1);
     }
 
-    // // パスにsalonIdを含める際は、URLとして有効な文字列にする
-    // const encodedSalonId = encodeURIComponent(id);
     currentUrl.pathname = `${pathWithoutTrailingSlash}`;
 
-    // この時点では、URLにクエリパラメータは含まれていない状態
     console.log("リダイレクト先URLのベース: ", currentUrl.toString());
 
     // LIFFログイン - 内部的にliff.stateを生成する
     liff?.login({
-      redirectUri: currentUrl.toString() + `/calender?salonId=${params.id}`,
+      redirectUri: currentUrl.toString() + `/calender?salonId=${id}`,
     });
   };
 

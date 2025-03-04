@@ -1,11 +1,12 @@
+"use client";
+
 import { Profile } from "./line-profile";
-
-type Props = {
-  params: {
-    id: string;
-  };
-};
-
-export default function CalenderPage({ params }: Props) {
-  return <Profile id={params.id} />;
+import { useSearchParams } from "next/navigation";
+export default function CalenderPage() {
+  const searchParams = useSearchParams();
+  const id = searchParams.get("salonId");
+  if (!id) {
+    return <div>No salonId</div>;
+  }
+  return <Profile id={id} />;
 }

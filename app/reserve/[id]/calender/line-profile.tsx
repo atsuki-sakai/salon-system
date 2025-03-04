@@ -156,7 +156,7 @@ export function Profile({ id }: { id: string }) {
         salonId: id,
       });
     }
-  }, [customer, profile?.userId, id]);
+  }, [customer, createCustomer, id, profile]);
 
   return (
     <Card className="w-full max-w-md mx-auto my-8">
