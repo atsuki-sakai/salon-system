@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useUserDetails } from "@/hooks/useUserDetail";
+import { clearUserCache } from "@/lib/atoms/userAtom";
 import {
   Dialog,
   DialogBackdrop,
@@ -68,6 +69,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
   ];
 
   const handleSignOut = () => {
+    clearUserCache();
     signOut(() => {
       window.location.href = "/sign-in";
     });
