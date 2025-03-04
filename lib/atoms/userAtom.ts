@@ -1,4 +1,5 @@
 import { atomWithStorage } from 'jotai/utils';
+
 // 型定義
 export type UserDetails = {
   clerkId: string;

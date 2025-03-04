@@ -6,8 +6,8 @@ import { WebhookEvent } from '@clerk/nextjs/server';
 import Stripe from 'stripe';
 import { api } from '@/convex/_generated/api';
 import { fetchMutation, fetchQuery } from 'convex/nextjs';
-import * as Sentry from "@sentry/nextjs";
 import { clerkWebhookSchema } from '@/lib/validations';
+import * as Sentry from "@sentry/nextjs";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-01-27.acacia'
 });
