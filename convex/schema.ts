@@ -23,5 +23,19 @@ export default defineSchema({
     currentPeriodEnd: v.optional(v.string())  // 現在の課金期間の終了タイムスタンプ (Unix時間)
   })
   .index("by_subscription_id", ["subscriptionId"])
-  .searchIndex("search_subscriptions", { searchField: "subscriptionId" })   // customerIdで検索するためのインデックス
+  .searchIndex("search_subscriptions", { searchField: "subscriptionId" }),   // customerIdで検索するためのインデックス
+
+  customers: defineTable({
+    lineId: v.string(),
+    email: v.string(),
+    phone: v.string(),
+    name: v.string(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
+    salonId: v.string(),
+  })
+  .index("by_line_id", ["lineId"])
+  .index("by_salon_id", ["salonId"])
+  .searchIndex("search_customers", { searchField: "lineId" })
+  .searchIndex("search_by_salon_id", { searchField: "salonId" }),
 });
