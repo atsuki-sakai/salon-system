@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useUser } from "@clerk/nextjs";
-import { useUserDetails } from "@/lib/atoms/userAtom";
+import { useUserDetails } from "@/hooks/useUserDetail";
 import {
   Dialog,
   DialogBackdrop,
