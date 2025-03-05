@@ -1,4 +1,5 @@
 // convex/users.ts
+
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
@@ -42,7 +43,7 @@ export const updateSubscription = mutation({
     customerId: v.string()
   },
   handler: async (ctx, args) => {
-    // まず、users テーブルの "by_subscription_id" インデックスでユーザーを検索
+    // まず、users テーブルの "by_stripe_customer_id" インデックスでユーザーを検索
     let user = await ctx.db
       .query("users")
       .withIndex("by_stripe_customer_id", (q) => q.eq("stripeCustomerId", args.customerId))
@@ -90,5 +91,47 @@ export const deleteUser = mutation({
     if (!user) return null;
     await ctx.db.delete(user._id);
     return true;
+  },
+});
+
+
+export const getPaginatedUsers = query({
+  args: {
+    limit: v.number(),
+    cursor: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const { limit, cursor } = args;
+    
+    // Build the query
+    let queryBuilder = ctx.db.query("users");
+    
+    // Apply filter if cursor exists
+    if (cursor) {
+      queryBuilder = queryBuilder.filter(q => 
+        q.lt(q.field("_creationTime"), cursor)
+      );
+    }
+    
+    // Apply ordering and limit, then execute
+    const users = await queryBuilder
+      .order("desc")
+      .take(limit + 1);
+    
+    // Check if there's a next page
+    const hasNextPage = users.length > limit;
+    if (hasNextPage) {
+      users.pop();
+    }
+    
+    // Calculate the next cursor
+    const nextCursor = hasNextPage && users.length > 0 
+      ? users[users.length - 1]?._creationTime
+      : null;
+    return {
+      users,
+      nextCursor,
+      hasNextPage,
+    };
   },
 });

@@ -1,38 +1,65 @@
-
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
 
 export const createCustomer = mutation({
   args: {
-    lineId: v.string(),
+    uid: v.string(),
     email: v.string(),
     phone: v.string(),
     name: v.string(),
-    salonId: v.string(),
+    salonIds: v.array(v.string()),
   },
   handler: async (ctx, args) => {
     const customer = await ctx.db.insert("customers", {
-      lineId: args.lineId,
+      uid: args.uid,
       email: args.email,
       phone: args.phone,
       name: args.name,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      salonId: args.salonId,
+      salonIds: args.salonIds,
     });
 
     return customer;
   },
 });
 
-export const getCustomerByLineId = query({
+export const getCustomerByUid = query({
   args: {
-    lineId: v.string(),
+    uid: v.string(),
   },
   handler: async (ctx, args) => {
-    const customer = await ctx.db.query("customers").filter(q => q.eq(q.field("lineId"), args.lineId)).first();
+    const customer = await ctx.db.query("customers").filter(q => q.eq(q.field("uid"), args.uid)).first();
     return customer;
+  },
+});
+
+export const updateCustomer = mutation({
+  args: {
+    uid: v.string(),
+    email: v.string(),
+    phone: v.string(),
+    name: v.string(),
+    salonIds: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const existingCustomer = await ctx.db
+      .query("customers")
+      .filter(q => q.eq(q.field("uid"), args.uid))
+      .first();
+
+    if (!existingCustomer) {
+      throw new Error("Customer not found");
+    }
+
+    return await ctx.db.patch(existingCustomer._id, {
+      email: args.email,
+      phone: args.phone,
+      name: args.name,
+      salonIds: args.salonIds,
+      updatedAt: new Date().toISOString(),
+    });
   },
 });
 
