@@ -30,11 +30,20 @@ export function LiffProvider({
   const [liffObject, setLiffObject] = useState<typeof liff | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [profile, setProfile] = useState<LiffContextType["profile"]>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     let mounted = true;
 
     const initLiff = async () => {
+      if (
+        typeof window !== "undefined" &&
+        !window.location.href.includes("liff")
+      ) {
+        setIsInitialized(true);
+        return;
+      }
+
       try {
         console.log("Initializing LIFF with ID:", liffId);
         const liffInstance = await import("@line/liff").then(
@@ -43,7 +52,7 @@ export function LiffProvider({
 
         await liffInstance.init({
           liffId: liffId,
-          withLoginOnExternalBrowser: true,
+          withLoginOnExternalBrowser: false,
         });
 
         console.log("LIFF initialized successfully");
@@ -71,6 +80,10 @@ export function LiffProvider({
         }
       } catch (error) {
         console.error("LIFF initialization failed:", error);
+      } finally {
+        if (mounted) {
+          setIsInitialized(true);
+        }
       }
     };
 
@@ -84,6 +97,10 @@ export function LiffProvider({
       mounted = false;
     };
   }, [liffId]);
+
+  if (!isInitialized) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <LiffContext.Provider value={{ liff: liffObject, isLoggedIn, profile }}>
