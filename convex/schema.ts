@@ -26,16 +26,16 @@ export default defineSchema({
   .searchIndex("search_subscriptions", { searchField: "subscriptionId" }),   // customerIdで検索するためのインデックス
 
   customers: defineTable({
-    lineId: v.string(),
+    uid: v.string(),
     email: v.string(),
     phone: v.string(),
     name: v.string(),
     createdAt: v.string(),
     updatedAt: v.string(),
-    salonId: v.string(),
+    salonIds: v.array(v.string()),
   })
-  .index("by_line_id", ["lineId"])
-  .index("by_salon_id", ["salonId"])
-  .searchIndex("search_customers", { searchField: "lineId" })
-  .searchIndex("search_by_salon_id", { searchField: "salonId" }),
+  .index("by_uid", ["uid"])
+  .index("by_salon_id", ["salonIds"])
+  .searchIndex("search_by_uid", { searchField: "uid" })
+  .searchIndex("search_by_salon_id", { searchField: "salonIds" }),
 });

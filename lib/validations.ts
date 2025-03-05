@@ -94,3 +94,17 @@ export const userSchema = z.object({
   subscriptionId: z.string().optional(),
   subscriptionStatus: z.string().optional(),
 });
+
+export const customerSchema = z.object({
+  name: z.string().min(1, { message: "お名前を入力してください" }),
+  phone: z
+    .string()
+    .regex(/^(\d{2,4}[-]?\d{2,4}[-]?\d{4})$/, { message: "電話番号の形式が正しくありません" }),
+  email: z.string().optional().refine((email) => email === "" || z.string().email().safeParse(email).success, {
+    message: "有効なメールアドレスを入力してください",
+  }),
+});
+
+export const phoneSchema = z.object({
+  phone: z.string().regex(/^(\d{2,4}[-]?\d{2,4}[-]?\d{4})$/, { message: "電話番号の形式が正しくありません" })
+});
