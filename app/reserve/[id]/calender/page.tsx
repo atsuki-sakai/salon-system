@@ -1,10 +1,12 @@
 "use client";
 
 import { Profile } from "./line-profile";
-import { useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
+
 export default function CalenderPage() {
-  const searchParams = useSearchParams();
-  const id = searchParams.get("salonId");
+  const params = useParams();
+  const id = params.id as string;
+
   if (!id) {
     return <div>No salonId</div>;
   }
