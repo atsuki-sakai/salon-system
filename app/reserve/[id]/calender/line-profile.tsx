@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -16,10 +16,10 @@ import { redirect } from "next/navigation";
 
 export function Profile({ id }: { id: string }) {
   const { isLoggedIn, profile } = useLiff();
-  const [phoneNumber, setPhoneNumber] = useState("");
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useZodForm(phoneSchema);
 
@@ -31,9 +31,9 @@ export function Profile({ id }: { id: string }) {
   useEffect(() => {
     if (isLoggedIn && profile && customer) {
       console.log("Customer data:", customer);
-      setPhoneNumber(customer.phone ?? "");
+      setValue("phone", customer.phone ?? "");
     }
-  }, [isLoggedIn, profile, customer]);
+  }, [isLoggedIn, profile, customer, setValue]);
 
   const createCustomer = useMutation(api.customers.createCustomer);
   const updateCustomer = useMutation(api.customers.updateCustomer);
@@ -48,7 +48,7 @@ export function Profile({ id }: { id: string }) {
         updateCustomer({
           uid: profile.userId,
           email: profile?.email ?? "",
-          phone: phoneNumber,
+          phone: data.phone,
           name: profile?.displayName ?? "",
           salonIds: customer.salonIds.concat(id),
         });
@@ -56,7 +56,7 @@ export function Profile({ id }: { id: string }) {
         createCustomer({
           uid: profile.userId,
           email: profile?.email ?? "",
-          phone: phoneNumber,
+          phone: data.phone,
           name: profile?.displayName ?? "",
           salonIds: [id],
         });
@@ -100,11 +100,11 @@ export function Profile({ id }: { id: string }) {
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="space-y-2">
               <Label htmlFor="phone">電話番号</Label>
+
               <Input
                 id="phone"
                 type="tel"
                 placeholder="090-1234-5678"
-                value={phoneNumber}
                 {...register("phone")}
                 required
               />
