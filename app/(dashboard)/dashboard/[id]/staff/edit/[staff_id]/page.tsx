@@ -32,7 +32,9 @@ import { ja } from "date-fns/locale";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Loading } from "@/components/common";
+import { useParams } from "next/navigation";
 
+// メニュー項目の定義（元のコードではここが欠けていました）
 // メニュー項目の定義（元のコードではここが欠けていました）
 const textMenuItems = [
   {
@@ -70,12 +72,8 @@ const textMenuItems = [
   },
 ];
 
-export default function EditStaffPage({
-  params,
-}: {
-  params: { id: string; staff_id: string };
-}) {
-  const { id, staff_id } = params;
+export default function EditStaffPage() {
+  const { staff_id } = useParams();
   const router = useRouter();
 
   // スタッフ情報の取得
@@ -166,7 +164,7 @@ export default function EditStaffPage({
         id: staff_id as Id<"staffs">,
       });
       toast.success("スタッフを削除しました");
-      router.push(`/dashboard/${id}/staff`);
+      router.push(`/dashboard/${staff?.salonId}/staff`);
     }
   };
 
@@ -202,12 +200,12 @@ export default function EditStaffPage({
         menuIds: data.menuIds || [],
         description: data.description || "",
         image: data.image || "",
-        salonId: id,
+        salonId: staff?.salonId || "",
         holidays: data.holidays || [],
       });
 
       toast.success("スタッフ情報を更新しました");
-      router.push(`/dashboard/${id}/staff`);
+      router.push(`/dashboard/${staff?.salonId}/staff`);
     } catch (error) {
       console.error("更新エラー:", error);
       toast.error("スタッフ情報の更新に失敗しました");
@@ -224,7 +222,7 @@ export default function EditStaffPage({
   return (
     <div className="max-w-5xl mx-auto">
       <div className="flex flex-col gap-2 mb-4 sticky top-0 bg-white py-4 z-10">
-        <Link href={`/dashboard/${id}/staff`}>
+        <Link href={`/dashboard/${staff?.salonId}/staff`}>
           <span className="text-sm text-indigo-700 flex items-center justify-start gap-2">
             <ArrowLeftIcon className="w-4 h-4" />
             <span>スタッフ一覧</span>
@@ -426,7 +424,7 @@ export default function EditStaffPage({
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push(`/dashboard/${id}/staff`)}
+            onClick={() => router.push(`/dashboard/${staff?.salonId}/staff`)}
           >
             キャンセル
           </Button>

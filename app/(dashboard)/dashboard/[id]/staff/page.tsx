@@ -15,7 +15,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { CalendarIcon, PencilIcon } from "lucide-react";
-
+import { useParams } from "next/navigation";
+import { Id } from "@/convex/_generated/dataModel";
 // デフォルトのスタッフ画像
 const DEFAULT_STAFF_IMAGE =
   "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=4&w=256&h=256&q=60";
@@ -35,10 +36,10 @@ type Staff = {
   holidays?: string[];
 };
 
-export default function StaffPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function StaffPage() {
+  const { id } = useParams();
   const staffs = useQuery(api.staffs.getStaffsBySalonId, {
-    salonId: id,
+    salonId: id as Id<"users">,
   });
 
   // 休暇日の詳細表示状態を管理する
