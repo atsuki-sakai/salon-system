@@ -3,7 +3,6 @@ import { v } from "convex/values";
 
 export const createReservation = mutation({
   args: {
-    id: v.id("reservations"),
     customerId: v.string(),
     customerName: v.string(),
     customerPhone: v.string(),
@@ -22,7 +21,6 @@ export const createReservation = mutation({
   },
   handler: async (ctx, args) => {
     const reservation = await ctx.db.insert("reservations", {
-      id: args.id,
       customerId: args.customerId,
       customerName: args.customerName,
       customerPhone: args.customerPhone,

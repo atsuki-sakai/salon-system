@@ -4,7 +4,6 @@ import { v } from "convex/values";
 
 export const createMenu = mutation({
   args: {
-    id: v.id("menus"),
     name: v.string(),
     price: v.number(),
     timeToMin: v.number(),
@@ -14,7 +13,6 @@ export const createMenu = mutation({
   },
   handler: async (ctx, args) => {
     const menu = await ctx.db.insert("menus", {
-      id: args.id,
       name: args.name,
       price: args.price,
       timeToMin: args.timeToMin,
