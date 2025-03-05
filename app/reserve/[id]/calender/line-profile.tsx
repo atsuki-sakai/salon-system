@@ -104,6 +104,7 @@ export function Profile({ id }: { id: string }) {
                 id="phone"
                 type="tel"
                 placeholder="090-1234-5678"
+                value={phoneNumber}
                 {...register("phone")}
                 required
               />
