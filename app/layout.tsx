@@ -21,21 +21,19 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ja">
-      <ClerkProvider>
-        <ClientLayout>
-          <body
-            className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-          >
-            {children}
-            <Toaster
-              position="top-right"
-              expand={false}
-              richColors
-              duration={5000}
-            />
-          </body>
-        </ClientLayout>
-      </ClerkProvider>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        <ClerkProvider>
+          <ClientLayout>{children}</ClientLayout>
+        </ClerkProvider>
+        <Toaster
+          position="top-right"
+          expand={false}
+          richColors
+          duration={5000}
+        />
+      </body>
     </html>
   );
 }
