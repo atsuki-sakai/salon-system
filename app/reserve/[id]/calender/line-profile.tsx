@@ -20,7 +20,7 @@ export function Profile({ id }: { id: string }) {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitted },
+    formState: { errors, isSubmitting },
   } = useZodForm(phoneSchema);
 
   const customer = useQuery(
@@ -68,7 +68,7 @@ export function Profile({ id }: { id: string }) {
     }
   };
 
-  if (!profile) {
+  if (!isLoggedIn) {
     return redirect(`/reserve/${id}`);
   }
 
@@ -81,13 +81,18 @@ export function Profile({ id }: { id: string }) {
         <div className="space-y-6">
           <div className="flex items-center space-x-4">
             <Avatar className="h-20 w-20">
-              <AvatarImage src={profile.pictureUrl} alt={profile.displayName} />
-              <AvatarFallback>{profile.displayName[0]}</AvatarFallback>
+              <AvatarImage
+                src={profile?.pictureUrl}
+                alt={profile?.displayName}
+              />
+              <AvatarFallback>{profile?.displayName[0]}</AvatarFallback>
             </Avatar>
             <div>
-              <h3 className="font-medium">{profile.displayName}</h3>
-              {profile.email && (
-                <p className="text-sm text-muted-foreground">{profile.email}</p>
+              <h3 className="font-medium">{profile?.displayName}</h3>
+              {profile?.email && (
+                <p className="text-sm text-muted-foreground">
+                  {profile?.email}
+                </p>
               )}
             </div>
           </div>
@@ -112,7 +117,7 @@ export function Profile({ id }: { id: string }) {
                 variant="default"
                 type="submit"
                 className="w-2/5 bg-green-600 font-bold text-white"
-                disabled={isSubmitted}
+                disabled={isSubmitting}
               >
                 予約者情報を入力
               </Button>
