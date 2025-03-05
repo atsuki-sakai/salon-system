@@ -1,58 +1,34 @@
 "use client";
 
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
+import Link from "next/link";
 import {
-  ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   EllipsisHorizontalIcon,
 } from "@heroicons/react/20/solid";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import {
+  format,
+  addDays,
+  subDays,
+  parseISO,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  startOfWeek,
+  endOfWeek,
+  isSameMonth,
+  isToday,
+  addMonths,
+  subMonths,
+} from "date-fns";
+import { ja } from "date-fns/locale";
+import { Button } from "../ui/button";
 
-const days = [
-  { date: "2021-12-27" },
-  { date: "2021-12-28" },
-  { date: "2021-12-29" },
-  { date: "2021-12-30" },
-  { date: "2021-12-31" },
-  { date: "2022-01-01", isCurrentMonth: true },
-  { date: "2022-01-02", isCurrentMonth: true },
-  { date: "2022-01-03", isCurrentMonth: true },
-  { date: "2022-01-04", isCurrentMonth: true },
-  { date: "2022-01-05", isCurrentMonth: true },
-  { date: "2022-01-06", isCurrentMonth: true },
-  { date: "2022-01-07", isCurrentMonth: true },
-  { date: "2022-01-08", isCurrentMonth: true },
-  { date: "2022-01-09", isCurrentMonth: true },
-  { date: "2022-01-10", isCurrentMonth: true },
-  { date: "2022-01-11", isCurrentMonth: true },
-  { date: "2022-01-12", isCurrentMonth: true },
-  { date: "2022-01-13", isCurrentMonth: true },
-  { date: "2022-01-14", isCurrentMonth: true },
-  { date: "2022-01-15", isCurrentMonth: true },
-  { date: "2022-01-16", isCurrentMonth: true },
-  { date: "2022-01-17", isCurrentMonth: true },
-  { date: "2022-01-18", isCurrentMonth: true },
-  { date: "2022-01-19", isCurrentMonth: true },
-  { date: "2022-01-20", isCurrentMonth: true, isToday: true },
-  { date: "2022-01-21", isCurrentMonth: true },
-  { date: "2022-01-22", isCurrentMonth: true, isSelected: true },
-  { date: "2022-01-23", isCurrentMonth: true },
-  { date: "2022-01-24", isCurrentMonth: true },
-  { date: "2022-01-25", isCurrentMonth: true },
-  { date: "2022-01-26", isCurrentMonth: true },
-  { date: "2022-01-27", isCurrentMonth: true },
-  { date: "2022-01-28", isCurrentMonth: true },
-  { date: "2022-01-29", isCurrentMonth: true },
-  { date: "2022-01-30", isCurrentMonth: true },
-  { date: "2022-01-31", isCurrentMonth: true },
-  { date: "2022-02-01" },
-  { date: "2022-02-02" },
-  { date: "2022-02-03" },
-  { date: "2022-02-04" },
-  { date: "2022-02-05" },
-  { date: "2022-02-06" },
-];
+import { useParams } from "next/navigation";
 
 function classNames(...classes: (string | boolean | undefined)[]) {
   return classes
@@ -60,7 +36,58 @@ function classNames(...classes: (string | boolean | undefined)[]) {
     .join(" ");
 }
 
-export default function Example() {
+function getCalendarDays(date: Date, selectedDate: Date) {
+  const start = startOfWeek(startOfMonth(date));
+  const end = endOfWeek(endOfMonth(date));
+
+  return eachDayOfInterval({ start, end }).map((day) => ({
+    date: format(day, "yyyy-MM-dd"),
+    isCurrentMonth: isSameMonth(day, date),
+    isToday: isToday(day),
+    isSelected:
+      format(day, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd"),
+  }));
+}
+
+export default function Calendar() {
+  const params = useParams();
+  const salonId = params.id as string;
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  const handlePrevMonth = () => {
+    setCurrentMonth((prev) => subMonths(prev, 1));
+  };
+
+  const handleNextMonth = () => {
+    setCurrentMonth((prev) => addMonths(prev, 1));
+  };
+
+  const handleDateSelect = (date: string) => {
+    setSelectedDate(parseISO(date));
+  };
+
+  const days = getCalendarDays(currentMonth, selectedDate);
+
+  // Fetch necessary data
+  const staffs = useQuery(api.staffs.getStaffsBySalonId, { salonId });
+  const menus = useQuery(api.menus.getMenusBySalonId, { salonId });
+  console.log(staffs);
+  console.log(menus);
+
+  const reservations = useQuery(api.reservations.getReservationsByDate, {
+    salonId,
+    date: format(selectedDate, "yyyy-MM-dd"),
+  });
+
+  const handlePrevDay = () => {
+    setSelectedDate((prev) => subDays(prev, 1));
+  };
+
+  const handleNextDay = () => {
+    setSelectedDate((prev) => addDays(prev, 1));
+  };
+
   const container = useRef<HTMLDivElement>(null);
   const containerNav = useRef<HTMLDivElement>(null);
   const containerOffset = useRef<HTMLDivElement>(null);
@@ -85,24 +112,25 @@ export default function Example() {
       1440;
   }, []);
 
+  console.log(reservations);
   return (
     <div className="flex h-full flex-col">
       <header className="flex flex-none items-center justify-between border-b border-gray-200 px-6 py-4">
         <div>
           <h1 className="text-base font-semibold text-gray-900">
-            <time dateTime="2022-01-22" className="sm:hidden">
-              2022年1月22日
-            </time>
-            <time dateTime="2022-01-22" className="hidden sm:inline">
-              2022年1月22日
+            <time dateTime={format(selectedDate, "yyyy-MM-dd")}>
+              {format(selectedDate, "yyyy年M月d日", { locale: ja })}
             </time>
           </h1>
-          <p className="mt-1 text-sm text-gray-500">土曜日</p>
+          <p className="mt-1 text-sm text-gray-500">
+            {format(selectedDate, "EEEE", { locale: ja })}
+          </p>
         </div>
         <div className="flex items-center">
           <div className="relative flex items-center rounded-md bg-white shadow-xs md:items-stretch">
             <button
               type="button"
+              onClick={handlePrevDay}
               className="flex h-9 w-12 items-center justify-center rounded-l-md border-y border-l border-gray-300 pr-1 text-gray-400 hover:text-gray-500 focus:relative md:w-9 md:pr-0 md:hover:bg-gray-50"
             >
               <span className="sr-only">前の日</span>
@@ -110,13 +138,14 @@ export default function Example() {
             </button>
             <button
               type="button"
+              onClick={() => setSelectedDate(new Date())}
               className="hidden border-y border-gray-300 px-3.5 text-sm font-semibold text-gray-900 hover:bg-gray-50 focus:relative md:block"
             >
               今日
             </button>
-            <span className="relative -mx-px h-5 w-px bg-gray-300 md:hidden" />
             <button
               type="button"
+              onClick={handleNextDay}
               className="flex h-9 w-12 items-center justify-center rounded-r-md border-y border-r border-gray-300 pl-1 text-gray-400 hover:text-gray-500 focus:relative md:w-9 md:pl-0 md:hover:bg-gray-50"
             >
               <span className="sr-only">次の日</span>
@@ -124,64 +153,12 @@ export default function Example() {
             </button>
           </div>
           <div className="hidden md:ml-4 md:flex md:items-center">
-            <Menu as="div" className="relative">
-              <MenuButton
-                type="button"
-                className="flex items-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 shadow-xs ring-gray-300 ring-inset hover:bg-gray-50"
-              >
-                日表示
-                <ChevronDownIcon
-                  className="-mr-1 size-5 text-gray-400"
-                  aria-hidden="true"
-                />
-              </MenuButton>
-              <MenuItems
-                transition
-                className="absolute right-0 z-10 mt-3 w-36 origin-top-right overflow-hidden rounded-md bg-white ring-1 shadow-lg ring-black/5 focus:outline-hidden data-closed:scale-95 data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
-              >
-                <div className="py-1">
-                  <MenuItem>
-                    <a
-                      href="#"
-                      className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
-                    >
-                      日表示
-                    </a>
-                  </MenuItem>
-                  <MenuItem>
-                    <a
-                      href="#"
-                      className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
-                    >
-                      週表示
-                    </a>
-                  </MenuItem>
-                  <MenuItem>
-                    <a
-                      href="#"
-                      className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
-                    >
-                      月表示
-                    </a>
-                  </MenuItem>
-                  <MenuItem>
-                    <a
-                      href="#"
-                      className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
-                    >
-                      年表示
-                    </a>
-                  </MenuItem>
-                </div>
-              </MenuItems>
-            </Menu>
             <div className="ml-6 h-6 w-px bg-gray-300" />
-            <button
-              type="button"
-              className="ml-6 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            >
-              イベントを追加
-            </button>
+            <Link href={`/dashboard/${salonId}/calender/create`}>
+              <Button className="ml-6 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                イベントを追加
+              </Button>
+            </Link>
           </div>
           <Menu as="div" className="relative ml-6 md:hidden">
             <MenuButton className="-mx-2 flex items-center rounded-full border border-transparent p-2 text-gray-400 hover:text-gray-500">
@@ -212,115 +189,83 @@ export default function Example() {
                   </a>
                 </MenuItem>
               </div>
-              <div className="py-1">
-                <MenuItem>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
-                  >
-                    日表示
-                  </a>
-                </MenuItem>
-                <MenuItem>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
-                  >
-                    週表示
-                  </a>
-                </MenuItem>
-                <MenuItem>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
-                  >
-                    月表示
-                  </a>
-                </MenuItem>
-                <MenuItem>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900 data-focus:outline-hidden"
-                  >
-                    年表示
-                  </a>
-                </MenuItem>
-              </div>
             </MenuItems>
           </Menu>
         </div>
       </header>
+      <div className="w-full md:hidden max-w-md flex-none border-l border-gray-100 px-8 py-10 ">
+        <div className="flex items-center text-center text-gray-900">
+          <button
+            type="button"
+            onClick={handlePrevMonth}
+            className="-m-1.5 flex flex-none items-center justify-center p-1.5 text-gray-400 hover:text-gray-500"
+          >
+            <span className="sr-only">前の月</span>
+            <ChevronLeftIcon className="size-5" aria-hidden="true" />
+          </button>
+          <div className="flex-auto text-sm font-semibold">
+            {format(currentMonth, "yyyy年M月", { locale: ja })}
+          </div>
+          <button
+            type="button"
+            onClick={handleNextMonth}
+            className="-m-1.5 flex flex-none items-center justify-center p-1.5 text-gray-400 hover:text-gray-500"
+          >
+            <span className="sr-only">次の月</span>
+            <ChevronRightIcon className="size-5" aria-hidden="true" />
+          </button>
+        </div>
+        <div className="mt-6 grid grid-cols-7 text-center text-xs/6 text-gray-500">
+          <div>月</div>
+          <div>火</div>
+          <div>水</div>
+          <div>木</div>
+          <div>金</div>
+          <div>土</div>
+          <div>日</div>
+        </div>
+        <div className="isolate mt-2 grid grid-cols-7 gap-px rounded-lg bg-gray-200 text-sm ring-1 shadow-sm ring-gray-200">
+          {days.map((day, dayIdx) => (
+            <button
+              key={day.date}
+              type="button"
+              onClick={() => handleDateSelect(day.date)}
+              className={classNames(
+                "py-1.5 hover:bg-gray-100 focus:z-10",
+                day.isCurrentMonth ? "bg-white" : "bg-gray-50",
+                (day.isSelected || day.isToday) && "font-semibold",
+                day.isSelected && "text-white",
+                !day.isSelected &&
+                  day.isCurrentMonth &&
+                  !day.isToday &&
+                  "text-gray-900",
+                !day.isSelected &&
+                  !day.isCurrentMonth &&
+                  !day.isToday &&
+                  "text-gray-400",
+                day.isToday && !day.isSelected && "text-indigo-600",
+                dayIdx === 0 && "rounded-tl-lg",
+                dayIdx === 6 && "rounded-tr-lg",
+                dayIdx === days.length - 7 && "rounded-bl-lg",
+                dayIdx === days.length - 1 && "rounded-br-lg"
+              )}
+            >
+              <time
+                dateTime={day.date}
+                className={classNames(
+                  "mx-auto flex size-7 items-center justify-center rounded-full",
+                  day.isSelected && day.isToday ? "bg-indigo-600" : "",
+                  day.isSelected && !day.isToday ? "bg-gray-900" : ""
+                )}
+              >
+                {day.date?.split("-").pop()?.replace(/^0/, "") ?? ""}
+              </time>
+            </button>
+          ))}
+        </div>
+      </div>
       <div className="isolate flex flex-auto overflow-hidden bg-white">
         <div ref={container} className="flex flex-auto flex-col overflow-auto">
-          <div
-            ref={containerNav}
-            className="sticky top-0 z-10 grid flex-none grid-cols-7 bg-white text-xs text-gray-500 ring-1 shadow-sm ring-black/5 md:hidden"
-          >
-            <button
-              type="button"
-              className="flex flex-col items-center pt-3 pb-1.5"
-            >
-              <span>W</span>
-              {/* デフォルト: "text-gray-900", 選択時: "bg-gray-900 text-white", 今日（選択していない場合）: "text-indigo-600", 今日（選択時）: "bg-indigo-600 text-white" */}
-              <span className="mt-3 flex size-8 items-center justify-center rounded-full text-base font-semibold text-gray-900">
-                19
-              </span>
-            </button>
-            <button
-              type="button"
-              className="flex flex-col items-center pt-3 pb-1.5"
-            >
-              <span>T</span>
-              <span className="mt-3 flex size-8 items-center justify-center rounded-full text-base font-semibold text-indigo-600">
-                20
-              </span>
-            </button>
-            <button
-              type="button"
-              className="flex flex-col items-center pt-3 pb-1.5"
-            >
-              <span>F</span>
-              <span className="mt-3 flex size-8 items-center justify-center rounded-full text-base font-semibold text-gray-900">
-                21
-              </span>
-            </button>
-            <button
-              type="button"
-              className="flex flex-col items-center pt-3 pb-1.5"
-            >
-              <span>S</span>
-              <span className="mt-3 flex size-8 items-center justify-center rounded-full bg-gray-900 text-base font-semibold text-white">
-                22
-              </span>
-            </button>
-            <button
-              type="button"
-              className="flex flex-col items-center pt-3 pb-1.5"
-            >
-              <span>S</span>
-              <span className="mt-3 flex size-8 items-center justify-center rounded-full text-base font-semibold text-gray-900">
-                23
-              </span>
-            </button>
-            <button
-              type="button"
-              className="flex flex-col items-center pt-3 pb-1.5"
-            >
-              <span>M</span>
-              <span className="mt-3 flex size-8 items-center justify-center rounded-full text-base font-semibold text-gray-900">
-                24
-              </span>
-            </button>
-            <button
-              type="button"
-              className="flex flex-col items-center pt-3 pb-1.5"
-            >
-              <span>T</span>
-              <span className="mt-3 flex size-8 items-center justify-center rounded-full text-base font-semibold text-gray-900">
-                25
-              </span>
-            </button>
-          </div>
           <div className="flex w-full flex-auto">
             <div className="w-14 flex-none bg-white ring-1 ring-gray-100" />
             <div className="grid flex-auto grid-cols-1 grid-rows-1">
@@ -483,63 +428,36 @@ export default function Example() {
                   gridTemplateRows: "1.75rem repeat(288, minmax(0, 1fr)) auto",
                 }}
               >
-                <li
-                  className="relative mt-px flex"
-                  style={{ gridRow: "134 / span 12" }}
-                >
-                  <a
-                    href="#"
-                    className="group absolute inset-1 flex flex-col overflow-y-auto rounded-lg bg-blue-50 p-2 text-xs/5 hover:bg-blue-100"
-                  >
-                    <p className="order-1 font-semibold text-blue-700">
-                      佐藤 ありさ
-                    </p>
-                    <p className="order-1 text-blue-500 group-hover:text-blue-700">
-                      山田さんカット
-                    </p>
-                    <p className="text-blue-500 group-hover:text-blue-700">
-                      <time dateTime="2022-01-22T11:00">11:00 ~ 12:00</time>
-                    </p>
-                  </a>
-                </li>
-                <li
-                  className="relative mt-px flex"
-                  style={{ gridRow: "92 / span 30" }}
-                >
-                  <a
-                    href="#"
-                    className="group absolute inset-1 flex flex-col overflow-y-auto rounded-lg bg-pink-50 p-2 text-xs/5 hover:bg-pink-100"
-                  >
-                    <p className="order-1 font-semibold text-pink-700">
-                      鈴木 太郎
-                    </p>
-                    <p className="order-1 text-pink-500 group-hover:text-pink-700">
-                      山田さんカットとパーマ
-                    </p>
-                    <p className="text-pink-500 group-hover:text-pink-700">
-                      <time dateTime="2022-01-22T07:30">7:30 ~ 10:00</time>
-                    </p>
-                  </a>
-                </li>
-                <li
-                  className="relative mt-px flex"
-                  style={{ gridRow: "182 / span 18" }}
-                >
-                  <a
-                    href="#"
-                    className="group absolute inset-1 flex flex-col overflow-y-auto rounded-lg bg-indigo-50 p-2 text-xs/5 hover:bg-indigo-100"
-                  >
-                    <p className="order-1 font-semibold text-indigo-700">
-                      田中 花子
-                    </p>
-                    <p className="order-1 text-indigo-500 group-hover:text-indigo-700">
-                      山田さんカット
-                    </p>
-                    <p className="text-indigo-500 group-hover:text-indigo-700">
-                      <time dateTime="2022-01-22T15:00">15:00 ~ 16:30</time>
-                    </p>
-                  </a>
-                </li>
+                {reservations?.map((reservation) => {
+                  const startMinutes = getMinutesFromTime(
+                    reservation.startTime
+                  );
+                  const endMinutes = getMinutesFromTime(reservation.endTime);
+                  const duration = endMinutes - startMinutes;
+
+                  return (
+                    <li
+                      key={reservation._id}
+                      className="relative mt-px flex"
+                      style={{
+                        gridRow: `${Math.floor(startMinutes / 5) + 2} / span ${Math.floor(duration / 5)}`,
+                      }}
+                    >
+                      <div className="group absolute inset-1 flex flex-col overflow-y-auto rounded-lg bg-blue-50 p-2 text-xs/5 hover:bg-blue-100">
+                        <p className="order-1 font-semibold text-blue-700">
+                          {reservation.customerName}
+                        </p>
+                        <p className="text-blue-500">
+                          {reservation.menuName} ({reservation.staffName})
+                        </p>
+                        <p className="text-blue-500">
+                          {format(parseISO(reservation.startTime), "HH:mm")} ~
+                          {format(parseISO(reservation.endTime), "HH:mm")}
+                        </p>
+                      </div>
+                    </li>
+                  );
+                })}
               </ol>
             </div>
           </div>
@@ -548,14 +466,18 @@ export default function Example() {
           <div className="flex items-center text-center text-gray-900">
             <button
               type="button"
+              onClick={handlePrevMonth}
               className="-m-1.5 flex flex-none items-center justify-center p-1.5 text-gray-400 hover:text-gray-500"
             >
               <span className="sr-only">前の月</span>
               <ChevronLeftIcon className="size-5" aria-hidden="true" />
             </button>
-            <div className="flex-auto text-sm font-semibold">2022年1月</div>
+            <div className="flex-auto text-sm font-semibold">
+              {format(currentMonth, "yyyy年M月", { locale: ja })}
+            </div>
             <button
               type="button"
+              onClick={handleNextMonth}
               className="-m-1.5 flex flex-none items-center justify-center p-1.5 text-gray-400 hover:text-gray-500"
             >
               <span className="sr-only">次の月</span>
@@ -576,6 +498,7 @@ export default function Example() {
               <button
                 key={day.date}
                 type="button"
+                onClick={() => handleDateSelect(day.date)}
                 className={classNames(
                   "py-1.5 hover:bg-gray-100 focus:z-10",
                   day.isCurrentMonth ? "bg-white" : "bg-gray-50",
@@ -613,4 +536,9 @@ export default function Example() {
       </div>
     </div>
   );
+}
+
+function getMinutesFromTime(timeString: string) {
+  const date = parseISO(timeString);
+  return date.getHours() * 60 + date.getMinutes();
 }

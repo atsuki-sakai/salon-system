@@ -86,3 +86,16 @@ export const getStaffsBySalonId = query({
     return staffs;
   },
 });
+
+export const getStaffsByStaffIds = query({
+  args: {
+    staffIds: v.array(v.id("staffs")),
+  },
+  handler: async (ctx, args) => {
+    const staffs = await Promise.all(args.staffIds.map(async (staffId) => {
+      const staff = await ctx.db.get(staffId);
+      return staff;
+    }));
+    return staffs;
+  },
+});

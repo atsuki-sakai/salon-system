@@ -119,3 +119,15 @@ export const staffSchema = z.object({
   menuIds: z.array(z.string()).optional(),
   holidays: z.array(z.string()).optional(),
 });
+
+export const menuSchema = z.object({
+  name: z.string().min(1, "メニュー名を入力してください"),
+  price: z.string().min(1, "料金を入力してください"),
+  salePrice: z.string().optional(),
+  timeToMin: z.string().min(1, "所要時間を入力してください"),
+  image: z.string().optional(),
+  description: z.string().optional(),
+  staffIds: z.array(z.string()).optional(),
+  targetGender: z.enum(["全て", "男性", "女性"]).default("全て"),
+  couponId: z.string().optional(),
+});

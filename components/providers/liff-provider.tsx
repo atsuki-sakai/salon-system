@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import liff from "@line/liff";
-
+import { Loading } from "@/components/common";
 type LiffContextType = {
   liff: typeof liff | null;
   isLoggedIn: boolean;
@@ -99,7 +99,7 @@ export function LiffProvider({
   }, [liffId]);
 
   if (!isInitialized) {
-    return <div>Loading...</div>;
+    return <Loading />;
   }
 
   return (

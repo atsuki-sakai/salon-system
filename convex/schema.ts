@@ -60,10 +60,14 @@ export default defineSchema({
   menus: defineTable({
     name: v.string(),
     price: v.number(),
+    salePrice: v.optional(v.number()),
     timeToMin: v.number(),
     image: v.string(),
     staffIds: v.array(v.string()),
     salonId: v.string(),
+    description: v.optional(v.string()),
+    couponId: v.optional(v.string()),
+    targetGender: v.optional(v.union(v.literal("全て"), v.literal("男性"), v.literal("女性"))),
   })
   .index("by_staff_id", ["staffIds"])
   .index("by_salon_id", ["salonId"])

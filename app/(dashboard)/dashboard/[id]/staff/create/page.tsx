@@ -22,7 +22,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
+import { Id } from "@/convex/_generated/dataModel";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
 import { Calendar } from "@/components/ui/calendar";
@@ -33,41 +34,41 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
-const textMenuItems = [
-  {
-    id: "menu_1",
-    name: "カット",
-    category: "カット",
-    price: "3,000円",
-    duration: "約30分",
-    coolingTime: "約10分",
-    availableStaffs: ["山田 花子", "佐藤 太郎"],
-    imageUrl:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=4&w=256&h=256&q=60",
-  },
-  {
-    id: "menu_2",
-    name: "パーマ",
-    category: "パーマ",
-    price: "5,000円",
-    duration: "約60分",
-    coolingTime: "約10分",
-    availableStaffs: ["山田 花子", "佐藤 太郎"],
-    imageUrl:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=4&w=256&h=256&q=60",
-  },
-  {
-    id: "menu_3",
-    name: "カラー",
-    category: "カラー",
-    price: "4,500円",
-    duration: "約45分",
-    coolingTime: "約10分",
-    availableStaffs: ["山田 花子", "佐藤 太郎"],
-    imageUrl:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=4&w=256&h=256&q=60",
-  },
-];
+// const textMenuItems = [
+//   {
+//     id: "menu_1",
+//     name: "カット",
+//     category: "カット",
+//     price: "3,000円",
+//     duration: "約30分",
+//     coolingTime: "約10分",
+//     availableStaffs: ["山田 花子", "佐藤 太郎"],
+//     imageUrl:
+//       "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=4&w=256&h=256&q=60",
+//   },
+//   {
+//     id: "menu_2",
+//     name: "パーマ",
+//     category: "パーマ",
+//     price: "5,000円",
+//     duration: "約60分",
+//     coolingTime: "約10分",
+//     availableStaffs: ["山田 花子", "佐藤 太郎"],
+//     imageUrl:
+//       "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=4&w=256&h=256&q=60",
+//   },
+//   {
+//     id: "menu_3",
+//     name: "カラー",
+//     category: "カラー",
+//     price: "4,500円",
+//     duration: "約45分",
+//     coolingTime: "約10分",
+//     availableStaffs: ["山田 花子", "佐藤 太郎"],
+//     imageUrl:
+//       "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=4&w=256&h=256&q=60",
+//   },
+// ];
 
 export default function StaffCreatePage() {
   const params = useParams();
@@ -134,6 +135,9 @@ export default function StaffCreatePage() {
   };
 
   const createStaff = useMutation(api.staffs.createStaff);
+  const menus = useQuery(api.menus.getMenusBySalonId, {
+    salonId: id as Id<"users">,
+  });
 
   const onSubmit = (data: z.infer<typeof staffSchema>) => {
     try {
@@ -227,20 +231,23 @@ export default function StaffCreatePage() {
         <div className="space-y-4">
           <Label className="font-bold">対応メニュー</Label>
           <div className="grid grid-cols-2 gap-4">
-            {textMenuItems.map((item) => (
-              <div key={item.id} className="flex items-center space-x-2">
+            {menus?.length === 0 && (
+              <p className="text-sm text-gray-500">メニューがありません</p>
+            )}
+            {menus?.map((menu) => (
+              <div key={menu._id} className="flex items-center space-x-2">
                 <Checkbox
-                  id={item.id}
-                  checked={selectedMenus.includes(item.id)}
+                  id={menu._id}
+                  checked={selectedMenus.includes(menu.name)}
                   onCheckedChange={(checked) =>
-                    handleMenuChange(checked as boolean, item.id)
+                    handleMenuChange(checked as boolean, menu.name)
                   }
                 />
                 <Label
-                  htmlFor={item.id}
+                  htmlFor={menu._id}
                   className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
-                  {item.name}
+                  {menu.name}
                 </Label>
               </div>
             ))}

@@ -94,7 +94,16 @@ export const deleteUser = mutation({
   },
 });
 
-
+export const getStaffsBySalonId = query({
+  args: {
+    salonId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { salonId } = args;
+    const staffs = await ctx.db.query("staffs").filter(q => q.eq(q.field("salonId"), salonId)).collect();
+    return staffs;
+  },
+});
 export const getPaginatedUsers = query({
   args: {
     limit: v.number(),

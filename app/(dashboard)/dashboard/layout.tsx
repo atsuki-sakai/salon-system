@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-
+import { ClerkProvider } from "@clerk/nextjs";
 import { Sidebar } from "@/components/common";
 
 export const metadata: Metadata = {
@@ -15,7 +15,9 @@ export default function DashboardLayout({
   return (
     <main className="flex h-screen overflow-hidden">
       <div className="flex-1 overflow-y-auto">
-        <Sidebar>{children}</Sidebar>
+        <ClerkProvider>
+          <Sidebar>{children}</Sidebar>
+        </ClerkProvider>
       </div>
     </main>
   );

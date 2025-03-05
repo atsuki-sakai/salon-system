@@ -7,18 +7,26 @@ export const createMenu = mutation({
     name: v.string(),
     price: v.number(),
     timeToMin: v.number(),
-    image: v.string(),
+    image: v.optional(v.string()),
     staffIds: v.array(v.string()),
     salonId: v.string(),
+    description: v.optional(v.string()),
+    couponId: v.optional(v.string()),
+    salePrice: v.optional(v.number()),
+    targetGender: v.optional(v.union(v.literal("全て"), v.literal("男性"), v.literal("女性"))),
   },
   handler: async (ctx, args) => {
     const menu = await ctx.db.insert("menus", {
       name: args.name,
       price: args.price,
       timeToMin: args.timeToMin,
-      image: args.image,
+      image: args.image || "",
       staffIds: args.staffIds,
       salonId: args.salonId,
+      description: args.description,
+      couponId: args.couponId,
+      salePrice: args.salePrice,
+      targetGender: args.targetGender,
     });
     return menu;
   },
@@ -33,6 +41,10 @@ export const updateMenu = mutation({
     image: v.string(),
     staffIds: v.array(v.string()),
     salonId: v.string(),
+    description: v.optional(v.string()),
+    couponId: v.optional(v.string()),
+    salePrice: v.optional(v.number()),
+    targetGender: v.optional(v.union(v.literal("全て"), v.literal("男性"), v.literal("女性"))),
   },
   handler: async (ctx, args) => {
     const menu = await ctx.db.patch(args.id, {
@@ -42,6 +54,10 @@ export const updateMenu = mutation({
       image: args.image,
       staffIds: args.staffIds,
       salonId: args.salonId,
+      description: args.description,
+      couponId: args.couponId,
+      salePrice: args.salePrice,
+      targetGender: args.targetGender,
     });
     return menu;
   },
