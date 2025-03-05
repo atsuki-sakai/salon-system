@@ -1,10 +1,12 @@
+
 // convex/schema.ts
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
   users: defineTable({
-    clerkId: v.string(),           // ClerkユーザーID
+    clerkId: v.string(),    
+    salonName: v.optional(v.string()),  // salonNameを任意フィールドに変更
     stripeCustomerId: v.string(),  // Stripe顧客ID
     email: v.string(),             // Emailアドレス
     subscriptionId: v.optional(v.string()),    // 現在のサブスクリプションID
@@ -38,4 +40,54 @@ export default defineSchema({
   .index("by_salon_id", ["salonIds"])
   .searchIndex("search_by_uid", { searchField: "uid" })
   .searchIndex("search_by_salon_id", { searchField: "salonIds" }),
+
+  staffs: defineTable({
+    name: v.string(),
+    email: v.string(),
+    phone: v.string(),
+    salonId: v.string(),
+    menuIds: v.optional(v.array(v.string())),
+    description: v.optional(v.string()),
+    gender: v.optional(v.string()),
+    image: v.optional(v.string()),
+    holidays: v.optional(v.array(v.string())),
+  })
+  .index("by_salon_id", ["salonId"])
+  .index("by_menu_id", ["menuIds"])
+  .searchIndex("search_by_salon_id", { searchField: "salonId" })
+  .searchIndex("search_by_menu_id", { searchField: "menuIds" }),
+
+  menus: defineTable({
+    name: v.string(),
+    price: v.number(),
+    timeToMin: v.number(),
+    image: v.string(),
+    staffIds: v.array(v.string()),
+    salonId: v.string(),
+  })
+  .index("by_staff_id", ["staffIds"])
+  .index("by_salon_id", ["salonId"])
+  .searchIndex("search_by_staff_id", { searchField: "staffIds" })
+  .searchIndex("search_by_salon_id", { searchField: "salonId" }),
+
+  reservations: defineTable({
+    customerId: v.string(),
+    customerName: v.string(),
+    customerPhone: v.string(),
+    staffId: v.string(),
+    staffName: v.string(),
+    menuId: v.string(),
+    menuName: v.string(),
+    price: v.number(),
+    salonId: v.string(),
+    salonName: v.string(),
+    reservationDate: v.string(),
+    status: v.string(),
+    startTime: v.string(),
+    endTime: v.string(),
+    note: v.string(),
+  })
+  .index("by_customer_id", ["customerId"])
+  .index("by_staff_id", ["staffId"])
+  .index("by_menu_id", ["menuId"]),
 });

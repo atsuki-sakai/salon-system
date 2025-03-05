@@ -108,3 +108,14 @@ export const customerSchema = z.object({
 export const phoneSchema = z.object({
   phone: z.string().regex(/^(\d{2,4}[-]?\d{2,4}[-]?\d{4})$/, { message: "電話番号の形式が正しくありません" })
 });
+
+export const staffSchema = z.object({
+  name: z.string().min(1, { message: "お名前を入力してください" }),
+  email: z.string().email({ message: "有効なメールアドレスを入力してください" }),
+  phone: z.string().regex(/^(\d{2,4}[-]?\d{2,4}[-]?\d{4})$/, { message: "電話番号の形式が正しくありません" }),
+  description: z.string().optional(),
+  gender: z.enum(["男性", "女性"]).optional(),
+  image: z.string().optional(),
+  menuIds: z.array(z.string()).optional(),
+  holidays: z.array(z.string()).optional(),
+});

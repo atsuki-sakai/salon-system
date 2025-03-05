@@ -1,10 +1,8 @@
 import { mutation, query } from "./_generated/server";
-import { v } from "convex/values";
-
+import { v } from "convex/values"
 
 export const createStaff = mutation({
   args: {
-    id: v.id("staffs"),
     name: v.string(),
     email: v.string(),
     phone: v.string(),
@@ -13,10 +11,10 @@ export const createStaff = mutation({
     description: v.string(),
     gender: v.string(),
     image: v.string(),
+    holidays: v.array(v.string()),
   },
   handler: async (ctx, args) => {
     const staff = await ctx.db.insert("staffs", {
-      id: args.id,
       name: args.name,
       email: args.email,
       phone: args.phone,
@@ -25,6 +23,7 @@ export const createStaff = mutation({
       description: args.description,
       gender: args.gender,
       image: args.image,
+      holidays: args.holidays,
     });
     return staff;
   },
@@ -41,6 +40,7 @@ export const updateStaff = mutation({
     description: v.string(),
     gender: v.string(),
     image: v.string(),
+    holidays: v.array(v.string()),
   },
   handler: async (ctx, args) => {
     const staff = await ctx.db.patch(args.id, {
@@ -52,6 +52,7 @@ export const updateStaff = mutation({
       description: args.description,
       gender: args.gender,
       image: args.image,
+      holidays: args.holidays,
     });
     return staff;
   },
