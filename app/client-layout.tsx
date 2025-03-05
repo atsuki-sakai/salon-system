@@ -2,7 +2,6 @@
 
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { LiffProvider } from "@/components/providers/liff-provider";
-
 const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
 
