@@ -25,12 +25,29 @@ export const createCustomer = mutation({
   },
 });
 
+export const getCustomersBySalonId = query({
+  args: {
+    salonId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const salonCustomers = await ctx.db
+      .query("customers")
+      .collect();
+
+    return salonCustomers.filter(customer => customer.salonIds.includes(args.salonId));
+  },
+});
+
 export const getCustomerByUid = query({
   args: {
     uid: v.string(),
   },
   handler: async (ctx, args) => {
-    const customer = await ctx.db.query("customers").filter(q => q.eq(q.field("uid"), args.uid)).first();
+    const customer = await ctx.db
+      .query("customers")
+      .filter(q => q.eq(q.field("uid"), args.uid))
+      .first();
+
     return customer;
   },
 });

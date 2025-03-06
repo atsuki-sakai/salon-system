@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { ClerkProvider } from "@clerk/nextjs";
 import "../../app/globals.css";
 import { Toaster } from "@/components/ui/sonner";
-import ClientLayout from "./client-layout";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({
@@ -24,9 +22,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ClerkProvider>
-          <ClientLayout>{children}</ClientLayout>
-        </ClerkProvider>
+        {children}
         <Toaster
           position="top-right"
           expand={false}

@@ -103,6 +103,7 @@ export const customerSchema = z.object({
   email: z.string().optional().refine((email) => email === "" || z.string().email().safeParse(email).success, {
     message: "有効なメールアドレスを入力してください",
   }),
+  salonIds: z.array(z.string()),
 });
 
 export const phoneSchema = z.object({

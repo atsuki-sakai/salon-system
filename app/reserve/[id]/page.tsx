@@ -1,58 +1,152 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useLiff } from "@/components/providers/liff-provider";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { useZodForm } from "@/hooks/useZodForm";
+import { z } from "zod";
+import { customerSchema } from "@/lib/validations";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useState, useEffect } from "react";
+import { setCookie, getCookie } from "@/lib/utils";
 
-import { redirect } from "next/navigation";
 export default function ReservePage() {
   const params = useParams();
+  const router = useRouter();
   const id = params.id as string;
-  const { liff, isLoggedIn, profile } = useLiff();
-  const handleLineLogin = () => {
-    console.log("handleLogin");
-    console.log("isLoggedIn", isLoggedIn);
-    console.log("profile", profile);
-    console.log("liff?.isInClient()", liff?.isInClient());
+  const [confirmRegister, setConfirmRegister] = useState(true);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setValue,
+  } = useZodForm(customerSchema, {
+    defaultValues: {
+      name: "",
+      phone: "",
+      email: "",
+      salonIds: [id],
+    },
+  });
 
-    console.log("salonId: ", id);
-
-    // 現在のURLを複製
-    const currentUrl = new URL(window.location.href);
-
-    // URLから既存のクエリパラメータを削除
-    // LIFFは内部的にliff.stateを使うので、余計なパラメータを消しておく
-    currentUrl.search = "";
-
-    // パスの一部としてsalonIdを含める（liff.stateとの重複を避けるため）
-    let pathWithoutTrailingSlash = currentUrl.pathname;
-    if (pathWithoutTrailingSlash.endsWith("/")) {
-      pathWithoutTrailingSlash = pathWithoutTrailingSlash.slice(0, -1);
-    }
-
-    currentUrl.pathname = `${pathWithoutTrailingSlash}`;
-
-    console.log("リダイレクト先URLのベース: ", currentUrl.toString());
-
-    // LIFFログイン - 内部的にliff.stateを生成する
-    liff?.login({
-      redirectUri: currentUrl.toString() + `/calendar`,
-    });
+  const generateUid = () => {
+    return "customer_" + Math.random().toString(36).substring(2, 15);
   };
 
-  if (isLoggedIn) {
-    return redirect(`/reserve/${id}/calendar`);
-  }
+  const createCustomer = useMutation(api.customers.createCustomer);
+  const updateCustomer = useMutation(api.customers.updateCustomer);
+  const salonCustomers = useQuery(api.customers.getCustomersBySalonId, {
+    salonId: id,
+  });
+
+  const onSubmit = async (data: z.infer<typeof customerSchema>) => {
+    try {
+      if (confirmRegister) {
+        const existingCustomer = salonCustomers?.find(
+          (customer) => customer.email === data.email
+        );
+        if (existingCustomer) {
+          console.log("customer already exists");
+          const customer = await updateCustomer({
+            uid: existingCustomer.uid,
+            name: data.name,
+            phone: data.phone,
+            email: data.email ?? "",
+            salonIds: data.salonIds.concat(id),
+          });
+          console.log(customer);
+          const customerData = JSON.stringify({
+            uid: existingCustomer.uid,
+            name: data.name,
+            phone: data.phone,
+            email: data.email,
+          });
+          setCookie("customerData", customerData, 60); // 60日間保存
+          router.push(`/reserve/${id}/calendar/?uid=${existingCustomer.uid}`);
+        } else {
+          const uid = generateUid();
+          const customer = await createCustomer({
+            uid: uid,
+            name: data.name,
+            phone: data.phone,
+            email: data.email ?? "",
+            salonIds: data.salonIds,
+          });
+          console.log(customer);
+          const customerData = JSON.stringify({
+            uid: uid,
+            name: data.name,
+            phone: data.phone,
+            email: data.email,
+          });
+          setCookie("customerData", customerData, 60); // 60日間保存
+          router.push(`/reserve/${id}/calendar?uid=${uid}`);
+        }
+      }
+    } catch (error) {
+      console.error("予約エラー:", error);
+      // エラーハンドリングを追加
+    }
+  };
+
+  // フォーム初期化時にクッキーからデータを読み込む
+  useEffect(() => {
+    const customerDataStr = getCookie("customerData");
+    if (customerDataStr) {
+      try {
+        const data = JSON.parse(customerDataStr);
+        Object.entries(data).forEach(([key, value]) => {
+          setValue(key as "name" | "phone" | "email", value as string);
+        });
+      } catch (error) {
+        console.error("クッキーデータの解析エラー:", error);
+      }
+    }
+  }, [setValue, salonCustomers]);
 
   return (
     <div className="flex flex-col items-center justify-center h-screen">
-      <Button
-        variant="outline"
-        className=" bg-green-600 text-white"
-        onClick={handleLineLogin}
-      >
-        LINEでログイン
-      </Button>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div>
+          <Label htmlFor="name">名前</Label>
+          <Input placeholder="名前" {...register("name")} />
+          {errors.name && (
+            <p className="text-red-500  text-sm mt-1">{errors.name.message}</p>
+          )}
+        </div>
+        <div>
+          <Label htmlFor="phone">電話番号</Label>
+          <Input placeholder="電話番号" {...register("phone")} />
+          {errors.phone && (
+            <p className="text-red-500  text-sm mt-1">{errors.phone.message}</p>
+          )}
+        </div>
+        <div>
+          <Label htmlFor="email">メールアドレス</Label>
+          <Input placeholder="メールアドレス" {...register("email")} />
+          {errors.email && (
+            <p className="text-red-500  text-sm mt-1">{errors.email.message}</p>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="confirmRegister"
+            checked={confirmRegister}
+            onCheckedChange={(checked: boolean) => setConfirmRegister(checked)}
+          />
+          <Label htmlFor="confirmRegister" className="text-xs">
+            予約情報を保持次回からの予約時に自動入力します。
+          </Label>
+        </div>
+        <div className="flex justify-end">
+          <Button type="submit" disabled={isSubmitting}>
+            予約する
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }
