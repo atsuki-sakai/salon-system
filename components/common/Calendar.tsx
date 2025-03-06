@@ -539,7 +539,7 @@ export default function Calendar() {
                       style={reservationStyle}
                     >
                       <Popover>
-                        <PopoverTrigger>
+                        <PopoverTrigger asChild>
                           <button
                             type="button"
                             onClick={() =>
@@ -571,44 +571,44 @@ export default function Calendar() {
                               </p>
                             </div>
                           </button>
-                          <PopoverContent style={{ backgroundColor: bgColor }}>
-                            {selectedReservation && (
-                              <div className="">
-                                <span className="text-sm">メニュー</span>
-                                <h5 className="text-lg font-bold mb-2">
-                                  {selectedReservation.menuName}
-                                </h5>
-                                <p className="text-sm">
-                                  対応スタッフ -{" "}
-                                  <span className="font-bold">
-                                    {selectedReservation.staffName}
-                                  </span>
-                                </p>
-                                <p className="text-xs mt-4">施術時間</p>
-                                <p className="text-sm text-indigo-700">
-                                  {selectedReservation.startTime.split("T")[1]}{" "}
-                                  ~ {selectedReservation.endTime.split("T")[1]}
-                                </p>
-                                <p className="text-xs mt-4">お客様名</p>
-                                <p className="text-base">
-                                  {selectedReservation.customerName}
-                                </p>
-                                <p className="text-xs">
-                                  TEL:{" "}
-                                  <span className="font-bold text-sm underline tracking-wide">
-                                    {selectedReservation.customerPhone}
-                                  </span>
-                                </p>
-                                <p className="text-xs mt-4">備考</p>
-                                <p className="text-sm">
-                                  {selectedReservation.note
-                                    ? selectedReservation.note
-                                    : "なし"}
-                                </p>
-                              </div>
-                            )}
-                          </PopoverContent>
                         </PopoverTrigger>
+                        <PopoverContent style={{ backgroundColor: bgColor }}>
+                          {selectedReservation && (
+                            <div className="">
+                              <span className="text-sm">メニュー</span>
+                              <h5 className="text-lg font-bold mb-2">
+                                {selectedReservation.menuName}
+                              </h5>
+                              <p className="text-sm">
+                                対応スタッフ -{" "}
+                                <span className="font-bold">
+                                  {selectedReservation.staffName}
+                                </span>
+                              </p>
+                              <p className="text-xs mt-4">施術時間</p>
+                              <p className="text-sm text-indigo-700">
+                                {selectedReservation.startTime.split("T")[1]} ~{" "}
+                                {selectedReservation.endTime.split("T")[1]}
+                              </p>
+                              <p className="text-xs mt-4">お客様名</p>
+                              <p className="text-base">
+                                {selectedReservation.customerName}
+                              </p>
+                              <p className="text-xs">
+                                TEL:{" "}
+                                <span className="font-bold text-sm underline tracking-wide">
+                                  {selectedReservation.customerPhone}
+                                </span>
+                              </p>
+                              <p className="text-xs mt-4">備考</p>
+                              <p className="text-sm">
+                                {selectedReservation.note
+                                  ? selectedReservation.note
+                                  : "なし"}
+                              </p>
+                            </div>
+                          )}
+                        </PopoverContent>
                       </Popover>
                     </li>
                   );
