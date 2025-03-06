@@ -1,4 +1,3 @@
-
 // convex/schema.ts
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
@@ -46,16 +45,13 @@ export default defineSchema({
     email: v.string(),
     phone: v.string(),
     salonId: v.string(),
-    menuIds: v.optional(v.array(v.string())),
     description: v.optional(v.string()),
     gender: v.optional(v.string()),
     image: v.optional(v.string()),
     holidays: v.optional(v.array(v.string())),
   })
   .index("by_salon_id", ["salonId"])
-  .index("by_menu_id", ["menuIds"])
-  .searchIndex("search_by_salon_id", { searchField: "salonId" })
-  .searchIndex("search_by_menu_id", { searchField: "menuIds" }),
+  .searchIndex("search_by_salon_id", { searchField: "salonId" }),
 
   menus: defineTable({
     name: v.string(),
@@ -93,5 +89,23 @@ export default defineSchema({
   })
   .index("by_customer_id", ["customerId"])
   .index("by_staff_id", ["staffId"])
-  .index("by_menu_id", ["menuId"]),
+  .index("by_menu_id", ["menuId"])
+  .searchIndex("search_by_customer_id", { searchField: "customerId" })
+  .searchIndex("search_by_staff_id", { searchField: "staffId" })
+  .searchIndex("search_by_menu_id", { searchField: "menuId" }),
+
+  settings: defineTable({
+    salonId: v.string(),
+    salonName: v.optional(v.string()),
+    email: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    address: v.optional(v.string()),
+    openTime: v.optional(v.string()),
+    closeTime: v.optional(v.string()),
+    holidays: v.optional(v.array(v.string())),
+    description: v.optional(v.string()),
+  })
+  .index("by_salon_id", ["salonId"])
+  .searchIndex("search_by_salon_id", { searchField: "salonId" }),
+  
 });

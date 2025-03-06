@@ -131,3 +131,15 @@ export const menuSchema = z.object({
   targetGender: z.enum(["全て", "男性", "女性"]).default("全て"),
   couponId: z.string().optional(),
 });
+
+export const settingSchema = z.object({
+  salonId: z.string(),
+  salonName: z.string().optional(),
+  email: z.string().optional(),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  openTime: z.string().optional(),
+  closeTime: z.string().optional(),
+  description: z.string().optional(),
+  holidays: z.array(z.string()).optional(),
+});
