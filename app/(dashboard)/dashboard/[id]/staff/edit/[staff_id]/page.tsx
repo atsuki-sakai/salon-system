@@ -1,4 +1,7 @@
 "use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -7,7 +10,6 @@ import { staffSchema } from "@/lib/validations";
 import { z } from "zod";
 import { ArrowLeftIcon, CalendarIcon } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
@@ -28,15 +30,17 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Loading } from "@/components/common";
-import { useParams } from "next/navigation";
+
+// 空の配列定数（同じ参照を使い回す）
+const EMPTY_ARRAY: string[] = [];
 
 export default function EditStaffPage() {
   const { staff_id } = useParams();
-  const { id } = useParams();
+  const { id } = useParams(); // salonId
   const router = useRouter();
+
   // スタッフ情報の取得
   const staff = useQuery(api.staffs.getStaff, {
     id: staff_id as Id<"staffs">,
@@ -58,7 +62,12 @@ export default function EditStaffPage() {
   } = useZodForm(staffSchema);
 
   const selectedGender = watch("gender") as "男性" | "女性" | undefined;
-  const holidays = watch("holidays") || [];
+  const watchedHolidays = watch("holidays");
+  // watchedHolidays が falsy の場合は EMPTY_ARRAY を返す
+  const holidays = useMemo(
+    () => (watchedHolidays ? watchedHolidays : EMPTY_ARRAY),
+    [watchedHolidays]
+  );
 
   // 日付を文字列形式に変換する関数
   const formatDateToString = (date: Date): string => {
@@ -102,7 +111,7 @@ export default function EditStaffPage() {
 
       setIsFormInitialized(true);
     }
-  }, [staff, reset, isFormInitialized]);
+  }, [staff, reset, isFormInitialized, setValue]);
 
   // 日付が選択されたら holidays フィールドを更新
   useEffect(() => {
@@ -112,7 +121,7 @@ export default function EditStaffPage() {
     }
   }, [vacationDates, setValue]);
 
-  // ⭐ useMutationをコンポーネントのトップレベルに移動
+  // ⭐ useMutation をコンポーネントのトップレベルに移動
   const deleteStaff = useMutation(api.staffs.deleteStaff);
 
   const handleDeleteStaff = async () => {
@@ -138,7 +147,6 @@ export default function EditStaffPage() {
         email: data.email,
         phone: data.phone,
         gender: data.gender || "",
-
         description: data.description || "",
         image: data.image || "",
         salonId: staff?.salonId || "",
@@ -222,7 +230,6 @@ export default function EditStaffPage() {
             <p className="text-sm mt-1 text-red-500">{errors.phone.message}</p>
           )}
         </div>
-
         <div>
           <Label htmlFor="description" className="font-bold">
             スタッフ紹介
@@ -300,7 +307,6 @@ export default function EditStaffPage() {
                 </Link>
               </p>
             </div>
-
             {holidays.length > 0 && (
               <div className="border rounded-md p-4 bg-gray-50">
                 <h3 className="font-medium mb-2 text-sm">選択された休暇日:</h3>
@@ -321,12 +327,10 @@ export default function EditStaffPage() {
                           <button
                             type="button"
                             onClick={() => {
-                              // 選択された日付を削除
                               const newVacationDates = vacationDates.filter(
                                 (d) => formatDateToString(d) !== dateStr
                               );
                               setVacationDates(newVacationDates);
-                              // holidays フィールドも更新
                               const newHolidays = holidays.filter(
                                 (d) => d !== dateStr
                               );

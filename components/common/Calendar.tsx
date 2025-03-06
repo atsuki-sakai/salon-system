@@ -41,7 +41,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-
+import type { Doc } from "@/convex/_generated/dataModel";
 // クラス名を結合するユーティリティ
 function classNames(...classes: (string | boolean | undefined)[]) {
   return classes
@@ -78,8 +78,11 @@ export default function Calendar() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedStaffId, setSelectedStaffId] = useState<string>("all");
-  const [filteredReservations, setFilteredReservations] = useState<any[]>([]);
-  const [selectedReservation, setSelectedReservation] = useState<any>(null);
+  const [filteredReservations, setFilteredReservations] = useState<
+    Doc<"reservations">[]
+  >([]);
+  const [selectedReservation, setSelectedReservation] =
+    useState<Doc<"reservations"> | null>(null);
 
   const handlePrevMonth = () => {
     setCurrentMonth((prev) => subMonths(prev, 1));
@@ -239,7 +242,7 @@ export default function Calendar() {
             </div>
             <div className="hidden md:ml-4 md:flex md:items-center">
               <div className="ml-6 h-6 w-px bg-gray-300" />
-              <Link href={`/dashboard/${salonId}/calender/create`}>
+              <Link href={`/dashboard/${salonId}/calendar/create`}>
                 <Button className="ml-6 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                   イベントを追加
                 </Button>

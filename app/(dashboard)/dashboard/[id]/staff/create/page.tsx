@@ -10,10 +10,10 @@ import { useParams } from "next/navigation";
 import { z } from "zod";
 import Link from "next/link";
 import { ArrowLeftIcon, CalendarIcon } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { format, isSameDay, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
-
+import { useRouter } from "next/navigation";
 import {
   Select,
   SelectContent,
@@ -21,7 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
@@ -33,44 +32,12 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
-// const textMenuItems = [
-//   {
-//     id: "menu_1",
-//     name: "カット",
-//     category: "カット",
-//     price: "3,000円",
-//     duration: "約30分",
-//     coolingTime: "約10分",
-//     availableStaffs: ["山田 花子", "佐藤 太郎"],
-//     imageUrl:
-//       "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=4&w=256&h=256&q=60",
-//   },
-//   {
-//     id: "menu_2",
-//     name: "パーマ",
-//     category: "パーマ",
-//     price: "5,000円",
-//     duration: "約60分",
-//     coolingTime: "約10分",
-//     availableStaffs: ["山田 花子", "佐藤 太郎"],
-//     imageUrl:
-//       "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=4&w=256&h=256&q=60",
-//   },
-//   {
-//     id: "menu_3",
-//     name: "カラー",
-//     category: "カラー",
-//     price: "4,500円",
-//     duration: "約45分",
-//     coolingTime: "約10分",
-//     availableStaffs: ["山田 花子", "佐藤 太郎"],
-//     imageUrl:
-//       "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=4&w=256&h=256&q=60",
-//   },
-// ];
+// 空の配列は同じ参照で使い回す
+const EMPTY_ARRAY: string[] = [];
 
 export default function StaffCreatePage() {
   const params = useParams();
+  const router = useRouter();
   const id = params.id as string;
 
   // 休暇日の状態を管理
@@ -86,7 +53,13 @@ export default function StaffCreatePage() {
   } = useZodForm(staffSchema);
 
   const selectedGender = watch("gender");
-  const holidays = watch("holidays") || [];
+  const watchedHolidays = watch("holidays");
+
+  // watchedHolidays が falsy の場合は EMPTY_ARRAY を返す
+  const holidays = useMemo(
+    () => watchedHolidays || EMPTY_ARRAY,
+    [watchedHolidays]
+  );
 
   // 日付を文字列形式に変換する関数
   const formatDateToString = (date: Date): string => {
@@ -98,21 +71,19 @@ export default function StaffCreatePage() {
     return parseISO(dateString);
   };
 
-  // vacationDatesが変更されたらholidaysフィールドを更新
+  // vacationDates が変更されたら holidays フィールドを更新
   useEffect(() => {
-    // 日付を文字列の配列に変換してセット
     const formattedDates = vacationDates.map(formatDateToString);
     setValue("holidays", formattedDates);
   }, [vacationDates, setValue]);
 
-  // holidaysが初期値として設定されている場合、vacationDatesを更新
+  // holidays が初期値として設定されている場合、vacationDates を更新
   useEffect(() => {
     if (holidays.length > 0 && vacationDates.length === 0) {
-      // 文字列の日付を Date オブジェクトに変換
       const dates = holidays.map(parseDateString);
       setVacationDates(dates);
     }
-  }, [holidays]);
+  }, [holidays, vacationDates]);
 
   const createStaff = useMutation(api.staffs.createStaff);
 
@@ -130,6 +101,7 @@ export default function StaffCreatePage() {
       });
       console.log(data.holidays);
       console.log(data);
+      router.push(`/dashboard/${id}/staff`);
       toast.success("スタッフを追加しました");
     } catch (error) {
       console.error(error);
@@ -246,11 +218,11 @@ export default function StaffCreatePage() {
                   mode="multiple"
                   selected={vacationDates}
                   onSelect={(dates) => {
-                    // shadcn/uiのCalendarコンポーネントはundefinedを返す場合があるため、対処
+                    // shadcn/ui の Calendar コンポーネントは undefined を返す場合があるため対処
                     if (dates === undefined) return;
                     setVacationDates(dates);
                   }}
-                  locale={ja} // 日本語ロケールを使用
+                  locale={ja}
                   className="rounded-md border"
                 />
                 <div className="p-3 border-t flex justify-between">
@@ -284,17 +256,17 @@ export default function StaffCreatePage() {
                         className="bg-white px-2 py-1 rounded-md border text-sm flex items-center gap-1"
                       >
                         <span>
-                          {format(date, "yyyy年MM月dd日(EEE)", { locale: ja })}
+                          {format(date, "yyyy年MM月dd日(EEE)", {
+                            locale: ja,
+                          })}
                         </span>
                         <button
                           type="button"
                           onClick={() => {
-                            // 選択された日付を削除
                             const newVacationDates = vacationDates.filter(
                               (d) => !isSameDay(d, date)
                             );
                             setVacationDates(newVacationDates);
-                            // holidays フィールドも更新
                             const newHolidays = holidays.filter(
                               (d) => d !== dateStr
                             );

@@ -36,12 +36,12 @@ export default function ReservePage() {
 
     // LIFFログイン - 内部的にliff.stateを生成する
     liff?.login({
-      redirectUri: currentUrl.toString() + `/calender`,
+      redirectUri: currentUrl.toString() + `/calendar`,
     });
   };
 
   if (isLoggedIn) {
-    return redirect(`/reserve/${id}/calender`);
+    return redirect(`/reserve/${id}/calendar`);
   }
 
   return (

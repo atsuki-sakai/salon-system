@@ -10,6 +10,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
 import { Loading } from "@/components/common";
+import type { Doc } from "@/convex/_generated/dataModel";
 import {
   Select,
   SelectContent,
@@ -35,7 +36,7 @@ const reservationSchema = z.object({
 
 // ユーティリティ関数：時刻文字列 "HH:mm" を分数に変換
 function timeStringToMinutes(time: string): number {
-  const [h, m] = time.split(":").map(Number);
+  const [h, m] = time.split(":").map(Number) as [number, number];
   return h * 60 + m;
 }
 
@@ -55,32 +56,38 @@ function computeAvailableTimeSlots(
 ): number[] {
   const slots: number[] = [];
   // 予約が無い場合：営業時間全体を10分刻みで候補にする
-  if (reservations.length === 0) {
+  if (!reservations || reservations.length === 0) {
     for (let t = open; t + duration <= close; t += 10) {
       slots.push(t);
     }
     return slots;
   }
   // 営業開始から最初の予約まで
-  if (reservations[0].start - open >= duration) {
+  if (reservations?.[0]?.start && reservations[0].start - open >= duration) {
     for (let t = open; t + duration <= reservations[0].start; t += 10) {
       slots.push(t);
     }
   }
   // 予約間の隙間
   for (let i = 0; i < reservations.length - 1; i++) {
-    const gapStart = reservations[i].end;
-    const gapEnd = reservations[i + 1].start;
-    if (gapEnd - gapStart >= duration) {
+    const gapStart = reservations[i]?.end;
+    const gapEnd = reservations[i + 1]?.start;
+    if (gapEnd && gapStart && gapEnd - gapStart >= duration) {
       for (let t = gapStart; t + duration <= gapEnd; t += 10) {
         slots.push(t);
       }
     }
   }
   // 最後の予約終了から営業時間終了まで
-  if (close - reservations[reservations.length - 1].end >= duration) {
+  const lastReservation = reservations[reservations.length - 1];
+  if (
+    reservations &&
+    reservations.length > 0 &&
+    lastReservation?.end &&
+    close - lastReservation.end >= duration
+  ) {
     for (
-      let t = reservations[reservations.length - 1].end;
+      let t = reservations[reservations.length - 1]?.end ?? 0;
       t + duration <= close;
       t += 10
     ) {
@@ -113,7 +120,7 @@ export default function CreateReservation() {
     timeToMin: number;
     staffIds: string[];
   } | null>(null);
-  const [filteredStaffs, setFilteredStaffs] = useState<any[]>([]);
+  const [filteredStaffs, setFilteredStaffs] = useState<Doc<"staffs">[]>([]);
   const [endTime, setEndTime] = useState<string>("");
   const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([]);
 
@@ -142,16 +149,16 @@ export default function CreateReservation() {
 
       // 選択されたスタッフの予約のみ抽出（予約時間はISO文字列の「T」以降を利用）
       const staffReservations = reservationsForDate
-        .filter((res: any) => res.staffId === watchedStaffId)
-        .map((res: any) => {
-          const startPart = res.startTime.split("T")[1]; // HH:mm
-          const endPart = res.endTime.split("T")[1];
+        .filter((res: Doc<"reservations">) => res.staffId === watchedStaffId)
+        .map((res: Doc<"reservations">) => {
+          const startPart = res.startTime.split("T")[1] ?? "00:00";
+          const endPart = res.endTime.split("T")[1] ?? "00:00";
           return {
             start: timeStringToMinutes(startPart),
             end: timeStringToMinutes(endPart),
           };
         })
-        .sort((a: any, b: any) => a.start - b.start);
+        .sort((a, b) => a.start - b.start);
 
       // 空き時間候補を計算（10分刻みで算出）
       const slotsInMinutes = computeAvailableTimeSlots(
@@ -179,11 +186,11 @@ export default function CreateReservation() {
   // メニュー選択時の処理：選択されたメニューに基づいて、対応可能なスタッフ（menu.staffIdsに含まれるもの）のみを抽出
   const handleMenuSelect = (menuId: string) => {
     setValue("menuId", menuId);
-    const menu = menus.find((m: any) => m._id === menuId);
+    const menu = menus.find((m: Doc<"menus">) => m._id === menuId);
     setSelectedMenu(menu || null);
     if (menu) {
       console.log("menu", menu);
-      const availableStaffs = staffs.filter((staff: any) =>
+      const availableStaffs = staffs.filter((staff: Doc<"staffs">) =>
         menu.staffIds.includes(staff._id)
       );
       console.log("availableStaffs", availableStaffs);
@@ -193,7 +200,10 @@ export default function CreateReservation() {
     }
     // すでに開始時間が選択されている場合、終了時刻を再計算
     const currentStartTime = watchedStartTime;
-    calculateEndTime(menu, currentStartTime);
+    calculateEndTime(
+      menu ? { timeToMin: menu.timeToMin } : null,
+      currentStartTime
+    );
   };
 
   // 開始時間選択時の処理：終了時刻を計算
@@ -211,7 +221,10 @@ export default function CreateReservation() {
       setEndTime("");
       return;
     }
-    const [hours, minutes] = startTime.split(":").map(Number);
+    const [hours, minutes] = startTime.split(":").map(Number) as [
+      number,
+      number,
+    ];
     const totalMinutes = hours * 60 + minutes + menu.timeToMin;
     const endHours = Math.floor(totalMinutes / 60);
     const endMinutes = totalMinutes % 60;
@@ -226,9 +239,11 @@ export default function CreateReservation() {
   const onSubmit = async (data: z.infer<typeof reservationSchema>) => {
     try {
       const selectedStaff = staffs.find(
-        (staff: any) => staff._id === data.staffId
+        (staff: Doc<"staffs">) => staff._id === data.staffId
       );
-      const selectedMenu = menus.find((menu: any) => menu._id === data.menuId);
+      const selectedMenu = menus.find(
+        (menu: Doc<"menus">) => menu._id === data.menuId
+      );
 
       if (!selectedStaff || !selectedMenu) {
         toast.error("スタッフまたはメニューの選択が無効です");
@@ -262,11 +277,11 @@ export default function CreateReservation() {
       });
 
       toast.success("予約を作成しました");
-      router.push(`/dashboard/${salonId}/calender`);
-    } catch (error: any) {
+      router.push(`/dashboard/${salonId}/calendar`);
+    } catch (error: unknown) {
       console.error("Error details:", error);
 
-      if (error.message && error.message.includes("{")) {
+      if (error instanceof Error && error.message.includes("{")) {
         try {
           const jsonStr = error.message.substring(
             error.message.indexOf("{"),
@@ -313,7 +328,7 @@ export default function CreateReservation() {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="flex flex-col gap-2 mb-4 sticky top-0 bg-white py-4 z-10">
-        <Link href={`/dashboard/${salonId}/calender`}>
+        <Link href={`/dashboard/${salonId}/calendar`}>
           <span className="text-sm text-indigo-700 flex items-center justify-start gap-2">
             <ArrowLeftIcon className="w-4 h-4" />
             <span>カレンダーに戻る</span>
@@ -350,7 +365,7 @@ export default function CreateReservation() {
               <SelectValue placeholder="メニューを選択" />
             </SelectTrigger>
             <SelectContent>
-              {menus.map((menu: any) => (
+              {menus.map((menu: Doc<"menus">) => (
                 <SelectItem key={menu._id} value={menu._id}>
                   {menu.name} ({menu.timeToMin}分)
                 </SelectItem>
@@ -370,7 +385,7 @@ export default function CreateReservation() {
             </SelectTrigger>
             <SelectContent>
               {filteredStaffs.length > 0 ? (
-                filteredStaffs.map((staff: any) => (
+                filteredStaffs.map((staff: Doc<"staffs">) => (
                   <SelectItem key={staff._id} value={staff._id}>
                     {staff.name}
                   </SelectItem>

@@ -3,7 +3,7 @@
 import { Profile } from "./line-profile";
 import { useParams } from "next/navigation";
 
-export default function CalenderPage() {
+export default function CalendarPage() {
   const params = useParams();
   const id = params.id as string;
 
