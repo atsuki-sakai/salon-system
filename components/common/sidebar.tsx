@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useUser } from "@clerk/nextjs";
+import { usePathname } from "next/navigation";
 import { useUserDetails } from "@/hooks/useUserDetail";
 import { clearUserCache } from "@/lib/atoms/userAtom";
 import {
@@ -30,43 +30,12 @@ import { useClerk } from "@clerk/nextjs";
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
+
 export default function Sidebar({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { signOut } = useClerk();
-  const { user } = useUser();
+  const { signOut, user } = useClerk();
   const { userDetails, isLoading } = useUserDetails();
-  const navigation = [
-    {
-      name: "ダッシュボード",
-      href: `/dashboard/${user?.id}`,
-      icon: HomeIcon,
-      current: true,
-    },
-    {
-      name: "予約カレンダー",
-      href: `/dashboard/${user?.id}/calender`,
-      icon: CalendarIcon,
-      current: false,
-    },
-    {
-      name: "スタッフ一覧",
-      href: `/dashboard/${user?.id}/staff`,
-      icon: FolderIcon,
-      current: false,
-    },
-    {
-      name: "メニュー一覧",
-      href: `/dashboard/${user?.id}/menu`,
-      icon: DocumentDuplicateIcon,
-      current: false,
-    },
-    {
-      name: "サブスクリプション",
-      href: `/dashboard/${user?.id}/subscription`,
-      icon: CreditCardIcon,
-      current: false,
-    },
-  ];
+  const pathname = usePathname(); // 現在のパスを取得
 
   const handleSignOut = () => {
     clearUserCache();
@@ -74,6 +43,35 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
       window.location.href = "/sign-in";
     });
   };
+
+  // navigation の current は削除し、表示時に pathname と比較する
+  const navigation = [
+    {
+      name: "ダッシュボード",
+      href: `/dashboard/${user?.id}`,
+      icon: HomeIcon,
+    },
+    {
+      name: "予約カレンダー",
+      href: `/dashboard/${user?.id}/calendar`,
+      icon: CalendarIcon,
+    },
+    {
+      name: "スタッフ一覧",
+      href: `/dashboard/${user?.id}/staff`,
+      icon: FolderIcon,
+    },
+    {
+      name: "メニュー一覧",
+      href: `/dashboard/${user?.id}/menu`,
+      icon: DocumentDuplicateIcon,
+    },
+    {
+      name: "サブスクリプション",
+      href: `/dashboard/${user?.id}/subscription`,
+      icon: CreditCardIcon,
+    },
+  ];
 
   return (
     <>
@@ -108,7 +106,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                   </button>
                 </div>
               </TransitionChild>
-              {/* Sidebar component, swap this element with another sidebar if you like */}
+              {/* Sidebar for mobile */}
               <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4">
                 <div className="flex h-16 shrink-0 items-center">
                   <h1 className="text-2xl font-bold">予約管理</h1>
@@ -117,30 +115,35 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                   <ul role="list" className="flex flex-1 flex-col gap-y-7">
                     <li>
                       <ul role="list" className="-mx-2 space-y-1">
-                        {navigation.map((item) => (
-                          <li key={item.name}>
-                            <a
-                              href={item.href}
-                              className={classNames(
-                                item.current
-                                  ? "bg-gray-50 text-indigo-600"
-                                  : "text-gray-700 hover:bg-gray-50 hover:text-indigo-600",
-                                "group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold"
-                              )}
-                            >
-                              <item.icon
-                                aria-hidden="true"
+                        {navigation.map((item) => {
+                          // 現在のページかどうかを pathname と比較して判定
+                          const isCurrent = pathname === item.href;
+
+                          return (
+                            <li key={item.name}>
+                              <a
+                                href={item.href}
                                 className={classNames(
-                                  item.current
-                                    ? "text-indigo-600"
-                                    : "text-gray-400 group-hover:text-indigo-600",
-                                  "size-6 shrink-0"
+                                  isCurrent
+                                    ? "bg-gray-50 text-indigo-600"
+                                    : "text-gray-700 hover:bg-gray-50 hover:text-indigo-600",
+                                  "group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold"
                                 )}
-                              />
-                              {item.name}
-                            </a>
-                          </li>
-                        ))}
+                              >
+                                <item.icon
+                                  aria-hidden="true"
+                                  className={classNames(
+                                    isCurrent
+                                      ? "text-indigo-600"
+                                      : "text-gray-400 group-hover:text-indigo-600",
+                                    "size-6 shrink-0"
+                                  )}
+                                />
+                                {item.name}
+                              </a>
+                            </li>
+                          );
+                        })}
                       </ul>
                     </li>
 
@@ -165,7 +168,6 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
 
         {/* Static sidebar for desktop */}
         <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
-          {/* Sidebar component, swap this element with another sidebar if you like */}
           <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6 pb-4">
             <div className="flex h-16 shrink-0 items-center">
               <h1 className="text-2xl font-bold">予約管理</h1>
@@ -174,36 +176,39 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
               <ul role="list" className="flex flex-1 flex-col gap-y-7">
                 <li>
                   <ul role="list" className="-mx-2 space-y-1">
-                    {navigation.map((item) => (
-                      <li key={item.name}>
-                        <a
-                          href={item.href}
-                          className={classNames(
-                            item.current
-                              ? "bg-gray-50 text-indigo-600"
-                              : "text-gray-700 hover:bg-gray-50 hover:text-indigo-600",
-                            "group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold"
-                          )}
-                        >
-                          <item.icon
-                            aria-hidden="true"
+                    {navigation.map((item) => {
+                      const isCurrent = pathname === item.href;
+                      return (
+                        <li key={item.name}>
+                          <a
+                            href={item.href}
                             className={classNames(
-                              item.current
-                                ? "text-indigo-600"
-                                : "text-gray-400 group-hover:text-indigo-600",
-                              "size-6 shrink-0"
+                              isCurrent
+                                ? "bg-gray-50 text-indigo-600"
+                                : "text-gray-700 hover:bg-gray-50 hover:text-indigo-600",
+                              "group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold"
                             )}
-                          />
-                          {item.name}
-                        </a>
-                      </li>
-                    ))}
+                          >
+                            <item.icon
+                              aria-hidden="true"
+                              className={classNames(
+                                isCurrent
+                                  ? "text-indigo-600"
+                                  : "text-gray-400 group-hover:text-indigo-600",
+                                "size-6 shrink-0"
+                              )}
+                            />
+                            {item.name}
+                          </a>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </li>
 
                 <li className="mt-auto">
                   <a
-                    href="#"
+                    href={`/dashboard/${user?.id}/setting`}
                     className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-50 hover:text-indigo-600"
                   >
                     <Cog6ToothIcon
@@ -230,30 +235,12 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                 <Bars3Icon aria-hidden="true" className="size-6" />
               </button>
 
-              {/* Separator */}
               <div
                 aria-hidden="true"
                 className="h-6 w-px bg-gray-200 lg:hidden"
               />
 
               <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-                {/* <form
-                  action="#"
-                  method="GET"
-                  className="grid flex-1 grid-cols-1"
-                >
-                  <input
-                    name="search"
-                    type="search"
-                    placeholder="Search"
-                    aria-label="Search"
-                    className="col-start-1 row-start-1 block size-full bg-white pl-8 text-base text-gray-900 outline-hidden placeholder:text-gray-400 sm:text-sm/6"
-                  />
-                  <MagnifyingGlassIcon
-                    aria-hidden="true"
-                    className="pointer-events-none col-start-1 row-start-1 size-5 self-center text-gray-400"
-                  />
-                </form> */}
                 <div className="flex items-center justify-start w-full">
                   <h3 className="text-xl font-bold tracking-wide">予約管理</h3>
                 </div>
@@ -265,18 +252,15 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                       </p>
                     </div>
                   ) : null}
-                  {/* Separator */}
                   <div
                     aria-hidden="true"
                     className="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-200"
                   />
-
-                  {/* Profile dropdown */}
                   <Menu as="div" className="relative">
                     <MenuButton className="-m-1.5 flex items-center p-1.5">
                       <span className="sr-only">ユーザーメニューを開く</span>
                       <span className="hidden lg:flex lg:items-center">
-                        <h5 className="text-sm  text-gray-700">
+                        <h5 className="text-sm text-gray-700">
                           {isLoading ? "" : userDetails?.email}
                         </h5>
                         <ChevronDownIcon

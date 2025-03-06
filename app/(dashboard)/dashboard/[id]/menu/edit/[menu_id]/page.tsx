@@ -1,6 +1,5 @@
 "use client";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -14,7 +13,6 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
 import { Id } from "@/convex/_generated/dataModel";
-import { useEffect } from "react";
 import { Loading } from "@/components/common";
 import {
   Select,
@@ -35,18 +33,36 @@ export default function MenuEditPage() {
   const [selectedTargetGender, setSelectedTargetGender] = useState<
     "全て" | "男性" | "女性"
   >("全て");
+  const [selectValue, setSelectValue] = useState(""); // Selectの内部状態を管理
+
+  const handleStaffSelect = (staffId: string) => {
+    if (staffId === "all") {
+      const allStaffIds = salonStaffs?.map((staff) => staff._id) || [];
+      setSelectedStaffIds(allStaffIds);
+      setValue("staffIds", allStaffIds);
+      setSelectValue(""); // 内部状態をリセット
+    } else {
+      if (selectedStaffIds.includes(staffId)) {
+        toast.error("既に選択されているスタッフです");
+        return;
+      }
+      const newStaffIds = [...selectedStaffIds, staffId];
+      setSelectedStaffIds(newStaffIds);
+      setValue("staffIds", newStaffIds);
+      setSelectValue(""); // 選択後にリセット
+    }
+  };
 
   const menu = useQuery(api.menus.getMenu, {
     id: menu_id as Id<"menus">,
   });
 
-  const selectedStaffs = useQuery(api.staffs.getStaffsByStaffIds, {
-    staffIds: menu?.staffIds as Id<"staffs">[],
-  });
+  // 初期選択スタッフの詳細情報取得（参考用）
+
+  // サロン内の全スタッフ情報を取得
   const salonStaffs = useQuery(api.staffs.getStaffsBySalonId, {
     salonId: id as Id<"users">,
   });
-  console.log(salonStaffs);
 
   const {
     register,
@@ -102,21 +118,6 @@ export default function MenuEditPage() {
     } catch (error) {
       console.error(error);
       toast.error("メニューの更新に失敗しました");
-    }
-  };
-  const handleStaffSelect = (staffId: string) => {
-    if (staffId === "all") {
-      const allStaffIds = selectedStaffs?.map((staff) => staff!._id) || [];
-      setSelectedStaffIds(allStaffIds);
-      setValue("staffIds", allStaffIds);
-    } else {
-      if (selectedStaffIds.includes(staffId)) {
-        toast.error("既に選択されているスタッフです");
-        return;
-      }
-      const newStaffIds = [...selectedStaffIds, staffId];
-      setSelectedStaffIds(newStaffIds);
-      setValue("staffIds", newStaffIds);
     }
   };
 
@@ -187,9 +188,7 @@ export default function MenuEditPage() {
           </Label>
           <Select
             defaultValue={menu.timeToMin.toString()}
-            onValueChange={(value) => {
-              setValue("timeToMin", value);
-            }}
+            onValueChange={(value) => setValue("timeToMin", value)}
           >
             <SelectTrigger>
               <SelectValue placeholder="所要時間を選択" />
@@ -269,7 +268,13 @@ export default function MenuEditPage() {
           {salonStaffs?.length === 0 ? (
             <p className="text-sm text-gray-500">スタッフがありません</p>
           ) : (
-            <Select onValueChange={handleStaffSelect}>
+            <Select
+              value={selectValue}
+              onValueChange={(value) => {
+                setSelectValue(value);
+                handleStaffSelect(value);
+              }}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="対応スタッフを選択" />
               </SelectTrigger>

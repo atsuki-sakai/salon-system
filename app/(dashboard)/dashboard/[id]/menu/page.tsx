@@ -74,7 +74,7 @@ export default function MenuPage() {
             key={menu._id}
             className="col-span-1 flex flex-col divide-y divide-gray-200 rounded-lg bg-white border border-gray-100 shadow-sm"
           >
-            <div className="flex flex-1 flex-col p-4">
+            <div className="flex  flex-col p-4">
               <Image
                 alt={menu.name}
                 src={menu.image || DEFAULT_MENU_IMAGE}
@@ -117,13 +117,21 @@ export default function MenuPage() {
             <div>
               <div className="px-4 py-2 ">
                 <p className="text-xs">対応可能スタッフ</p>
-                <p className="text-sm text-gray-500 tracking-wide font-bold">
-                  {menu.staffIds.map((staffId) => (
-                    <span key={staffId} className="mr-2">
-                      {staffs?.find((staff) => staff._id === staffId)?.name}
-                    </span>
-                  ))}
-                </p>
+                <div className="flex text-sm text-gray-500 tracking-wide font-bold py-2 h-[100px] overflow-y-hidden">
+                  {menu.staffIds.map((staffId) => {
+                    const staff = staffs?.find(
+                      (staff) => staff._id === staffId
+                    );
+                    return staff ? (
+                      <span key={staffId} className={`mr-2 whitespace-nowrap`}>
+                        {staff.name}
+                      </span>
+                    ) : null;
+                  })}
+                  {menu.staffIds.length === 0 && (
+                    <span className="text-gray-500">未設定</span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -135,7 +143,7 @@ export default function MenuPage() {
                 </p>
               </div>
             </div>
-            <div className="px-4 py-2">
+            <div className="px-4 py-2 h-[220px] overflow-y-hidden">
               <p className="text-sm text-gray-500">
                 {menu.description?.slice(0, 120) + "..."}
               </p>
