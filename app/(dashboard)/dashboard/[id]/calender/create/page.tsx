@@ -20,6 +20,7 @@ import {
 import { z } from "zod";
 import { useZodForm } from "@/hooks/useZodForm";
 import { format } from "date-fns";
+import { useState } from "react";
 
 const reservationSchema = z.object({
   customerName: z.string().min(1, "お客様名を入力してください"),
@@ -41,15 +42,54 @@ export default function CreateReservation() {
     handleSubmit,
     formState: { errors, isSubmitting },
     setValue,
+    watch,
   } = useZodForm(reservationSchema);
 
   const staffs = useQuery(api.staffs.getStaffsBySalonId, { salonId });
   const menus = useQuery(api.menus.getMenusBySalonId, { salonId });
   const createReservation = useMutation(api.reservations.create);
 
+  const [selectedMenu, setSelectedMenu] = useState<{
+    timeToMin: number;
+  } | null>(null);
+  const [endTime, setEndTime] = useState<string>("");
+
   if (!staffs || !menus) {
     return <Loading />;
   }
+
+  const handleMenuSelect = (menuId: string) => {
+    setValue("menuId", menuId);
+    const menu = menus?.find((m) => m._id === menuId);
+    setSelectedMenu(menu || null);
+    // 現在の開始時間をwatchから取得して終了時間を計算
+    const currentStartTime = watch("startTime");
+    calculateEndTime(menu, currentStartTime);
+  };
+
+  const handleStartTimeSelect = (time: string) => {
+    setValue("startTime", time);
+    calculateEndTime(selectedMenu, time);
+  };
+
+  const calculateEndTime = (
+    menu: { timeToMin: number } | null,
+    startTime?: string
+  ) => {
+    if (!menu || !startTime) {
+      setEndTime("");
+      return;
+    }
+
+    const [hours, minutes] = startTime.split(":").map(Number);
+    const totalMinutes = hours * 60 + minutes + menu.timeToMin;
+    const endHours = Math.floor(totalMinutes / 60);
+    const endMinutes = totalMinutes % 60;
+
+    setEndTime(
+      `${endHours.toString().padStart(2, "0")}:${endMinutes.toString().padStart(2, "0")}`
+    );
+  };
 
   const onSubmit = async (data: z.infer<typeof reservationSchema>) => {
     try {
@@ -89,8 +129,49 @@ export default function CreateReservation() {
 
       toast.success("予約を作成しました");
       router.push(`/dashboard/${salonId}/calender`);
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      console.error("Error details:", error);
+
+      if (error.message && error.message.includes("{")) {
+        try {
+          const jsonStr = error.message.substring(
+            error.message.indexOf("{"),
+            error.message.lastIndexOf("}") + 1
+          );
+          const errorData = JSON.parse(jsonStr);
+
+          if (errorData.type === "RESERVATION_CONFLICT") {
+            const { customerName, startTime, endTime, staffName, menuName } =
+              errorData.conflictingReservation;
+            const formattedDate = format(new Date(startTime), "M月d日");
+            const formattedStart = format(new Date(startTime), "HH:mm");
+            const formattedEnd = format(new Date(endTime), "HH:mm");
+
+            toast.error(
+              <div className="flex flex-col gap-1">
+                <p>予約が重複しています</p>
+                <p className="text-sm text-gray-100">
+                  {formattedDate} {formattedStart}～{formattedEnd}
+                </p>
+                <p className="text-sm text-gray-100">
+                  予約者: {customerName}様
+                </p>
+                <p className="text-sm text-gray-100">
+                  担当スタッフ: {staffName}
+                </p>
+                <p className="text-sm text-gray-100">メニュー: {menuName}</p>
+              </div>,
+              {
+                duration: 20000,
+              }
+            );
+            return;
+          }
+        } catch (parseError) {
+          console.error("Error parsing error message:", parseError);
+        }
+      }
+
       toast.error("予約の作成に失敗しました");
     }
   };
@@ -151,7 +232,7 @@ export default function CreateReservation() {
 
         <div>
           <Label htmlFor="menuId">メニュー</Label>
-          <Select onValueChange={(value) => setValue("menuId", value)}>
+          <Select onValueChange={handleMenuSelect}>
             <SelectTrigger>
               <SelectValue placeholder="メニューを選択" />
             </SelectTrigger>
@@ -180,7 +261,28 @@ export default function CreateReservation() {
 
         <div>
           <Label htmlFor="startTime">開始時間</Label>
-          <Input {...register("startTime")} type="time" step="300" />
+          <Select onValueChange={handleStartTimeSelect}>
+            <SelectTrigger>
+              <SelectValue placeholder="開始時間を選択" />
+            </SelectTrigger>
+            <SelectContent>
+              {Array.from({ length: 24 * 6 }, (_, i) => {
+                const hour = Math.floor(i / 6);
+                const minute = (i % 6) * 10;
+                const time = `${hour.toString().padStart(2, "0")}:${minute
+                  .toString()
+                  .padStart(2, "0")}`;
+                return (
+                  <SelectItem key={time} value={time}>
+                    {time}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+          <p className="text-sm text-gray-500 mt-1">
+            {endTime && `終了時間: ${endTime}`}
+          </p>
           {errors.startTime && (
             <p className="text-sm text-red-500 mt-1">
               {errors.startTime.message}
@@ -207,4 +309,9 @@ export default function CreateReservation() {
       </form>
     </div>
   );
+}
+
+function getMinutesFromTime(timeString: string) {
+  const date = new Date(timeString);
+  return date.getHours() * 60 + date.getMinutes();
 }
