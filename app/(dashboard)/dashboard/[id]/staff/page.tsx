@@ -41,6 +41,9 @@ export default function StaffPage() {
   const staffs = useQuery(api.staffs.getStaffsBySalonId, {
     salonId: id as Id<"users">,
   });
+  const menus = useQuery(api.menus.getMenusBySalonId, {
+    salonId: id as Id<"users">,
+  });
 
   // 休暇日の詳細表示状態を管理する
   const [expandedHolidayStaff, setExpandedHolidayStaff] = useState<
@@ -134,7 +137,10 @@ export default function StaffPage() {
                     .slice(0, 3); // 次の3つの休暇日を表示
 
                   // スタッフが対応しているメニューを表示用に整形
-                  const menuIds = staff.menuIds || [];
+                  // const menuIds = staff.menuIds || [];
+                  const availableMenus = menus?.filter(
+                    (menu) => menu.staffIds?.includes(staff._id) ?? []
+                  );
 
                   return (
                     <tr key={staff._id}>
@@ -167,13 +173,13 @@ export default function StaffPage() {
                       </td>
                       <td className="px-3 py-5 text-sm text-gray-500">
                         <div className="flex flex-wrap gap-1">
-                          {menuIds.length > 0 ? (
-                            menuIds.map((menuId, index) => (
+                          {availableMenus && availableMenus.length > 0 ? (
+                            availableMenus.map((menu, index) => (
                               <span
                                 key={index}
                                 className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-blue-600/20 ring-inset"
                               >
-                                {menuId.replace("menu_", "")}
+                                {menu.name}
                               </span>
                             ))
                           ) : (

@@ -21,9 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useMutation, useQuery } from "convex/react";
-import { Id } from "@/convex/_generated/dataModel";
+
+import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
 import { Calendar } from "@/components/ui/calendar";
@@ -86,8 +85,6 @@ export default function StaffCreatePage() {
     setValue,
   } = useZodForm(staffSchema);
 
-  // menuIdsとgenderの現在の値を監視
-  const selectedMenus = watch("menuIds") || [];
   const selectedGender = watch("gender");
   const holidays = watch("holidays") || [];
 
@@ -117,27 +114,7 @@ export default function StaffCreatePage() {
     }
   }, [holidays]);
 
-  const handleMenuChange = (checked: boolean, menuName: string) => {
-    const currentMenus = [...selectedMenus];
-    if (checked) {
-      if (!currentMenus.includes(menuName)) {
-        currentMenus.push(menuName);
-      }
-    } else {
-      const index = currentMenus.indexOf(menuName);
-      if (index > -1) {
-        currentMenus.splice(index, 1);
-      }
-    }
-
-    // setValueを使用して値を更新
-    setValue("menuIds", currentMenus);
-  };
-
   const createStaff = useMutation(api.staffs.createStaff);
-  const menus = useQuery(api.menus.getMenusBySalonId, {
-    salonId: id as Id<"users">,
-  });
 
   const onSubmit = (data: z.infer<typeof staffSchema>) => {
     try {
@@ -146,7 +123,6 @@ export default function StaffCreatePage() {
         email: data.email,
         phone: data.phone,
         gender: data.gender || "",
-        menuIds: data.menuIds || [],
         description: data.description || "",
         image: data.image || "",
         salonId: id,
@@ -226,34 +202,6 @@ export default function StaffCreatePage() {
           <Input {...register("phone")} />
           {errors.phone && (
             <p className="text-sm mt-1 text-red-500">{errors.phone.message}</p>
-          )}
-        </div>
-        <div className="space-y-4">
-          <Label className="font-bold">対応メニュー</Label>
-          <div className="grid grid-cols-2 gap-4">
-            {menus?.length === 0 && (
-              <p className="text-sm text-gray-500">メニューがありません</p>
-            )}
-            {menus?.map((menu) => (
-              <div key={menu._id} className="flex items-center space-x-2">
-                <Checkbox
-                  id={menu._id}
-                  checked={selectedMenus.includes(menu.name)}
-                  onCheckedChange={(checked) =>
-                    handleMenuChange(checked as boolean, menu.name)
-                  }
-                />
-                <Label
-                  htmlFor={menu._id}
-                  className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  {menu.name}
-                </Label>
-              </div>
-            ))}
-          </div>
-          {errors.menuIds && (
-            <p className="text-sm text-red-500">{errors.menuIds.message}</p>
           )}
         </div>
         <div>

@@ -17,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,54 +33,13 @@ import { toast } from "sonner";
 import { Loading } from "@/components/common";
 import { useParams } from "next/navigation";
 
-
-
-// const textMenuItems = [
-//   {
-//     id: "menu_1",
-//     name: "カット",
-//     category: "カット",
-//     price: "3,000円",
-//     duration: "約30分",
-//     coolingTime: "約10分",
-//     availableStaffs: ["山田 花子", "佐藤 太郎"],
-//     imageUrl:
-//       "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=4&w=256&h=256&q=60",
-//   },
-//   {
-//     id: "menu_2",
-//     name: "パーマ",
-//     category: "パーマ",
-//     price: "5,000円",
-//     duration: "約60分",
-//     coolingTime: "約10分",
-//     availableStaffs: ["山田 花子", "佐藤 太郎"],
-//     imageUrl:
-//       "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=4&w=256&h=256&q=60",
-//   },
-//   {
-//     id: "menu_3",
-//     name: "カラー",
-//     category: "カラー",
-//     price: "4,500円",
-//     duration: "約45分",
-//     coolingTime: "約10分",
-//     availableStaffs: ["山田 花子", "佐藤 太郎"],
-//     imageUrl:
-//       "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=4&w=256&h=256&q=60",
-//   },
-// ];
-
 export default function EditStaffPage() {
   const { staff_id } = useParams();
-  const router = useRouter();
   const { id } = useParams();
+  const router = useRouter();
   // スタッフ情報の取得
   const staff = useQuery(api.staffs.getStaff, {
     id: staff_id as Id<"staffs">,
-  });
-  const menus = useQuery(api.menus.getMenusBySalonId, {
-    salonId: id as Id<"users">,
   });
 
   // 休暇日の状態管理
@@ -99,8 +57,6 @@ export default function EditStaffPage() {
     reset,
   } = useZodForm(staffSchema);
 
-  // 選択値の監視
-  const selectedMenus = watch("menuIds") || [];
   const selectedGender = watch("gender") as "男性" | "女性" | undefined;
   const holidays = watch("holidays") || [];
 
@@ -127,7 +83,6 @@ export default function EditStaffPage() {
         email: staff.email || "",
         phone: staff.phone || "",
         gender: staff.gender as "男性" | "女性" | undefined,
-        menuIds: staff.menuIds || [],
         description: staff.description || "",
         image: staff.image || "",
         holidays: staff.holidays || [],
@@ -171,23 +126,6 @@ export default function EditStaffPage() {
     }
   };
 
-  // チェックボックスの変更ハンドラ
-  const handleMenuChange = (checked: boolean, menuName: string) => {
-    const currentMenus = [...selectedMenus];
-    if (checked) {
-      if (!currentMenus.includes(menuName)) {
-        currentMenus.push(menuName);
-      }
-    } else {
-      const index = currentMenus.indexOf(menuName);
-      if (index > -1) {
-        currentMenus.splice(index, 1);
-      }
-    }
-
-    setValue("menuIds", currentMenus);
-  };
-
   // スタッフ更新ミューテーション
   const updateStaff = useMutation(api.staffs.updateStaff);
 
@@ -200,7 +138,7 @@ export default function EditStaffPage() {
         email: data.email,
         phone: data.phone,
         gender: data.gender || "",
-        menuIds: data.menuIds || [],
+
         description: data.description || "",
         image: data.image || "",
         salonId: staff?.salonId || "",
@@ -284,34 +222,7 @@ export default function EditStaffPage() {
             <p className="text-sm mt-1 text-red-500">{errors.phone.message}</p>
           )}
         </div>
-        <div className="space-y-4">
-          <Label className="font-bold">対応メニュー</Label>
-          <div className="grid grid-cols-2 gap-4">
-            {menus?.length === 0 && (
-              <p className="text-sm text-gray-500">メニューがありません</p>
-            )}
-            {menus?.map((menu) => (
-              <div key={menu._id} className="flex items-center space-x-2">
-                <Checkbox
-                  id={menu._id}
-                  checked={selectedMenus.includes(menu.name)}
-                  onCheckedChange={(checked) =>
-                    handleMenuChange(checked as boolean, menu.name)
-                  }
-                />
-                <Label
-                  htmlFor={menu._id}
-                  className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  {menu.name}
-                </Label>
-              </div>
-            ))}
-          </div>
-          {errors.menuIds && (
-            <p className="text-sm text-red-500">{errors.menuIds.message}</p>
-          )}
-        </div>
+
         <div>
           <Label htmlFor="description" className="font-bold">
             スタッフ紹介
@@ -378,6 +289,17 @@ export default function EditStaffPage() {
                 </div>
               </PopoverContent>
             </Popover>
+            <div className="py-3 text-xs text-gray-500">
+              <p>
+                スタッフの対応メニューはメニュー一覧から編集してください。
+                <Link
+                  className="underline text-sm text-indigo-600 ml-2"
+                  href={`/dashboard/${id}/menus`}
+                >
+                  メニュー一覧
+                </Link>
+              </p>
+            </div>
 
             {holidays.length > 0 && (
               <div className="border rounded-md p-4 bg-gray-50">
