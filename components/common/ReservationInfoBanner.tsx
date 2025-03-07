@@ -1,9 +1,9 @@
 import { CheckCircleIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
-import { useUserDetails } from "@/hooks/useUserDetail";
+import { useSalonCore } from "@/hooks/useSalonCore";
 import Loading from "@/components/common/Loading";
 export default function ReservationInfoBanner() {
-  const { userDetails, isLoading } = useUserDetails();
+  const { salonCore, isLoading } = useSalonCore();
   if (isLoading) return <Loading />;
 
   return (
@@ -26,11 +26,11 @@ export default function ReservationInfoBanner() {
               variant="outline"
               onClick={() => {
                 navigator.clipboard.writeText(
-                  `${process.env.NEXT_PUBLIC_URL}/reserve/${userDetails?.clerkId}`
+                  `${process.env.NEXT_PUBLIC_URL}/reserve/${salonCore?.clerkId}`
                 );
               }}
             >
-              <p>{`${process.env.NEXT_PUBLIC_URL}/reserve/${userDetails?.clerkId}`}</p>
+              <p>{`${process.env.NEXT_PUBLIC_URL}/reserve/${salonCore?.clerkId}`}</p>
               <span className="text-sm text-gray-500 ml-2">コピー</span>
             </Button>
           </div>

@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { useUserDetails } from "@/hooks/useUserDetail";
-import { clearUserCache } from "@/lib/atoms/userAtom";
+import { useSalonCore } from "@/hooks/useSalonCore";
+import { clearSalonCoreAtoms } from "@/lib/atoms/salonCoreAtoms";
 import {
   Dialog,
   DialogBackdrop,
@@ -33,12 +33,12 @@ function classNames(...classes: string[]) {
 
 export default function Sidebar({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { signOut, user } = useClerk();
-  const { userDetails, isLoading } = useUserDetails();
+  const { signOut, user: salon } = useClerk();
+  const { salonCore, isLoading } = useSalonCore();
   const pathname = usePathname(); // 現在のパスを取得
 
   const handleSignOut = () => {
-    clearUserCache();
+    clearSalonCoreAtoms();
     signOut(() => {
       window.location.href = "/sign-in";
     });
@@ -48,27 +48,27 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
   const navigation = [
     {
       name: "ダッシュボード",
-      href: `/dashboard/${user?.id}`,
+      href: `/dashboard/${salon?.id}`,
       icon: HomeIcon,
     },
     {
       name: "予約カレンダー",
-      href: `/dashboard/${user?.id}/calendar`,
+      href: `/dashboard/${salon?.id}/calendar`,
       icon: CalendarIcon,
     },
     {
       name: "スタッフ一覧",
-      href: `/dashboard/${user?.id}/staff`,
+      href: `/dashboard/${salon?.id}/staff`,
       icon: FolderIcon,
     },
     {
       name: "メニュー一覧",
-      href: `/dashboard/${user?.id}/menu`,
+      href: `/dashboard/${salon?.id}/menu`,
       icon: DocumentDuplicateIcon,
     },
     {
       name: "サブスクリプション",
-      href: `/dashboard/${user?.id}/subscription`,
+      href: `/dashboard/${salon?.id}/subscription`,
       icon: CreditCardIcon,
     },
   ];
@@ -149,7 +149,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
 
                     <li className="mt-auto">
                       <a
-                        href="#"
+                        href={`/dashboard/${salon?.id}/setting`}
                         className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-50 hover:text-indigo-600"
                       >
                         <Cog6ToothIcon
@@ -208,7 +208,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
 
                 <li className="mt-auto">
                   <a
-                    href={`/dashboard/${user?.id}/setting`}
+                    href={`/dashboard/${salon?.id}/setting`}
                     className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-50 hover:text-indigo-600"
                   >
                     <Cog6ToothIcon
@@ -245,7 +245,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                   <h3 className="text-xl font-bold tracking-wide">予約管理</h3>
                 </div>
                 <div className="flex items-center gap-x-4 lg:gap-x-6">
-                  {userDetails?.subscriptionStatus === "active" ? (
+                  {salonCore?.subscriptionStatus === "active" ? (
                     <div className="flex items-center gap-x-4 lg:gap-x-6">
                       <p className="text-xs w-32 text-center font-bold border border-green-700 rounded-full px-2 py-1 bg-green-100 text-green-700">
                         プレミアムプラン
@@ -261,7 +261,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                       <span className="sr-only">ユーザーメニューを開く</span>
                       <span className="hidden lg:flex lg:items-center">
                         <h5 className="text-sm text-gray-700">
-                          {isLoading ? "" : userDetails?.email}
+                          {isLoading ? "" : salonCore?.email}
                         </h5>
                         <ChevronDownIcon
                           aria-hidden="true"
