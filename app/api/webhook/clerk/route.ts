@@ -1,3 +1,4 @@
+
 // app/api/clerk-webhook/route.ts
 import { Webhook } from 'svix';
 import { headers } from 'next/headers';
@@ -67,35 +68,35 @@ export async function POST(req: Request) {
     const email = email_addresses[0]?.email_address ?? "no-email";
 
     // 既存ユーザーの存在チェック
-    const existingUser = await fetchQuery(api.users.getUserByClerkId, { clerkId: clerkUserId });
-    if (!existingUser) {
+    const existingSalon = await fetchQuery(api.salon.getSalonByClerkId, { clerkId: clerkUserId });
+    if (!existingSalon) {
       // 新規の場合は Stripe で Customer を作成
       const customer = await stripe.customers.create({
         email: email || undefined,
         metadata: { clerkUserId },
       });
       // registerUser で新規登録
-      await fetchMutation(api.users.registerUser, { clerkId: clerkUserId, email, stripeCustomerId: customer.id });
+      await fetchMutation(api.salon.add, { clerkId: clerkUserId, email, stripeCustomerId: customer.id });
     } else {
       // 既に存在する場合は registerUser でメールアドレス更新（Stripe Customer ID はそのまま）
-      await fetchMutation(api.users.registerUser, { clerkId: clerkUserId, email, stripeCustomerId: existingUser.stripeCustomerId });
+      await fetchMutation(api.salon.add, { clerkId: clerkUserId, email, stripeCustomerId: existingSalon.stripeCustomerId });
     }
   }
   else if (eventType === 'user.updated') {
     const { id, email_addresses } = data;
     const clerkUserId = id;
     const email = email_addresses[0]?.email_address;
-    await fetchMutation(api.users.registerUser, { clerkId: clerkUserId, email: email ?? "no-email", stripeCustomerId: "" });
+    await fetchMutation(api.salon.add, { clerkId: clerkUserId, email: email ?? "no-email", stripeCustomerId: "" });
     // ※既存ユーザーがある前提なので、stripeCustomerId は既に存在しているものを保持する運用とする
   }
   else if (eventType === 'user.deleted') {
     const { id } = data as { id: string };
     const clerkUserId = id;
-    const userRecord = await fetchQuery(api.users.getUserByClerkId, { clerkId: clerkUserId });
-    if (userRecord && userRecord.stripeCustomerId) {
+    const salonRecord = await fetchQuery(api.salon.getSalonByClerkId, { clerkId: clerkUserId });
+    if (salonRecord && salonRecord.stripeCustomerId) {
       try {
-        await stripe.customers.del(userRecord.stripeCustomerId);
-        await fetchMutation(api.users.deleteUser, { clerkId: clerkUserId });
+        await stripe.customers.del(salonRecord.stripeCustomerId);
+        await fetchMutation(api.salon.trash, { clerkId: clerkUserId });
       } catch (err) {
         Sentry.captureMessage("Stripe customer deletion failed", { level: "error" });
         console.error("Stripe customer deletion failed:", err);

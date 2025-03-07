@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     case 'customer.subscription.updated': {
       const subscription = dataObject as Stripe.Subscription;
       const formattedDate = formatTimestampToDate(subscription.current_period_end);
-      await fetchMutation(api.subscriptions.syncSubscription, {
+      await fetchMutation(api.subscription.syncSubscription, {
         subscription: {
           id: subscription.id,
           customer:
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
           currentPeriodEnd: formattedDate,
         },
       });
-      await fetchMutation(api.users.updateSubscription, {
+      await fetchMutation(api.salon.updateSubscription, {
         customerId:
           typeof subscription.customer === 'string'
             ? subscription.customer
@@ -80,7 +80,7 @@ export async function POST(req: Request) {
       if (subId) {
         const subscription = await stripe.subscriptions.retrieve(subId);
         const formattedDate = formatTimestampToDate(subscription.current_period_end);
-        await fetchMutation(api.subscriptions.syncSubscription, {
+        await fetchMutation(api.subscription.syncSubscription, {
           subscription: {
             id: subscription.id,
             customer:
@@ -92,7 +92,7 @@ export async function POST(req: Request) {
             currentPeriodEnd: formattedDate,
           },
         });
-        await fetchMutation(api.users.updateSubscription, {
+        await fetchMutation(api.salon.updateSubscription, {
           customerId:
             typeof subscription.customer === 'string'
               ? subscription.customer
@@ -106,7 +106,7 @@ export async function POST(req: Request) {
     case 'customer.subscription.deleted': {
       const canceledSub = dataObject as Stripe.Subscription;
       const formattedDate = formatTimestampToDate(canceledSub.current_period_end);
-      await fetchMutation(api.subscriptions.syncSubscription, {
+      await fetchMutation(api.subscription.syncSubscription, {
         subscription: {
           id: canceledSub.id,
           customer:
@@ -118,7 +118,7 @@ export async function POST(req: Request) {
           currentPeriodEnd: formattedDate,
         },
       });
-      await fetchMutation(api.users.updateSubscription, {
+      await fetchMutation(api.salon.updateSubscription, {
         customerId:
           typeof canceledSub.customer === 'string'
             ? canceledSub.customer
@@ -135,7 +135,7 @@ export async function POST(req: Request) {
           ? invoice.subscription
           : invoice.subscription?.toString();
       if (subId) {
-        await fetchMutation(api.subscriptions.markFailed, { subscriptionId: subId });
+        await fetchMutation(api.subscription.markFailed, { subscriptionId: subId });
       }
       break;
     }
