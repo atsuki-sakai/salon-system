@@ -24,7 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarIcon, ClockIcon, UserIcon } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { useMutation } from "convex/react";
-import { ja } from "date-fns/locale";
+import { ja, se } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import { Doc } from "@/convex/_generated/dataModel";
 import { getCookie } from "@/lib/utils";
@@ -76,6 +76,8 @@ export default function ReservationTimePicker() {
       : "skip"
   );
 
+  console.log("optimalTimeSlots", optimalTimeSlots);
+
   // メニュー一覧とスタッフ一覧は既存のAPIから取得
   const menus = useQuery(api.menu.getMenusBySalonId, { salonId });
   const staffs = useQuery(api.staff.getAllStaffBySalonId, { salonId });
@@ -86,6 +88,7 @@ export default function ReservationTimePicker() {
   const [loginCustomer, setLoginCustomer] = useState<Doc<"customer"> | null>(
     null
   );
+  const [availableStaffs, setAvailableStaffs] = useState<Doc<"staff">[]>([]);
 
   // 今後14日間の日付を配列で作成
   const nextTwoWeeks = [...Array(14)].map((_, i) => {
@@ -212,7 +215,10 @@ export default function ReservationTimePicker() {
   const isStepTwoComplete = !!selectedStaffId;
   // 合計金額の計算
   const calculateTotalPrice = () => {
-    const menuPrice = selectedMenu?.price || 0;
+    if (!selectedMenu) return 0;
+    const menuPrice = selectedMenu?.salePrice
+      ? selectedMenu?.salePrice
+      : selectedMenu?.price;
     const extraCharge = selectedStaff?.extraCharge || 0;
     return menuPrice + extraCharge;
   };
@@ -237,6 +243,17 @@ export default function ReservationTimePicker() {
       router.push(`/reserve/${salonId}`);
     }
   }, [router, salonId]);
+
+  useEffect(() => {
+    if (selectedMenu && staffs) {
+      const filteredStaffs = staffs.filter((staff) =>
+        selectedMenu.availableStaffIds.includes(staff._id)
+      );
+      setAvailableStaffs(filteredStaffs);
+    } else {
+      setAvailableStaffs([]);
+    }
+  }, [selectedMenu, staffs]);
 
   console.log("loginCustomer", loginCustomer);
   console.log("selectedDate", selectedDate);
@@ -275,11 +292,17 @@ export default function ReservationTimePicker() {
                   <SelectValue placeholder="メニューを選択" />
                 </SelectTrigger>
                 <SelectContent>
-                  {menus?.map((menu) => (
-                    <SelectItem key={menu._id} value={menu._id}>
-                      {menu.name} ({menu.timeToMin}分)
-                    </SelectItem>
-                  ))}
+                  {menus && menus?.length > 0 ? (
+                    menus.map((menu) => (
+                      <SelectItem key={menu._id} value={menu._id}>
+                        {menu.name} ({menu.timeToMin}分)
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <p className="text-gray-500 text-sm p-1">
+                      メニューが見つかりません
+                    </p>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -313,14 +336,20 @@ export default function ReservationTimePicker() {
                 </SelectTrigger>
                 <SelectContent>
                   {/* 「未指定」オプションを削除 */}
-                  {staffs?.map((staff) => (
-                    <SelectItem key={staff._id} value={staff._id}>
-                      {staff.name} -{" "}
-                      {staff.extraCharge
-                        ? "指名料 ¥" + staff.extraCharge.toLocaleString()
-                        : "指名料無料"}
-                    </SelectItem>
-                  ))}
+                  {availableStaffs.length > 0 ? (
+                    availableStaffs?.map((staff) => (
+                      <SelectItem key={staff._id} value={staff._id}>
+                        {staff.name} -{" "}
+                        {staff.extraCharge
+                          ? "指名料 / ¥" + staff.extraCharge.toLocaleString()
+                          : "指名料無料"}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <p className="text-gray-500 text-sm p-1">
+                      対応可能なスタッフが見つかりません。
+                    </p>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -460,16 +489,43 @@ export default function ReservationTimePicker() {
                                 {selectedMenuDuration}分
                               </span>
                               <div className="flex items-center gap-2">
-                                <span className="text-xs mt-1 text-green-700 font-bold">
-                                  ¥ {selectedMenu?.price.toLocaleString()}
-                                </span>
+                                <p className="relative text-xs mt-1 text-green-700 font-bold ">
+                                  <span className="absolute -top-2.5 -left-2 inline-block text-xs scale-50">
+                                    基本料{" "}
+                                  </span>
+                                  <span className="text-xs mt-1 text-green-700 font-bold">
+                                    {selectedMenu?.salePrice ? (
+                                      <div className="flex flex-col items-end">
+                                        <span className="inline-block line-through text-gray-500 text-xs scale-75 -mr-1">
+                                          ¥
+                                          {selectedMenu?.price.toLocaleString()}
+                                        </span>
+                                        <span className="inline-block -mt-1">
+                                          ¥
+                                          {selectedMenu?.salePrice.toLocaleString()}
+                                        </span>
+                                      </div>
+                                    ) : (
+                                      <span>
+                                        ¥{selectedMenu?.price.toLocaleString()}
+                                      </span>
+                                    )}
+                                  </span>
+                                </p>
+
                                 {staffs?.find(
                                   (staff) => staff._id === selectedStaffId
                                 )?.extraCharge ? (
-                                  <span className="text-xs mt-1 text-green-700 font-bold">
-                                    {" + "}指名料 ¥{" "}
-                                    {selectedStaff?.extraCharge?.toLocaleString()}
-                                  </span>
+                                  <p className="relative text-xs mt-1 text-green-700 font-bold">
+                                    {" + "}
+                                    <span className="absolute -top-2.5 left-0 inline-block text-xs scale-50">
+                                      指名料{" "}
+                                    </span>
+                                    <span>
+                                      ¥
+                                      {selectedStaff?.extraCharge?.toLocaleString()}
+                                    </span>
+                                  </p>
                                 ) : null}
                               </div>
                             </Button>
@@ -520,7 +576,6 @@ export default function ReservationTimePicker() {
                 </h4>
                 <div className="flex w-full mb-3">
                   <div className="flex items-center justify-between gap-2">
-                    <CalendarIcon className="h-5 w-5 text-green-800" />
                     <span className=" text-green-800 tracking-wide font-semibold">
                       {selectedTimeSlot
                         ? formatDateJP(selectedTimeSlot.date!)
@@ -528,21 +583,27 @@ export default function ReservationTimePicker() {
                     </span>
                   </div>
                   <div className="flex items-center gap-2 ml-3">
-                    <span className="font-medium text-slate-800">
+                    <span className="text-xs">開始時間</span>
+                    <span className=" text-slate-800 tracking-wide font-semibold">
                       {selectedTimeSlot
-                        ? `${selectedTimeSlot.startTime}〜${selectedTimeSlot.endTime}`
+                        ? `${selectedTimeSlot.startTime.split("T")[1]}〜${selectedTimeSlot.endTime.split("T")[1]}`
                         : ""}
                     </span>
                   </div>
                 </div>
-                <div className="flex justify-between items-center my-2">
-                  <span>{selectedMenuName}</span>
+                <p className="text-xs text-gray-500 tracking-wide">
+                  開始時間の5分前にはお店にお越し頂けますと幸いです。
+                </p>
+                <div className="flex justify-between items-center my-3 pt-3">
+                  <span className="text-base font-semibold">
+                    {selectedMenuName}
+                  </span>
                   <span className="font-bold">{selectedMenuDuration}分</span>
                 </div>
                 <div className="flex justify-end">
                   <div className="flex items-center gap-2">
-                    <UserIcon className="h-5 w-5 text-green-800" />
-                    <span className="font-medium text-green-800 tracking-wide">
+                    <span className="text-xs">担当スタッフ</span>
+                    <span className="font-medium tracking-wide">
                       {selectedTimeSlot?.staffName}
                     </span>
                   </div>
@@ -555,9 +616,18 @@ export default function ReservationTimePicker() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm">メニュー料金 </span>
-                    <span className="font-bold">
-                      ¥ {selectedMenu?.price.toLocaleString()}
-                    </span>
+                    {selectedMenu?.salePrice ? (
+                      <div className="flex flex-col items-end">
+                        <span className="inline-block line-through text-gray-500 text-xs">
+                          ¥{selectedMenu?.price.toLocaleString()}
+                        </span>
+                        <span className="inline-block -mt-1">
+                          ¥{selectedMenu?.salePrice.toLocaleString()}
+                        </span>
+                      </div>
+                    ) : (
+                      <span>¥{selectedMenu?.price.toLocaleString()}</span>
+                    )}
                   </div>
                   {selectedStaff?.extraCharge ? (
                     <div className="flex justify-between">

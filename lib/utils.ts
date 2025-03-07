@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import CryptoJS from "crypto-js";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -23,11 +24,14 @@ export function formatTimestampToDate(timestamp: number): string {
   return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
 }
 
+
+const SECRET_KEY = process.env.COOKIE_SECRET_KEY!; // 適切な秘密鍵を設定してください
+
 export const setCookie = (name: string, value: string, days: number) => {
-  const expires = new Date(
-    Date.now() + days * 24 * 60 * 60 * 1000
-  ).toUTCString();
-  document.cookie = `${name}=${value}; expires=${expires}; path=/; ${
+  // 値を暗号化する
+  const encryptedValue = CryptoJS.AES.encrypt(value, SECRET_KEY).toString();
+  const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString();
+  document.cookie = `${name}=${encryptedValue}; expires=${expires}; path=/; ${
     process.env.NODE_ENV === "production" ? "secure;" : ""
   }`;
 };
@@ -35,7 +39,19 @@ export const setCookie = (name: string, value: string, days: number) => {
 export const getCookie = (name: string) => {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop()?.split(";").shift();
+  if (parts.length === 2) {
+    const encryptedValue = parts.pop()?.split(";").shift();
+    if (encryptedValue) {
+      try {
+        // 暗号化された値を復号する
+        const bytes = CryptoJS.AES.decrypt(encryptedValue, SECRET_KEY);
+        const decryptedData = bytes.toString(CryptoJS.enc.Utf8);
+        return decryptedData;
+      } catch (error) {
+        console.error("Cookie の復号に失敗しました", error);
+      }
+    }
+  }
   return null;
 };
 
@@ -50,11 +66,3 @@ export const generateUid = (key: string) => {
   return key + "_" + hexString;
 };
 
-export function createFullDateTime(dateStr: string, timeStr: string): string {
-  // dateStrが既にISO形式（YYYY-MM-DD）であることを前提
-  const datePart = dateStr.split("T")[0]; // もしdateStrがISO形式の場合、Tより前の部分を取得
-
-  // timeStrがHH:MM形式であることを前提
-  // ISO形式のタイムスタンプ（YYYY-MM-DDTHH:MM）を生成
-  return `${datePart}T${timeStr}`;
-}

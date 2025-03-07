@@ -63,7 +63,7 @@ export default function ReservePage() {
           email: data.email ?? "",
         });
         setCookie("customerData", customerData, 60); // 60日間保存
-        router.push(`/reserve/${id}/calendar/?id=${existingCustomer._id}`);
+        router.push(`/reserve/${id}/calendar`);
         return;
       } else {
         if (confirmRegister) {
@@ -83,7 +83,7 @@ export default function ReservePage() {
             email: data.email,
           });
           setCookie("customerData", customerData, 60); // 60日間保存
-          router.push(`/reserve/${id}/calendar/?id=${customerId}`);
+          router.push(`/reserve/${id}/calendar`);
         } else {
           const customerData = JSON.stringify({
             _id: "only_session",
@@ -93,7 +93,7 @@ export default function ReservePage() {
             email: data.email,
           });
           setCookie("customerData", customerData, 60); // 60日間保存
-          router.push(`/reserve/${id}/calendar?id=${"only_session"}`);
+          router.push(`/reserve/${id}/calendar`);
         }
       }
     } catch (error) {
