@@ -16,7 +16,7 @@ export const add = mutation({
     gender: v.optional(v.union(v.literal("全て"), v.literal("男性"), v.literal("女性"))),
   },
   handler: async (ctx, args) => {
-    const customer = await ctx.db.insert("customer", {
+    const customerId = await ctx.db.insert("customer", {
       salonId: args.salonId,
       email: args.email,
       phone: args.phone,
@@ -28,7 +28,7 @@ export const add = mutation({
       age: args.age,
       gender: args.gender,
     });
-    return customer;
+    return customerId;
   },
 });
 

@@ -93,3 +93,12 @@ export function timeStringToMinutes(timeStr: string): number {
     return slots;
   }
   
+  export function createFullDateTime(dateStr: string, timeStr: string): string {
+    // dateStrが既にISO形式（YYYY-MM-DD）であることを前提
+    const datePart = dateStr.split("T")[0]; // もしdateStrがISO形式の場合、Tより前の部分を取得
+  
+    // timeStrがHH:MM形式であることを前提
+    // ISO形式のタイムスタンプ（YYYY-MM-DDTHH:MM）を生成
+    return `${datePart}T${timeStr}`;
+  }
+  

@@ -176,5 +176,5 @@ export const reservationSchema = z.object({
   menuId: z.string().min(1, "メニューを選択してください"),
   reservationDate: z.string().min(1, "予約日を選択してください"),
   startTime: z.string().min(1, "開始時間を選択してください"),
-  note: z.string().optional(),
+  notes: z.string().optional(),
 });
