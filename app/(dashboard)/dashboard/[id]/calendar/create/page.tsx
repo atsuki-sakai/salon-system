@@ -111,16 +111,13 @@ export default function CreateReservation() {
   } = useZodForm(reservationSchema);
 
   // 全スタッフと全メニューの取得
-  const staffs = useQuery(api.staffs.getStaffsBySalonId, { salonId });
-  const menus = useQuery(api.menus.getMenusBySalonId, { salonId });
-  const createReservation = useMutation(api.reservations.create);
+  const staffs = useQuery(api.staff.getAllStaffBySalonId, { salonId });
+  const menus = useQuery(api.menu.getMenusBySalonId, { salonId });
+  const createReservation = useMutation(api.reservation.add);
 
   // 選択したメニュー情報、フィルタリングされたスタッフ一覧、終了時刻、及び空き開始時刻候補の状態管理
-  const [selectedMenu, setSelectedMenu] = useState<{
-    timeToMin: number;
-    staffIds: string[];
-  } | null>(null);
-  const [filteredStaffs, setFilteredStaffs] = useState<Doc<"staffs">[]>([]);
+  const [selectedMenu, setSelectedMenu] = useState<Doc<"menu"> | null>(null);
+  const [filteredStaffs, setFilteredStaffs] = useState<Doc<"staff">[]>([]);
   const [endTime, setEndTime] = useState<string>("");
   const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([]);
 
@@ -131,7 +128,7 @@ export default function CreateReservation() {
 
   // 予約済み情報の取得（予約日が入力されている場合のみ）
   const reservationsForDate = useQuery(
-    api.reservations.getReservationsByDate,
+    api.reservation.getReservationsByDate,
     watchedReservationDate ? { salonId, date: watchedReservationDate } : "skip"
   );
 
@@ -149,8 +146,8 @@ export default function CreateReservation() {
 
       // 選択されたスタッフの予約のみ抽出（予約時間はISO文字列の「T」以降を利用）
       const staffReservations = reservationsForDate
-        .filter((res: Doc<"reservations">) => res.staffId === watchedStaffId)
-        .map((res: Doc<"reservations">) => {
+        .filter((res: Doc<"reservation">) => res.staffId === watchedStaffId)
+        .map((res: Doc<"reservation">) => {
           const startPart = res.startTime.split("T")[1] ?? "00:00";
           const endPart = res.endTime.split("T")[1] ?? "00:00";
           return {
@@ -186,12 +183,12 @@ export default function CreateReservation() {
   // メニュー選択時の処理：選択されたメニューに基づいて、対応可能なスタッフ（menu.staffIdsに含まれるもの）のみを抽出
   const handleMenuSelect = (menuId: string) => {
     setValue("menuId", menuId);
-    const menu = menus.find((m: Doc<"menus">) => m._id === menuId);
+    const menu = menus.find((m: Doc<"menu">) => m._id === menuId);
     setSelectedMenu(menu || null);
     if (menu) {
       console.log("menu", menu);
-      const availableStaffs = staffs.filter((staff: Doc<"staffs">) =>
-        menu.staffIds.includes(staff._id)
+      const availableStaffs = staffs.filter((staff: Doc<"staff">) =>
+        menu.availableStaffIds.includes(staff._id)
       );
       console.log("availableStaffs", availableStaffs);
       setFilteredStaffs(availableStaffs);
@@ -239,10 +236,10 @@ export default function CreateReservation() {
   const onSubmit = async (data: z.infer<typeof reservationSchema>) => {
     try {
       const selectedStaff = staffs.find(
-        (staff: Doc<"staffs">) => staff._id === data.staffId
+        (staff: Doc<"staff">) => staff._id === data.staffId
       );
       const selectedMenu = menus.find(
-        (menu: Doc<"menus">) => menu._id === data.menuId
+        (menu: Doc<"menu">) => menu._id === data.menuId
       );
 
       if (!selectedStaff || !selectedMenu) {
@@ -263,12 +260,11 @@ export default function CreateReservation() {
         customerName: data.customerName,
         customerPhone: data.customerPhone,
         staffId: selectedStaff._id,
-        staffName: selectedStaff.name,
+        staffName: selectedStaff.name || "",
         menuId: selectedMenu._id,
         menuName: selectedMenu.name,
         price: selectedMenu.price,
         salonId,
-        salonName: "Salon Name",
         reservationDate: data.reservationDate,
         status: "confirmed",
         startTime: startDateTime,
@@ -365,7 +361,7 @@ export default function CreateReservation() {
               <SelectValue placeholder="メニューを選択" />
             </SelectTrigger>
             <SelectContent>
-              {menus.map((menu: Doc<"menus">) => (
+              {menus.map((menu: Doc<"menu">) => (
                 <SelectItem key={menu._id} value={menu._id}>
                   {menu.name} ({menu.timeToMin}分)
                 </SelectItem>
@@ -385,7 +381,7 @@ export default function CreateReservation() {
             </SelectTrigger>
             <SelectContent>
               {filteredStaffs.length > 0 ? (
-                filteredStaffs.map((staff: Doc<"staffs">) => (
+                filteredStaffs.map((staff: Doc<"staff">) => (
                   <SelectItem key={staff._id} value={staff._id}>
                     {staff.name}
                   </SelectItem>
