@@ -269,11 +269,11 @@ export default function CreateReservation() {
         status: "confirmed",
         startTime: startDateTime,
         endTime: endDateTime,
-        note: data.note || "",
+        notes: data.note || "",
       });
 
       toast.success("予約を作成しました");
-      router.push(`/dashboard/${salonId}/calendar`);
+      router.push(`/dashboard/${salonId}/reservation`);
     } catch (error: unknown) {
       console.error("Error details:", error);
 
