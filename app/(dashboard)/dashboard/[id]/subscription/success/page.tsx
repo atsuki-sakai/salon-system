@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useUserDetails } from "@/hooks/useUserDetail";
+import { useSalonCore } from "@/hooks/useSalonCore";
 import { CheckCircleIcon } from "@heroicons/react/24/outline";
 import Loading from "@/components/common/Loading";
 export default function SuccessSubscriptionPage() {
-  const { userDetails, isLoading } = useUserDetails();
+  const { salonCore, isLoading } = useSalonCore();
 
   if (isLoading) {
     return <Loading />;
@@ -24,7 +24,7 @@ export default function SuccessSubscriptionPage() {
           契約の更新は、
           <Link
             className="text-blue-500 hover:text-blue-600 underline"
-            href={`/dashboard/${userDetails?.clerkId}/subscription`}
+            href={`/dashboard/${salonCore?.salonId}/subscription`}
           >
             サブスクリプションページ
           </Link>

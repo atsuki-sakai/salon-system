@@ -6,7 +6,7 @@ import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useUserDetails } from "@/hooks/useUserDetail";
+import { useSalonCore } from "@/hooks/useSalonCore";
 import { CheckCircleIcon } from "@heroicons/react/24/outline";
 import Loading from "@/components/common/Loading";
 import { toast } from "sonner";
@@ -19,12 +19,12 @@ const features = [
 ];
 
 export default function SubscriptionPage() {
-  const { userDetails, isLoading } = useUserDetails();
+  const { salonCore, isLoading } = useSalonCore();
   const [error, setError] = useState("");
 
-  const createSession = useAction(api.subscriptions.createSubscriptionSession);
+  const createSession = useAction(api.subscription.createSubscriptionSession);
   const createBillingPortal = useAction(
-    api.subscriptions.createBillingPortalSession
+    api.subscription.createBillingPortalSession
   );
 
   const handleSubscribe = async () => {
@@ -33,16 +33,16 @@ export default function SubscriptionPage() {
       return;
     }
 
-    if (!userDetails?.stripeCustomerId) {
+    if (!salonCore?.stripeCustomerId) {
       setError("Stripeの顧客情報が見つかりません");
       return;
     }
 
     try {
-      console.log("Creating subscription for user:", userDetails?.clerkId);
+      console.log("Creating subscription for user:", salonCore?.clerkId);
       const result = await createSession({
-        stripeCustomerId: userDetails.stripeCustomerId,
-        clerkUserId: userDetails?.clerkId ?? "",
+        stripeCustomerId: salonCore.stripeCustomerId,
+        clerkUserId: salonCore?.clerkId ?? "",
         priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID!,
         baseUrl: process.env.NEXT_PUBLIC_URL!,
       });
@@ -62,12 +62,12 @@ export default function SubscriptionPage() {
     }
   };
   const handleBillingPortal = async () => {
-    console.log("Stripe Customer ID:", userDetails?.stripeCustomerId);
+    console.log("Stripe Customer ID:", salonCore?.stripeCustomerId);
 
     // Billing Portal セッションを作成する
     const result = await createBillingPortal({
-      customerId: userDetails?.stripeCustomerId ?? "",
-      returnUrl: `${process.env.NEXT_PUBLIC_URL}/dashboard/${userDetails?.clerkId}`,
+      customerId: salonCore?.stripeCustomerId ?? "",
+      returnUrl: `${process.env.NEXT_PUBLIC_URL}/dashboard/${salonCore?.clerkId}`,
     });
 
     // 返却された portalUrl を使ってリダイレクト
@@ -78,7 +78,7 @@ export default function SubscriptionPage() {
     }
   };
 
-  console.log("userDetails", userDetails);
+  console.log("salonCore", salonCore);
   if (isLoading) {
     return <Loading />;
   }
@@ -89,7 +89,7 @@ export default function SubscriptionPage() {
         <CardHeader>
           <CardTitle className="text-2xl">サブスクリプション</CardTitle>
         </CardHeader>
-        {userDetails?.subscriptionStatus === "active" ? (
+        {salonCore?.subscriptionStatus === "active" ? (
           <CardContent>
             <div className="flex items-center justify-center  border-b border-green-200 pb-4 mb-4">
               <CheckCircleIcon className="w-8 h-8 text-green-500 mr-2" />
