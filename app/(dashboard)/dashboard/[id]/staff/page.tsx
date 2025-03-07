@@ -139,6 +139,7 @@ export default function StaffPage() {
                             <FileImage
                               fileId={staff.imgFileId}
                               alt={staff.name}
+                              size={50}
                             />
                           </div>
                           <div className="ml-4">

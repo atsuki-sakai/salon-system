@@ -13,12 +13,10 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <main className="flex h-full overflow-hidden">
-      <div className="flex-1 overflow-y-auto">
-        <ClerkProvider>
-          <Sidebar>{children}</Sidebar>
-        </ClerkProvider>
-      </div>
-    </main>
+    <div>
+      <ClerkProvider>
+        <Sidebar>{children}</Sidebar>
+      </ClerkProvider>
+    </div>
   );
 }

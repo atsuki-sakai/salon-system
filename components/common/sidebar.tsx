@@ -53,7 +53,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
     },
     {
       name: "予約カレンダー",
-      href: `/dashboard/${salon?.id}/calendar`,
+      href: `/dashboard/${salon?.id}/reservation`,
       icon: CalendarIcon,
     },
     {

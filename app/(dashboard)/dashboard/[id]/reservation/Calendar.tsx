@@ -242,7 +242,7 @@ export default function Calendar() {
             </div>
             <div className="hidden md:ml-4 md:flex md:items-center">
               <div className="ml-6 h-6 w-px bg-gray-300" />
-              <Link href={`/dashboard/${salonId}/calendar/create`}>
+              <Link href={`/dashboard/${salonId}/reservation/create`}>
                 <Button className="ml-6 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                   イベントを追加
                 </Button>

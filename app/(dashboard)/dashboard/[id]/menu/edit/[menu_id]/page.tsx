@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { FileImage } from "@/components/common";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -34,6 +35,7 @@ export default function MenuEditPage() {
     "全て" | "男性" | "女性"
   >("全て");
   const [selectValue, setSelectValue] = useState(""); // Selectの内部状態を管理
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleStaffSelect = (staffId: string) => {
     if (staffId === "all") {
@@ -77,8 +79,8 @@ export default function MenuEditPage() {
     if (menu) {
       reset({
         name: menu.name,
-        price: menu.price.toString(),
-        salePrice: menu.salePrice?.toString() || "",
+        price: menu.price,
+        salePrice: menu.salePrice,
         timeToMin: menu.timeToMin.toString(),
         imgFileId: menu.imgFileId || "",
         description: menu.description || "",
@@ -98,21 +100,61 @@ export default function MenuEditPage() {
     setSelectedStaffIds(newStaffIds);
     setValue("availableStaffIds", newStaffIds);
   };
-
+  const deleteFile = useMutation(api.storage.deleteFile);
+  const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
   const onSubmit = async (data: z.infer<typeof menuSchema>) => {
     try {
+      let imageFileId = data.imgFileId || "";
+
+      // ファイルが選択されている場合、アップロード処理を実施
+      if (
+        fileInputRef.current?.files &&
+        fileInputRef.current.files.length > 0
+      ) {
+        const file = fileInputRef.current.files[0];
+        const maxSize = 2 * 1024 * 1024;
+        if (file && file.size > maxSize) {
+          toast.error(
+            "ファイルサイズが大きすぎます。2MB以下の画像をアップロードしてください。"
+          );
+          return;
+        }
+
+        // 例：アップロードURLの取得とファイルアップロード処理
+        const uploadUrl = await generateUploadUrl();
+        const results = await fetch(uploadUrl, {
+          method: "POST",
+          body: file,
+          headers: { "Content-Type": file ? file.type : "image/*" },
+        });
+        const resultData = await results.json();
+        imageFileId = resultData.storageId;
+      }
+
+      // メニュー更新処理
       await updateMenu({
         id: menu_id as Id<"menu">,
         name: data.name,
         price: Number(data.price),
         salePrice: data.salePrice ? Number(data.salePrice) : undefined,
         timeToMin: Number(data.timeToMin),
-        imgFileId: data.imgFileId || "",
+        imgFileId: imageFileId,
         availableStaffIds: selectedStaffIds,
         description: data.description || "",
         couponId: data.couponId || "",
         targetGender: data.targetGender || "全て",
       });
+
+      // 新しい画像がアップロードされた場合、古い画像が存在すれば削除する
+      if (
+        fileInputRef.current?.files &&
+        fileInputRef.current.files.length > 0 &&
+        menu?.imgFileId &&
+        menu.imgFileId !== imageFileId
+      ) {
+        await deleteFile({ storageId: menu.imgFileId });
+      }
+
       toast.success("メニューを更新しました");
       router.push(`/dashboard/${id}/menu`);
     } catch (error) {
@@ -127,6 +169,11 @@ export default function MenuEditPage() {
         await deleteMenu({
           id: menu_id as Id<"menu">,
         });
+        if (menu?.imgFileId) {
+          await deleteFile({
+            storageId: menu.imgFileId,
+          });
+        }
         toast.success("メニューを削除しました");
         router.push(`/dashboard/${id}/menu`);
       } catch (error) {
@@ -153,6 +200,18 @@ export default function MenuEditPage() {
         onSubmit={handleSubmit(onSubmit)}
         className="flex flex-col space-y-6"
       >
+        <div className="flex gap-4">
+          <FileImage fileId={menu.imgFileId} size={128} />
+          <div>
+            <Label htmlFor="imageFile">メニュー画像</Label>
+            <Input type="file" ref={fileInputRef} accept="image/*" />
+            {errors.imgFileId && (
+              <p className="text-sm mt-1 text-red-500">
+                {errors.imgFileId.message}
+              </p>
+            )}
+          </div>
+        </div>
         <div>
           <Label htmlFor="name" className="font-bold">
             メニュー名
@@ -251,19 +310,6 @@ export default function MenuEditPage() {
           )}
         </div>
         <div>
-          <Label htmlFor="imageFile">メニュー画像（任意）</Label>
-          <Input
-            type="text"
-            {...register("imgFileId")}
-            placeholder="画像URLを入力（任意）"
-          />
-          {errors.imgFileId && (
-            <p className="text-sm mt-1 text-red-500">
-              {errors.imgFileId.message}
-            </p>
-          )}
-        </div>
-        <div>
           <Label htmlFor="staffIds" className="font-bold">
             対応スタッフ
           </Label>
@@ -335,7 +381,7 @@ export default function MenuEditPage() {
             variant="outline"
             onClick={() => router.push(`/dashboard/${id}/menu`)}
           >
-            キャンセル
+            戻る
           </Button>
           <Button type="button" variant="destructive" onClick={handleDelete}>
             削除

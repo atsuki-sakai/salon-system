@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -29,6 +29,10 @@ export default function MenuCreatePage() {
   const params = useParams();
   const router = useRouter();
   const id = typeof params.id === "string" ? params.id : "";
+  // ファイルアップロード用の ref を追加
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  // アップロード URL を生成するミューテーション
+  const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
 
   const {
     register,
@@ -43,8 +47,6 @@ export default function MenuCreatePage() {
   });
 
   const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
-
-  console.log("salonStaffs", salonStaffs);
 
   const menus = useQuery(api.menu.getMenusBySalonId, {
     salonId: id as Id<"salon">,
@@ -82,11 +84,37 @@ export default function MenuCreatePage() {
         throw new Error("Invalid salon ID");
       }
 
+      // まずはテキスト入力（画像URL）の値を使用
+      let imageFileId = data.imgFileId || "";
+      // もしファイルが選択されていれば、ファイルアップロード処理を実行
+      if (
+        fileInputRef.current &&
+        fileInputRef.current.files &&
+        fileInputRef.current.files.length > 0
+      ) {
+        const file = fileInputRef.current.files[0];
+        const maxSize = 2 * 1024 * 1024;
+        if (file && file.size > maxSize) {
+          toast.error(
+            "ファイルサイズが大きすぎます。2MB以下の画像をアップロードしてください。"
+          );
+          return;
+        }
+        const uploadUrl = await generateUploadUrl();
+        const results = await fetch(uploadUrl, {
+          method: "POST",
+          body: file,
+          headers: { "Content-Type": file ? file.type : "image/*" },
+        });
+        const resultData = await results.json();
+        imageFileId = resultData.storageId;
+      }
+
       await createMenu({
         name: data.name,
         price: Number(data.price),
         timeToMin: Number(data.timeToMin),
-        imgFileId: data.imgFileId || "",
+        imgFileId: imageFileId,
         availableStaffIds: selectedStaffIds,
         salonId: id,
         description: data.description || "",
@@ -104,7 +132,7 @@ export default function MenuCreatePage() {
     }
   };
 
-  const handleCancel = () => {
+  const handleGoBack = () => {
     const redirectUrl = `/dashboard/${encodeURIComponent(id)}/menu`;
     router.push(redirectUrl);
   };
@@ -121,9 +149,18 @@ export default function MenuCreatePage() {
         <h1 className="text-2xl font-bold">メニューを追加</h1>
       </div>
       <form
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit(onSubmit, (errors) => {
+          console.log(errors);
+        })}
         className="flex flex-col space-y-6"
       >
+        <div>
+          <Label htmlFor="file" className="font-bold">
+            メニュー画像（アップロード）
+          </Label>
+          {/* ファイルアップロード用の Input：ここでは register は使用せず、ref 経由でアクセス */}
+          <Input type="file" ref={fileInputRef} accept="image/*" />
+        </div>
         <div>
           <Label htmlFor="name" className="font-bold">
             メニュー名
@@ -137,7 +174,10 @@ export default function MenuCreatePage() {
           <Label htmlFor="price" className="font-bold">
             料金（円）
           </Label>
-          <Input {...register("price")} type="number" />
+          <Input
+            {...register("price", { valueAsNumber: true })}
+            type="number"
+          />
           {errors.price && (
             <p className="text-sm mt-1 text-red-500">{errors.price.message}</p>
           )}
@@ -146,7 +186,10 @@ export default function MenuCreatePage() {
           <Label htmlFor="salePrice" className="font-bold">
             セール価格（円）
           </Label>
-          <Input {...register("salePrice")} type="number" />
+          <Input
+            {...register("salePrice", { valueAsNumber: true })}
+            type="number"
+          />
           {errors.salePrice && (
             <p className="text-sm mt-1 text-red-500">
               {errors.salePrice.message}
@@ -212,7 +255,7 @@ export default function MenuCreatePage() {
           <Label htmlFor="targetGender" className="font-bold">
             対象性別
           </Label>
-          <Select {...register("targetGender")} defaultValue="all">
+          <Select {...register("targetGender")} defaultValue="全て">
             <SelectTrigger>
               <SelectValue placeholder="対象性別を選択" />
             </SelectTrigger>
@@ -253,7 +296,6 @@ export default function MenuCreatePage() {
               </SelectContent>
             </Select>
           )}
-
           <div className="flex flex-wrap gap-2 mt-2">
             {selectedStaffIds.map((staffId) => {
               const staff = salonStaffs?.find((s) => s._id === staffId);
@@ -278,19 +320,7 @@ export default function MenuCreatePage() {
             </p>
           )}
         </div>
-        <div>
-          <Label htmlFor="imgFileId">メニュー画像（任意）</Label>
-          <Input
-            type="text"
-            {...register("imgFileId")}
-            placeholder="画像URLを入力（任意）"
-          />
-          {errors.imgFileId && (
-            <p className="text-sm mt-1 text-red-500">
-              {errors.imgFileId.message}
-            </p>
-          )}
-        </div>
+
         <div>
           <Label htmlFor="couponIds" className="font-bold">
             適用クーポン
@@ -302,10 +332,9 @@ export default function MenuCreatePage() {
             </p>
           )}
         </div>
-
-        <div className="flex justify-end gap-4">
-          <Button type="button" variant="outline" onClick={handleCancel}>
-            キャンセル
+        <div className="flex justify-end gap-4 pt-5">
+          <Button type="button" variant="outline" onClick={handleGoBack}>
+            戻る
           </Button>
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? "追加中..." : "メニューを追加"}

@@ -93,6 +93,7 @@ export default function EditStaffPage() {
         age: staff.age || 0,
         gender: staff.gender as "全て" | "男性" | "女性" | undefined,
         description: staff.description || "",
+        extraCharge: staff.extraCharge || 0,
         imgFileId: staff.imgFileId || "",
         regularHolidays: staff.regularHolidays || [],
       });
@@ -124,33 +125,77 @@ export default function EditStaffPage() {
   // ⭐ useMutation をコンポーネントのトップレベルに移動
   const deleteStaff = useMutation(api.staff.trash);
 
+  // スタッフ更新ミューテーション
+  const updateStaff = useMutation(api.staff.update);
+  const deleteFile = useMutation(api.storage.deleteFile);
+
   const handleDeleteStaff = async () => {
     const alert = await confirm("本当にスタッフを削除しますか？");
     if (alert) {
-      await deleteStaff({
-        id: staff_id as Id<"staff">,
-      });
-      toast.success("スタッフを削除しました");
-      router.push(`/dashboard/${staff?.salonId}/staff`);
+      try {
+        await deleteStaff({
+          id: staff_id as Id<"staff">,
+        });
+        if (staff && staff.imgFileId && staff.imgFileId !== "") {
+          await deleteFile({
+            storageId: staff.imgFileId,
+          });
+        }
+        toast.success("スタッフを削除しました");
+        router.push(`/dashboard/${staff?.salonId}/staff`);
+      } catch (error) {
+        console.error("スタッフ削除エラー:", error);
+        toast.error("スタッフの削除に失敗しました");
+      }
     }
   };
 
-  // スタッフ更新ミューテーション
-  const updateStaff = useMutation(api.staff.update);
-
   // フォーム送信ハンドラ
+  const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
+
   const onSubmit = async (data: z.infer<typeof staffSchema>) => {
     try {
+      let imageFileId: string | undefined = undefined;
+      if (
+        imageFileRef.current?.files &&
+        imageFileRef.current.files.length > 0
+      ) {
+        const file = imageFileRef.current.files[0];
+        const maxSize = 2 * 1024 * 1024;
+        if (file && file.size > maxSize) {
+          toast.error(
+            "ファイルサイズが大きすぎます。2MB以下の画像をアップロードしてください。"
+          );
+          return;
+        }
+        console.log(file);
+        const uploadUrl = await generateUploadUrl();
+        console.log(uploadUrl);
+        const results = await fetch(uploadUrl, {
+          method: "POST",
+          body: file,
+          headers: { "Content-Type": file ? file.type : "image/png" },
+        });
+        console.log(results);
+        const { storageId } = await results.json();
+        imageFileId = storageId;
+      }
       await updateStaff({
         id: staff_id as Id<"staff">,
         name: data.name,
         age: data.age,
         gender: data.gender || "全て",
         description: data.description || "",
-        imgFileId: data.imgFileId || "",
+        imgFileId: imageFileId || staff?.imgFileId,
         salonId: staff?.salonId || "",
         regularHolidays: data.regularHolidays || [],
       });
+      // 新しい画像がアップロードされた場合にのみ、既存の画像を削除する
+      if (imageFileId && staff && staff.imgFileId) {
+        await deleteFile({
+          storageId: staff.imgFileId,
+        });
+      }
 
       toast.success("スタッフ情報を更新しました");
       router.push(`/dashboard/${staff?.salonId}/staff`);
@@ -183,7 +228,7 @@ export default function EditStaffPage() {
         className="flex flex-col space-y-6"
       >
         <div className="flex gap-4">
-          <FileImage fileId={staff.imgFileId} alt={staff.name} size={100} />
+          <FileImage fileId={staff.imgFileId} alt={staff.name} size={50} />
           <div>
             <Label htmlFor="imageFile">
               スタッフ画像 <br />
@@ -232,18 +277,20 @@ export default function EditStaffPage() {
             <p className="text-sm text-red-500">{errors.gender.message}</p>
           )}
         </div>
+
         <div>
-          <Label htmlFor="email" className="font-bold">
-            メールアドレス
-          </Label>
-          <Input {...register("age")} />
+          <Label htmlFor="age">年齢</Label>
+          <Input {...register("age", { valueAsNumber: true })} type="number" />
           {errors.age && (
             <p className="text-sm mt-1 text-red-500">{errors.age.message}</p>
           )}
         </div>
         <div>
           <Label htmlFor="extraCharge">指名料金</Label>
-          <Input {...register("extraCharge")} />
+          <Input
+            {...register("extraCharge", { valueAsNumber: true })}
+            type="number"
+          />
           {errors.extraCharge && (
             <p className="text-sm mt-1 text-red-500">
               {errors.extraCharge.message}
@@ -378,7 +425,7 @@ export default function EditStaffPage() {
             variant="outline"
             onClick={() => router.push(`/dashboard/${staff?.salonId}/staff`)}
           >
-            キャンセル
+            戻る
           </Button>
           <Button
             type="button"

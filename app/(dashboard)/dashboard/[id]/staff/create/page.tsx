@@ -85,13 +85,16 @@ export default function StaffCreatePage() {
       setVacationDates(dates);
     }
   }, [holidays, vacationDates]);
+  console.log(id);
 
   const addStaff = useMutation(api.staff.add);
   const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
 
   const onSubmit = async (data: z.infer<typeof staffSchema>) => {
+    console.log("clicked");
     try {
-      let imageFileId = "";
+      console.log(data);
+      let imageFileId: string | undefined = undefined;
       if (
         imageFileRef.current?.files &&
         imageFileRef.current.files.length > 0
@@ -117,13 +120,13 @@ export default function StaffCreatePage() {
         imageFileId = storageId;
       }
       addStaff({
+        salonId: id,
         name: data.name,
         age: data.age,
         gender: data.gender || "全て",
         description: data.description || "",
         imgFileId: imageFileId,
-        salonId: id,
-        extraCharge: data.extraCharge || 0,
+        extraCharge: data.extraCharge,
         regularHolidays: data.regularHolidays || [],
       });
       console.log(data.regularHolidays);
@@ -148,7 +151,9 @@ export default function StaffCreatePage() {
         <h1 className="text-2xl font-bold">スタッフを追加</h1>
       </div>
       <form
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit(onSubmit, (errors) => {
+          console.log(errors);
+        })}
         className="flex flex-col space-y-6"
       >
         <div>
@@ -180,9 +185,9 @@ export default function StaffCreatePage() {
           <Label htmlFor="age" className="font-bold">
             年齢
           </Label>
-          <Input {...register("age")} />
-          {errors.name && (
-            <p className="text-sm mt-1 text-red-500">{errors.name.message}</p>
+          <Input {...register("age", { valueAsNumber: true })} type="number" />
+          {errors.age && (
+            <p className="text-sm mt-1 text-red-500">{errors.age.message}</p>
           )}
         </div>
         <div>
@@ -211,7 +216,10 @@ export default function StaffCreatePage() {
           <Label htmlFor="extraCharge" className="font-bold">
             指名料金
           </Label>
-          <Input {...register("extraCharge")} />
+          <Input
+            {...register("extraCharge", { valueAsNumber: true })}
+            type="number"
+          />
         </div>
         <div>
           <Label htmlFor="description" className="font-bold">
@@ -322,7 +330,11 @@ export default function StaffCreatePage() {
           </div>
         </div>
         <div className="flex justify-end gap-4">
-          <Button variant="outline" className="w-fit">
+          <Button
+            variant="outline"
+            className="w-fit"
+            onClick={() => router.push(`/dashboard/${id}/staff`)}
+          >
             キャンセル
           </Button>
           <Button

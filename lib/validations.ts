@@ -127,7 +127,7 @@ export const customerSchema = z.object({
 });
 
 export const staffSchema = z.object({
-  salonId: z.string({ message: "サロンIDが空です" }),
+  salonId: z.string({ message: "サロンIDが空です" }).optional(),
   name: z.string().min(1, { message: "お名前を入力してください" }),
   age: z.number().optional(),
   gender: z.enum(["全て", "男性", "女性"]).optional(),
@@ -138,11 +138,10 @@ export const staffSchema = z.object({
 });
 
 export const menuSchema = z.object({
-  salonId: z.string({ message: "サロンIDが空です" }),
-  name: z.string().min(1, "メニュー名を入力してください"),
-  price: z.string().min(1, "料金を入力してください"),
-  salePrice: z.string().optional(),
-  timeToMin: z.string().min(1, "所要時間を入力してください"),
+  name: z.string().min(1, { message: "メニュー名を入力してください" }),
+  price: z.number().min(1, { message: "料金を入力してください" }),
+  salePrice: z.number().optional(),
+  timeToMin: z.string().min(1, { message: "所要時間を入力してください" }),
   imgFileId: z.string().optional(),
   availableStaffIds: z.array(z.string()).optional(),
   description: z.string().optional(),

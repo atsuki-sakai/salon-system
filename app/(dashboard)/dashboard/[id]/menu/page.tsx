@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { FileImage } from "@/components/common";
 import Link from "next/link";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -10,10 +10,6 @@ import { useParams } from "next/navigation";
 import { Id } from "@/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { toast } from "sonner";
-
-// デフォルトのメニュー画像
-const DEFAULT_MENU_IMAGE =
-  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=4&w=256&h=256&q=60";
 
 export default function MenuPage() {
   const { id } = useParams();
@@ -74,14 +70,10 @@ export default function MenuPage() {
             key={menu._id}
             className="col-span-1 flex flex-col divide-y divide-gray-200 rounded-lg bg-white border border-gray-100 shadow-sm"
           >
-            <div className="flex  flex-col p-4">
-              <Image
-                alt={menu.name}
-                src={menu.imgFileId || DEFAULT_MENU_IMAGE}
-                className="mx-auto h-[250px] w-full shrink-0 object-cover"
-                width={128}
-                height={128}
-              />
+            <div className="flex flex-col p-4">
+              <div className="flex justify-center">
+                <FileImage fileId={menu.imgFileId} size={128} />
+              </div>
               <h3 className="mt-6 text-xl font-bold text-gray-900">
                 {menu.name}
               </h3>
@@ -117,13 +109,16 @@ export default function MenuPage() {
             <div>
               <div className="px-4 py-2 ">
                 <p className="text-xs">対応可能スタッフ</p>
-                <div className="flex text-sm text-gray-500 tracking-wide font-bold py-2 h-[100px] overflow-y-hidden">
+                <div className="flex text-sm text-gray-500 tracking-wide font-bold py-2 h-fit overflow-y-hidden">
                   {menu.availableStaffIds.map((staffId) => {
                     const staff = staffs?.find(
                       (staff) => staff._id === staffId
                     );
                     return staff ? (
-                      <span key={staffId} className={`mr-2 whitespace-nowrap`}>
+                      <span
+                        key={staffId}
+                        className={`mr-2 whitespace-nowrap text-sm border border-gray-200 rounded-md px-2 py-1 bg-orange-100`}
+                      >
                         {staff.name}
                       </span>
                     ) : null;
@@ -143,9 +138,9 @@ export default function MenuPage() {
                 </p>
               </div>
             </div>
-            <div className="px-4 py-2 h-[220px] overflow-y-hidden">
+            <div className="px-4 py-2 h-fit min-h-[100px] overflow-y-hidden">
               <p className="text-sm text-gray-500">
-                {menu.description?.slice(0, 120) + "..."}
+                {menu.description?.slice(0, 60) + "..."}
               </p>
             </div>
             <div>
