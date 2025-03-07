@@ -25,7 +25,7 @@ export function formatTimestampToDate(timestamp: number): string {
 }
 
 
-const SECRET_KEY = process.env.COOKIE_SECRET_KEY!; // 適切な秘密鍵を設定してください
+const SECRET_KEY = process.env.NEXT_PUBLIC_COOKIE_SECRET_KEY!; // 適切な秘密鍵を設定してください
 
 export const setCookie = (name: string, value: string, days: number) => {
   // 値を暗号化する

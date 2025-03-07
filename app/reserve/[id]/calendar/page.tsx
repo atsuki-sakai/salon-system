@@ -21,10 +21,10 @@ import { Id } from "@/convex/_generated/dataModel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, ClockIcon, UserIcon } from "lucide-react";
+import { CalendarIcon, ClockIcon } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { useMutation } from "convex/react";
-import { ja, se } from "date-fns/locale";
+import { ja } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import { Doc } from "@/convex/_generated/dataModel";
 import { getCookie } from "@/lib/utils";
@@ -88,6 +88,7 @@ export default function ReservationTimePicker() {
   const [loginCustomer, setLoginCustomer] = useState<Doc<"customer"> | null>(
     null
   );
+  const [disableDates, setDisableDates] = useState<Date[]>([]);
   const [availableStaffs, setAvailableStaffs] = useState<Doc<"staff">[]>([]);
 
   // 今後14日間の日付を配列で作成
@@ -95,6 +96,15 @@ export default function ReservationTimePicker() {
     const date = addDays(new Date(), i);
     return date;
   });
+
+  useEffect(() => {
+    if (selectedStaff) {
+      const holidays =
+        selectedStaff.regularHolidays?.map((dateStr) => new Date(dateStr)) ||
+        [];
+      setDisableDates(holidays);
+    }
+  }, [selectedStaff]);
 
   useEffect(() => {
     // 新しいメニューまたはスタッフが選択されたら選択済みの時間枠をリセット
@@ -234,7 +244,8 @@ export default function ReservationTimePicker() {
   )?.timeToMin;
 
   useEffect(() => {
-    const customerData = getCookie("customerData");
+    const customerData = getCookie("salonapp-customer-cookie");
+    console.log("customerData", customerData);
     if (!salonId) return;
     if (customerData) {
       console.log(customerData);
@@ -401,8 +412,13 @@ export default function ReservationTimePicker() {
                       selected={selectedDate}
                       onSelect={handleDateSelect}
                       disabled={(date) => {
-                        // 今日より前の日付は選択不可
-                        return date < new Date(new Date().setHours(0, 0, 0, 0));
+                        const today = new Date(new Date().setHours(0, 0, 0, 0));
+                        const isPast = date < today;
+                        const isHoliday = disableDates.some(
+                          (disabledDate) =>
+                            disabledDate.toDateString() === date.toDateString()
+                        );
+                        return isPast || isHoliday;
                       }}
                       locale={ja}
                       initialFocus
@@ -410,26 +426,34 @@ export default function ReservationTimePicker() {
                   </PopoverContent>
                 </Popover>
 
-                {/* 日付クイック選択ボタン */}
                 <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                  {nextTwoWeeks.slice(0, 5).map((date, index) => (
-                    <Button
-                      key={index}
-                      variant={"outline"}
-                      size="sm"
-                      onClick={() => setSelectedDate(date)}
-                      disabled={!isStepTwoComplete}
-                      className={`relative text-sm h-10 ${
-                        selectedDate &&
-                        format(selectedDate, "yyyy-MM-dd") ===
-                          format(date, "yyyy-MM-dd")
-                          ? "bg-indigo-50 text-indigo-800 border-indigo-200"
-                          : "bg-white text-gray-800 border-gray-200"
-                      } ${!isStepTwoComplete && "opacity-50 cursor-not-allowed"}`}
-                    >
-                      {format(date, "MM/dd（E）", { locale: ja })}
-                    </Button>
-                  ))}
+                  {nextTwoWeeks
+                    .filter(
+                      (date) =>
+                        !disableDates.some(
+                          (disabledDate) =>
+                            disabledDate.toDateString() === date.toDateString()
+                        )
+                    )
+                    .slice(0, 6)
+                    .map((date, index) => (
+                      <Button
+                        key={index}
+                        variant={"outline"}
+                        size="sm"
+                        onClick={() => setSelectedDate(date)}
+                        disabled={!isStepTwoComplete}
+                        className={`relative text-sm h-10 ${
+                          selectedDate &&
+                          format(selectedDate, "yyyy-MM-dd") ===
+                            format(date, "yyyy-MM-dd")
+                            ? "bg-indigo-50 text-indigo-800 border-indigo-200"
+                            : "bg-white text-gray-800 border-gray-200"
+                        } ${!isStepTwoComplete && "opacity-50 cursor-not-allowed"}`}
+                      >
+                        {format(date, "MM/dd（E）", { locale: ja })}
+                      </Button>
+                    ))}
                 </div>
               </div>
             </div>
@@ -483,11 +507,14 @@ export default function ReservationTimePicker() {
                                 {slot.startTime.split("T")[1]}〜
                                 {slot.endTime.split("T")[1]}
                               </span>
-                              <span className="text-xs mt-1">
+                              <span className="text-sm mt-1">
                                 {selectedMenuName}
-                                {" / "}
-                                {selectedMenuDuration}分
                               </span>
+                              <div className="w-full flex items-end justify-end gap-2">
+                                <span className="inline-block text-xs">
+                                  {selectedMenuDuration}分
+                                </span>
+                              </div>
                               <div className="flex items-center gap-2">
                                 <p className="relative text-xs mt-1 text-green-700 font-bold ">
                                   <span className="absolute -top-2.5 -left-2 inline-block text-xs scale-50">
@@ -496,7 +523,7 @@ export default function ReservationTimePicker() {
                                   <span className="text-xs mt-1 text-green-700 font-bold">
                                     {selectedMenu?.salePrice ? (
                                       <div className="flex flex-col items-end">
-                                        <span className="inline-block line-through text-gray-500 text-xs scale-75 -mr-1">
+                                        <span className="inline-block line-through text-gray-500 text-xs scale-50 -mr-2">
                                           ¥
                                           {selectedMenu?.price.toLocaleString()}
                                         </span>
@@ -537,8 +564,14 @@ export default function ReservationTimePicker() {
                 ) : (
                   <div className="rounded-lg bg-gray-50 p-4 text-center text-gray-500">
                     <ClockIcon className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-                    <p>選択した日の利用可能な時間枠が見つかりません</p>
-                    <p className="text-sm mt-1">他の日を選択してみてください</p>
+                    <p className="text-sm font-bold">
+                      {isStepOneComplete && isStepTwoComplete
+                        ? "利用可能な時間枠が見つかりません"
+                        : "予約日を選択してください"}
+                    </p>
+                    <p className="text-xs mt-1">
+                      スタッフや日付を変更して再度ご確認ください.
+                    </p>
                   </div>
                 )
               ) : (
@@ -558,7 +591,7 @@ export default function ReservationTimePicker() {
 
         {/* アラートダイアログ（選択した予約情報の確認） */}
         <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <AlertDialogContent className="max-h-screen max-w-md">
+          <AlertDialogContent className="max-h-screen max-w-md overflow-y-auto">
             <AlertDialogHeader>
               <AlertDialogTitle className="text-xl font-bold text-slate-800">
                 予約内容の確認
