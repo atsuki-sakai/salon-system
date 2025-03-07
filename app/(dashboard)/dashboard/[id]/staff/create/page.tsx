@@ -10,7 +10,7 @@ import { useParams } from "next/navigation";
 import { z } from "zod";
 import Link from "next/link";
 import { ArrowLeftIcon, CalendarIcon } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { format, isSameDay, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
 import { useRouter } from "next/navigation";
@@ -43,6 +43,7 @@ export default function StaffCreatePage() {
   // 休暇日の状態を管理
   const [vacationDates, setVacationDates] = useState<Date[]>([]);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const imageFileRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
@@ -53,7 +54,7 @@ export default function StaffCreatePage() {
   } = useZodForm(staffSchema);
 
   const selectedGender = watch("gender");
-  const watchedHolidays = watch("holidays");
+  const watchedHolidays = watch("regularHolidays");
 
   // watchedHolidays が falsy の場合は EMPTY_ARRAY を返す
   const holidays = useMemo(
@@ -74,7 +75,7 @@ export default function StaffCreatePage() {
   // vacationDates が変更されたら holidays フィールドを更新
   useEffect(() => {
     const formattedDates = vacationDates.map(formatDateToString);
-    setValue("holidays", formattedDates);
+    setValue("regularHolidays", formattedDates);
   }, [vacationDates, setValue]);
 
   // holidays が初期値として設定されている場合、vacationDates を更新
@@ -85,21 +86,47 @@ export default function StaffCreatePage() {
     }
   }, [holidays, vacationDates]);
 
-  const createStaff = useMutation(api.staffs.createStaff);
+  const addStaff = useMutation(api.staff.add);
+  const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
 
-  const onSubmit = (data: z.infer<typeof staffSchema>) => {
+  const onSubmit = async (data: z.infer<typeof staffSchema>) => {
     try {
-      createStaff({
+      let imageFileId = "";
+      if (
+        imageFileRef.current?.files &&
+        imageFileRef.current.files.length > 0
+      ) {
+        const file = imageFileRef.current.files[0];
+        const maxSize = 2 * 1024 * 1024;
+        if (file && file.size > maxSize) {
+          toast.error(
+            "ファイルサイズが大きすぎます。2MB以下の画像をアップロードしてください。"
+          );
+          return;
+        }
+        console.log(file);
+        const uploadUrl = await generateUploadUrl();
+        console.log(uploadUrl);
+        const results = await fetch(uploadUrl, {
+          method: "POST",
+          body: file,
+          headers: { "Content-Type": file ? file.type : "image/png" },
+        });
+        console.log(results);
+        const { storageId } = await results.json();
+        imageFileId = storageId;
+      }
+      addStaff({
         name: data.name,
-        email: data.email,
-        phone: data.phone,
-        gender: data.gender || "",
+        age: data.age,
+        gender: data.gender || "全て",
         description: data.description || "",
-        image: data.image || "",
+        imgFileId: imageFileId,
         salonId: id,
-        holidays: data.holidays || [],
+        extraCharge: data.extraCharge || 0,
+        regularHolidays: data.regularHolidays || [],
       });
-      console.log(data.holidays);
+      console.log(data.regularHolidays);
       console.log(data);
       router.push(`/dashboard/${id}/staff`);
       toast.success("スタッフを追加しました");
@@ -124,16 +151,36 @@ export default function StaffCreatePage() {
         onSubmit={handleSubmit(onSubmit)}
         className="flex flex-col space-y-6"
       >
-        {/* <div>
-          <Label htmlFor="image">画像</Label>
-          <Input {...register("image")} type="file" />
-          {errors.image && <p>{errors.image.message}</p>}
-        </div> */}
+        <div>
+          <Label htmlFor="imageFile">
+            スタッフ画像 <br />
+            <span className="text-xs text-gray-500">
+              2MB以下の画像をアップロードしてください
+            </span>
+          </Label>
+          <Input
+            {...register("imgFileId")}
+            type="file"
+            ref={imageFileRef}
+            accept="image/*"
+          />
+
+          {errors.imgFileId && <p>{errors.imgFileId.message}</p>}
+        </div>
         <div>
           <Label htmlFor="name" className="font-bold">
             スタッフ名
           </Label>
           <Input {...register("name")} />
+          {errors.name && (
+            <p className="text-sm mt-1 text-red-500">{errors.name.message}</p>
+          )}
+        </div>
+        <div>
+          <Label htmlFor="age" className="font-bold">
+            年齢
+          </Label>
+          <Input {...register("age")} />
           {errors.name && (
             <p className="text-sm mt-1 text-red-500">{errors.name.message}</p>
           )}
@@ -161,20 +208,10 @@ export default function StaffCreatePage() {
           )}
         </div>
         <div>
-          <Label htmlFor="email" className="font-bold">
-            メールアドレス
+          <Label htmlFor="extraCharge" className="font-bold">
+            指名料金
           </Label>
-          <Input {...register("email")} />
-          {errors.email && (
-            <p className="text-sm mt-1 text-red-500">{errors.email.message}</p>
-          )}
-        </div>
-        <div>
-          <Label htmlFor="phone">電話番号</Label>
-          <Input {...register("phone")} />
-          {errors.phone && (
-            <p className="text-sm mt-1 text-red-500">{errors.phone.message}</p>
-          )}
+          <Input {...register("extraCharge")} />
         </div>
         <div>
           <Label htmlFor="description" className="font-bold">
@@ -231,7 +268,7 @@ export default function StaffCreatePage() {
                     size="sm"
                     onClick={() => {
                       setVacationDates([]);
-                      setValue("holidays", []);
+                      setValue("regularHolidays", []);
                     }}
                     className="text-destructive hover:text-destructive"
                   >
@@ -270,7 +307,7 @@ export default function StaffCreatePage() {
                             const newHolidays = holidays.filter(
                               (d) => d !== dateStr
                             );
-                            setValue("holidays", newHolidays);
+                            setValue("regularHolidays", newHolidays);
                           }}
                           className="text-gray-500 hover:text-red-500 w-4 h-4 flex items-center justify-center rounded-full"
                         >

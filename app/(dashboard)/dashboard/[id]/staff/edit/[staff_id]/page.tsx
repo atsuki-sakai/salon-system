@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -10,6 +10,7 @@ import { staffSchema } from "@/lib/validations";
 import { z } from "zod";
 import { ArrowLeftIcon, CalendarIcon } from "lucide-react";
 import Link from "next/link";
+import { FileImage } from "@/components/common";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
@@ -42,15 +43,15 @@ export default function EditStaffPage() {
   const router = useRouter();
 
   // スタッフ情報の取得
-  const staff = useQuery(api.staffs.getStaff, {
-    id: staff_id as Id<"staffs">,
+  const staff = useQuery(api.staff.getStaff, {
+    id: staff_id as Id<"staff">,
   });
 
   // 休暇日の状態管理
   const [vacationDates, setVacationDates] = useState<Date[]>([]);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isFormInitialized, setIsFormInitialized] = useState(false);
-
+  const imageFileRef = useRef<HTMLInputElement>(null);
   // フォームの初期化
   const {
     register,
@@ -62,7 +63,7 @@ export default function EditStaffPage() {
   } = useZodForm(staffSchema);
 
   const selectedGender = watch("gender") as "男性" | "女性" | undefined;
-  const watchedHolidays = watch("holidays");
+  const watchedHolidays = watch("regularHolidays");
   // watchedHolidays が falsy の場合は EMPTY_ARRAY を返す
   const holidays = useMemo(
     () => (watchedHolidays ? watchedHolidays : EMPTY_ARRAY),
@@ -89,20 +90,19 @@ export default function EditStaffPage() {
     if (staff && !isFormInitialized) {
       reset({
         name: staff.name || "",
-        email: staff.email || "",
-        phone: staff.phone || "",
-        gender: staff.gender as "男性" | "女性" | undefined,
+        age: staff.age || 0,
+        gender: staff.gender as "全て" | "男性" | "女性" | undefined,
         description: staff.description || "",
-        image: staff.image || "",
-        holidays: staff.holidays || [],
+        imgFileId: staff.imgFileId || "",
+        regularHolidays: staff.regularHolidays || [],
       });
 
       setValue("gender", staff.gender as "男性" | "女性" | undefined);
 
       // 休暇日の初期化
-      if (staff.holidays) {
+      if (staff.regularHolidays) {
         try {
-          const dates = staff.holidays.map(parseDateString);
+          const dates = staff.regularHolidays.map(parseDateString);
           setVacationDates(dates);
         } catch (error) {
           console.error("休暇日の変換エラー:", error);
@@ -117,18 +117,18 @@ export default function EditStaffPage() {
   useEffect(() => {
     if (vacationDates.length > 0) {
       const formattedDates = vacationDates.map(formatDateToString);
-      setValue("holidays", formattedDates);
+      setValue("regularHolidays", formattedDates);
     }
   }, [vacationDates, setValue]);
 
   // ⭐ useMutation をコンポーネントのトップレベルに移動
-  const deleteStaff = useMutation(api.staffs.deleteStaff);
+  const deleteStaff = useMutation(api.staff.trash);
 
   const handleDeleteStaff = async () => {
     const alert = await confirm("本当にスタッフを削除しますか？");
     if (alert) {
       await deleteStaff({
-        id: staff_id as Id<"staffs">,
+        id: staff_id as Id<"staff">,
       });
       toast.success("スタッフを削除しました");
       router.push(`/dashboard/${staff?.salonId}/staff`);
@@ -136,21 +136,20 @@ export default function EditStaffPage() {
   };
 
   // スタッフ更新ミューテーション
-  const updateStaff = useMutation(api.staffs.updateStaff);
+  const updateStaff = useMutation(api.staff.update);
 
   // フォーム送信ハンドラ
   const onSubmit = async (data: z.infer<typeof staffSchema>) => {
     try {
       await updateStaff({
-        id: staff_id as Id<"staffs">,
+        id: staff_id as Id<"staff">,
         name: data.name,
-        email: data.email,
-        phone: data.phone,
-        gender: data.gender || "",
+        age: data.age,
+        gender: data.gender || "全て",
         description: data.description || "",
-        image: data.image || "",
+        imgFileId: data.imgFileId || "",
         salonId: staff?.salonId || "",
-        holidays: data.holidays || [],
+        regularHolidays: data.regularHolidays || [],
       });
 
       toast.success("スタッフ情報を更新しました");
@@ -183,6 +182,25 @@ export default function EditStaffPage() {
         onSubmit={handleSubmit(onSubmit)}
         className="flex flex-col space-y-6"
       >
+        <div className="flex gap-4">
+          <FileImage fileId={staff.imgFileId} alt={staff.name} size={100} />
+          <div>
+            <Label htmlFor="imageFile">
+              スタッフ画像 <br />
+              <span className="text-xs text-gray-500">
+                2MB以下の画像をアップロードしてください
+              </span>
+            </Label>
+            <Input
+              {...register("imgFileId")}
+              type="file"
+              ref={imageFileRef}
+              accept="image/*"
+            />
+
+            {errors.imgFileId && <p>{errors.imgFileId.message}</p>}
+          </div>
+        </div>
         <div>
           <Label htmlFor="name" className="font-bold">
             スタッフ名
@@ -218,16 +236,18 @@ export default function EditStaffPage() {
           <Label htmlFor="email" className="font-bold">
             メールアドレス
           </Label>
-          <Input {...register("email")} />
-          {errors.email && (
-            <p className="text-sm mt-1 text-red-500">{errors.email.message}</p>
+          <Input {...register("age")} />
+          {errors.age && (
+            <p className="text-sm mt-1 text-red-500">{errors.age.message}</p>
           )}
         </div>
         <div>
-          <Label htmlFor="phone">電話番号</Label>
-          <Input {...register("phone")} />
-          {errors.phone && (
-            <p className="text-sm mt-1 text-red-500">{errors.phone.message}</p>
+          <Label htmlFor="extraCharge">指名料金</Label>
+          <Input {...register("extraCharge")} />
+          {errors.extraCharge && (
+            <p className="text-sm mt-1 text-red-500">
+              {errors.extraCharge.message}
+            </p>
           )}
         </div>
         <div>
@@ -284,7 +304,7 @@ export default function EditStaffPage() {
                     size="sm"
                     onClick={() => {
                       setVacationDates([]);
-                      setValue("holidays", []);
+                      setValue("regularHolidays", []);
                     }}
                     className="text-destructive hover:text-destructive"
                   >
@@ -334,7 +354,7 @@ export default function EditStaffPage() {
                               const newHolidays = holidays.filter(
                                 (d) => d !== dateStr
                               );
-                              setValue("holidays", newHolidays);
+                              setValue("regularHolidays", newHolidays);
                             }}
                             className="text-gray-500 hover:text-red-500 w-4 h-4 flex items-center justify-center rounded-full"
                           >

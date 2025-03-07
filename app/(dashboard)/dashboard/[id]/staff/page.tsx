@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { FileImage } from "@/components/common";
 import Link from "next/link";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -16,33 +16,21 @@ import {
 } from "@/components/ui/tooltip";
 import { CalendarIcon, PencilIcon } from "lucide-react";
 import { useParams } from "next/navigation";
-import { Id } from "@/convex/_generated/dataModel";
-// デフォルトのスタッフ画像
-const DEFAULT_STAFF_IMAGE =
-  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=4&w=256&h=256&q=60";
+import { Id, Doc } from "@/convex/_generated/dataModel";
 
 // 日付関連のユーティリティ関数を追加
 const getTodayISOString = () => new Date().toISOString().split("T")[0];
 
-// 型定義の追加
-type Staff = {
-  _id: string;
-  name: string;
-  gender?: string;
-  email: string;
-  phone?: string;
-  image?: string;
-  menuIds?: string[];
-  holidays?: string[];
-};
-
 export default function StaffPage() {
   const { id } = useParams();
-  const staffs = useQuery(api.staffs.getStaffsBySalonId, {
-    salonId: id as Id<"users">,
+  const staffs = useQuery(api.staff.getAllStaffBySalonId, {
+    salonId: id as Id<"salon">,
   });
-  const menus = useQuery(api.menus.getMenusBySalonId, {
-    salonId: id as Id<"users">,
+  const menus = useQuery(api.menu.getMenusBySalonId, {
+    salonId: id as Id<"salon">,
+  });
+  const getUrl = useQuery(api.storage.getUrl, {
+    storageId: "kg20q6t04xp7q2dte306chtscx7bmz1f",
   });
 
   // 休暇日の詳細表示状態を管理する
@@ -63,11 +51,12 @@ export default function StaffPage() {
   };
 
   // 休暇日の判定を関数として抽出
-  const isOnHoliday = (staff: Staff) => {
+  const isOnHoliday = (staff: Doc<"staff">) => {
     const today = getTodayISOString();
-    return staff.holidays?.some((holiday) => holiday === today) ?? false;
+    return staff.regularHolidays?.some((holiday) => holiday === today) ?? false;
   };
 
+  console.log(getUrl);
   return (
     <div className="px-4 sm:px-6 lg:px-8">
       {/* ヘッダー部分 */}
@@ -130,7 +119,7 @@ export default function StaffPage() {
               <tbody className="divide-y divide-gray-200 bg-white">
                 {staffs.map((staff) => {
                   // 休暇日の処理
-                  const holidays = parseHolidays(staff.holidays);
+                  const holidays = parseHolidays(staff.regularHolidays);
                   const nextHolidays = holidays
                     .filter((date) => date >= new Date())
                     .sort((a, b) => a.getTime() - b.getTime())
@@ -139,7 +128,7 @@ export default function StaffPage() {
                   // スタッフが対応しているメニューを表示用に整形
                   // const menuIds = staff.menuIds || [];
                   const availableMenus = menus?.filter(
-                    (menu) => menu.staffIds?.includes(staff._id) ?? []
+                    (menu) => menu.availableStaffIds?.includes(staff._id) ?? []
                   );
 
                   return (
@@ -147,12 +136,9 @@ export default function StaffPage() {
                       <td className="py-5 pr-3 pl-4 text-sm whitespace-nowrap sm:pl-0">
                         <div className="flex items-center">
                           <div className="size-11 shrink-0">
-                            <Image
-                              src={staff.image || DEFAULT_STAFF_IMAGE}
+                            <FileImage
+                              fileId={staff.imgFileId}
                               alt={staff.name}
-                              width={44}
-                              height={44}
-                              className="size-11 rounded-full object-cover"
                             />
                           </div>
                           <div className="ml-4">
@@ -163,10 +149,10 @@ export default function StaffPage() {
                               </span>
                             </div>
                             <div className="mt-1 text-gray-500">
-                              {staff.email}
+                              {staff.age}
                             </div>
                             <div className="mt-1 text-gray-500">
-                              {staff.phone}
+                              {staff.extraCharge}
                             </div>
                           </div>
                         </div>
