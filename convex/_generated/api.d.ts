@@ -13,13 +13,14 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
-import type * as customers from "../customers.js";
-import type * as menus from "../menus.js";
-import type * as reservations from "../reservations.js";
-import type * as settings from "../settings.js";
-import type * as staffs from "../staffs.js";
-import type * as subscriptions from "../subscriptions.js";
-import type * as users from "../users.js";
+import type * as customer from "../customer.js";
+import type * as menu from "../menu.js";
+import type * as reservation from "../reservation.js";
+import type * as salon from "../salon.js";
+import type * as salon_config from "../salon_config.js";
+import type * as staff from "../staff.js";
+import type * as storage from "../storage.js";
+import type * as subscription from "../subscription.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -30,13 +31,14 @@ import type * as users from "../users.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
-  customers: typeof customers;
-  menus: typeof menus;
-  reservations: typeof reservations;
-  settings: typeof settings;
-  staffs: typeof staffs;
-  subscriptions: typeof subscriptions;
-  users: typeof users;
+  customer: typeof customer;
+  menu: typeof menu;
+  reservation: typeof reservation;
+  salon: typeof salon;
+  salon_config: typeof salon_config;
+  staff: typeof staff;
+  storage: typeof storage;
+  subscription: typeof subscription;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,
