@@ -12,7 +12,7 @@ import { ArrowLeftIcon } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
-import { Id } from "@/convex/_generated/dataModel";
+import { Id, Doc } from "@/convex/_generated/dataModel";
 import { Loading } from "@/components/common";
 import {
   Select,
@@ -37,9 +37,10 @@ export default function MenuEditPage() {
 
   const handleStaffSelect = (staffId: string) => {
     if (staffId === "all") {
-      const allStaffIds = salonStaffs?.map((staff) => staff._id) || [];
+      const allStaffIds =
+        salonStaffs?.map((staff: Doc<"staff">) => staff._id) || [];
       setSelectedStaffIds(allStaffIds);
-      setValue("staffIds", allStaffIds);
+      setValue("availableStaffIds", allStaffIds);
       setSelectValue(""); // 内部状態をリセット
     } else {
       if (selectedStaffIds.includes(staffId)) {
@@ -48,20 +49,20 @@ export default function MenuEditPage() {
       }
       const newStaffIds = [...selectedStaffIds, staffId];
       setSelectedStaffIds(newStaffIds);
-      setValue("staffIds", newStaffIds);
+      setValue("availableStaffIds", newStaffIds);
       setSelectValue(""); // 選択後にリセット
     }
   };
 
-  const menu = useQuery(api.menus.getMenu, {
-    id: menu_id as Id<"menus">,
+  const menu = useQuery(api.menu.getMenu, {
+    id: menu_id as Id<"menu">,
   });
 
   // 初期選択スタッフの詳細情報取得（参考用）
 
   // サロン内の全スタッフ情報を取得
-  const salonStaffs = useQuery(api.staffs.getStaffsBySalonId, {
-    salonId: id as Id<"users">,
+  const salonStaffs = useQuery(api.staff.getAllStaffBySalonId, {
+    salonId: id as Id<"salon">,
   });
 
   const {
@@ -79,36 +80,35 @@ export default function MenuEditPage() {
         price: menu.price.toString(),
         salePrice: menu.salePrice?.toString() || "",
         timeToMin: menu.timeToMin.toString(),
-        image: menu.image || "",
+        imgFileId: menu.imgFileId || "",
         description: menu.description || "",
         targetGender: menu.targetGender || "全て",
         couponId: menu.couponId || "",
       });
-      setSelectedStaffIds(menu.staffIds || []);
+      setSelectedStaffIds(menu.availableStaffIds || []);
       setSelectedTargetGender(menu.targetGender || "全て");
     }
   }, [menu, reset]);
 
-  const updateMenu = useMutation(api.menus.updateMenu);
-  const deleteMenu = useMutation(api.menus.deleteMenu);
+  const updateMenu = useMutation(api.menu.update);
+  const deleteMenu = useMutation(api.menu.trash);
 
   const removeStaff = (staffId: string) => {
     const newStaffIds = selectedStaffIds.filter((id) => id !== staffId);
     setSelectedStaffIds(newStaffIds);
-    setValue("staffIds", newStaffIds);
+    setValue("availableStaffIds", newStaffIds);
   };
 
   const onSubmit = async (data: z.infer<typeof menuSchema>) => {
     try {
       await updateMenu({
-        id: menu_id as Id<"menus">,
+        id: menu_id as Id<"menu">,
         name: data.name,
         price: Number(data.price),
         salePrice: data.salePrice ? Number(data.salePrice) : undefined,
         timeToMin: Number(data.timeToMin),
-        image: data.image || "",
-        staffIds: selectedStaffIds,
-        salonId: id as string,
+        imgFileId: data.imgFileId || "",
+        availableStaffIds: selectedStaffIds,
         description: data.description || "",
         couponId: data.couponId || "",
         targetGender: data.targetGender || "全て",
@@ -125,7 +125,7 @@ export default function MenuEditPage() {
     if (confirm("本当にこのメニューを削除しますか？")) {
       try {
         await deleteMenu({
-          id: menu_id as Id<"menus">,
+          id: menu_id as Id<"menu">,
         });
         toast.success("メニューを削除しました");
         router.push(`/dashboard/${id}/menu`);
@@ -251,14 +251,16 @@ export default function MenuEditPage() {
           )}
         </div>
         <div>
-          <Label htmlFor="image">メニュー画像（任意）</Label>
+          <Label htmlFor="imageFile">メニュー画像（任意）</Label>
           <Input
             type="text"
-            {...register("image")}
+            {...register("imgFileId")}
             placeholder="画像URLを入力（任意）"
           />
-          {errors.image && (
-            <p className="text-sm mt-1 text-red-500">{errors.image.message}</p>
+          {errors.imgFileId && (
+            <p className="text-sm mt-1 text-red-500">
+              {errors.imgFileId.message}
+            </p>
           )}
         </div>
         <div>
@@ -310,9 +312,9 @@ export default function MenuEditPage() {
               );
             })}
           </div>
-          {errors.staffIds && (
+          {errors.availableStaffIds && (
             <p className="text-sm mt-1 text-red-500">
-              {errors.staffIds.message}
+              {errors.availableStaffIds.message}
             </p>
           )}
         </div>

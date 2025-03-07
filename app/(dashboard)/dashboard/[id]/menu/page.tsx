@@ -17,19 +17,19 @@ const DEFAULT_MENU_IMAGE =
 
 export default function MenuPage() {
   const { id } = useParams();
-  const menus = useQuery(api.menus.getMenusBySalonId, {
-    salonId: id as Id<"users">,
+  const menus = useQuery(api.menu.getMenusBySalonId, {
+    salonId: id as Id<"salon">,
   });
-  const deleteMenu = useMutation(api.menus.deleteMenu);
-  const staffs = useQuery(api.staffs.getStaffsBySalonId, {
-    salonId: id as Id<"users">,
+  const deleteMenu = useMutation(api.menu.trash);
+  const staffs = useQuery(api.staff.getAllStaffBySalonId, {
+    salonId: id as Id<"salon">,
   });
 
   if (!menus) {
     return <Loading />;
   }
 
-  const handleDeleteMenu = async (menuId: Id<"menus">) => {
+  const handleDeleteMenu = async (menuId: Id<"menu">) => {
     const alert = await confirm("本当にメニューを削除しますか？");
     if (alert) {
       try {
@@ -77,7 +77,7 @@ export default function MenuPage() {
             <div className="flex  flex-col p-4">
               <Image
                 alt={menu.name}
-                src={menu.image || DEFAULT_MENU_IMAGE}
+                src={menu.imgFileId || DEFAULT_MENU_IMAGE}
                 className="mx-auto h-[250px] w-full shrink-0 object-cover"
                 width={128}
                 height={128}
@@ -118,7 +118,7 @@ export default function MenuPage() {
               <div className="px-4 py-2 ">
                 <p className="text-xs">対応可能スタッフ</p>
                 <div className="flex text-sm text-gray-500 tracking-wide font-bold py-2 h-[100px] overflow-y-hidden">
-                  {menu.staffIds.map((staffId) => {
+                  {menu.availableStaffIds.map((staffId) => {
                     const staff = staffs?.find(
                       (staff) => staff._id === staffId
                     );
@@ -128,7 +128,7 @@ export default function MenuPage() {
                       </span>
                     ) : null;
                   })}
-                  {menu.staffIds.length === 0 && (
+                  {menu.availableStaffIds.length === 0 && (
                     <span className="text-gray-500">未設定</span>
                   )}
                 </div>

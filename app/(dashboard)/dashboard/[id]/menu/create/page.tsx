@@ -37,17 +37,17 @@ export default function MenuCreatePage() {
     setValue,
   } = useZodForm(menuSchema);
 
-  const createMenu = useMutation(api.menus.createMenu);
-  const salonStaffs = useQuery(api.users.getStaffsBySalonId, {
-    salonId: id as Id<"users">,
+  const createMenu = useMutation(api.menu.add);
+  const salonStaffs = useQuery(api.staff.getAllStaffBySalonId, {
+    salonId: id as Id<"salon">,
   });
 
   const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
 
   console.log("salonStaffs", salonStaffs);
 
-  const menus = useQuery(api.menus.getMenusBySalonId, {
-    salonId: id as Id<"users">,
+  const menus = useQuery(api.menu.getMenusBySalonId, {
+    salonId: id as Id<"salon">,
   });
 
   if (!menus) {
@@ -58,7 +58,7 @@ export default function MenuCreatePage() {
     if (staffId === "all") {
       const allStaffIds = salonStaffs?.map((staff) => staff._id) || [];
       setSelectedStaffIds(allStaffIds);
-      setValue("staffIds", allStaffIds);
+      setValue("availableStaffIds", allStaffIds);
     } else {
       if (selectedStaffIds.includes(staffId)) {
         toast.error("既に選択されているスタッフです");
@@ -66,14 +66,14 @@ export default function MenuCreatePage() {
       }
       const newStaffIds = [...selectedStaffIds, staffId];
       setSelectedStaffIds(newStaffIds);
-      setValue("staffIds", newStaffIds);
+      setValue("availableStaffIds", newStaffIds);
     }
   };
 
   const removeStaff = (staffId: string) => {
     const newStaffIds = selectedStaffIds.filter((id) => id !== staffId);
     setSelectedStaffIds(newStaffIds);
-    setValue("staffIds", newStaffIds);
+    setValue("availableStaffIds", newStaffIds);
   };
 
   const onSubmit = async (data: z.infer<typeof menuSchema>) => {
@@ -86,8 +86,8 @@ export default function MenuCreatePage() {
         name: data.name,
         price: Number(data.price),
         timeToMin: Number(data.timeToMin),
-        image: "",
-        staffIds: selectedStaffIds,
+        imgFileId: data.imgFileId || "",
+        availableStaffIds: selectedStaffIds,
         salonId: id,
         description: data.description || "",
         couponId: data.couponId || "",
@@ -272,21 +272,23 @@ export default function MenuCreatePage() {
               );
             })}
           </div>
-          {errors.staffIds && (
+          {errors.availableStaffIds && (
             <p className="text-sm mt-1 text-red-500">
-              {errors.staffIds.message}
+              {errors.availableStaffIds.message}
             </p>
           )}
         </div>
         <div>
-          <Label htmlFor="image">メニュー画像（任意）</Label>
+          <Label htmlFor="imgFileId">メニュー画像（任意）</Label>
           <Input
             type="text"
-            {...register("image")}
+            {...register("imgFileId")}
             placeholder="画像URLを入力（任意）"
           />
-          {errors.image && (
-            <p className="text-sm mt-1 text-red-500">{errors.image.message}</p>
+          {errors.imgFileId && (
+            <p className="text-sm mt-1 text-red-500">
+              {errors.imgFileId.message}
+            </p>
           )}
         </div>
         <div>
