@@ -6,13 +6,14 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useZodForm } from "@/hooks/useZodForm";
 import { z } from "zod";
-import { customerSchema } from "@/lib/validations";
+import { customerAddSchema } from "@/lib/validations";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useEffect } from "react";
 import { setCookie, getCookie } from "@/lib/utils";
-
+import { Id } from "@/convex/_generated/dataModel";
+import { OriginalBreadcrumb } from "@/components/common/OriginalBreadcrumb";
 export default function ReservePage() {
   const params = useParams();
   const router = useRouter();
@@ -23,68 +24,66 @@ export default function ReservePage() {
     handleSubmit,
     formState: { errors, isSubmitting },
     setValue,
-  } = useZodForm(customerSchema, {
+  } = useZodForm(customerAddSchema, {
     defaultValues: {
-      name: "",
+      firstName: "",
+      lastName: "",
       phone: "",
       email: "",
-      salonIds: [id],
+      salonId: id,
     },
   });
 
-  const generateUid = () => {
-    return "customer_" + Math.random().toString(36).substring(2, 15);
-  };
-
-  const createCustomer = useMutation(api.customers.createCustomer);
-  const updateCustomer = useMutation(api.customers.updateCustomer);
-  const salonCustomers = useQuery(api.customers.getCustomersBySalonId, {
+  const createCustomer = useMutation(api.customer.add);
+  const updateCustomer = useMutation(api.customer.update);
+  const salonCustomers = useQuery(api.customer.getCustomersBySalonId, {
     salonId: id,
   });
 
-  const onSubmit = async (data: z.infer<typeof customerSchema>) => {
+  const onSubmit = async (data: z.infer<typeof customerAddSchema>) => {
     try {
-      if (confirmRegister) {
-        const existingCustomer = salonCustomers?.find(
-          (customer) => customer.email === data.email
-        );
-        if (existingCustomer) {
-          console.log("customer already exists");
-          const customer = await updateCustomer({
-            uid: existingCustomer.uid,
-            name: data.name,
-            phone: data.phone,
-            email: data.email ?? "",
-            salonIds: data.salonIds.concat(id),
-          });
-          console.log(customer);
-          const customerData = JSON.stringify({
-            uid: existingCustomer.uid,
-            name: data.name,
-            phone: data.phone,
-            email: data.email,
-          });
-          setCookie("customerData", customerData, 60); // 60日間保存
-          router.push(`/reserve/${id}/calendar/?uid=${existingCustomer.uid}`);
-        } else {
-          const uid = generateUid();
+      const existingCustomer = salonCustomers?.find(
+        (customer) => customer.email === data.email
+      );
+      if (existingCustomer) {
+        console.log("customer already exists");
+        const customer = await updateCustomer({
+          id: existingCustomer._id as Id<"customer">,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          phone: data.phone,
+          email: data.email ?? "",
+        });
+        console.log(customer);
+        const customerData = JSON.stringify({
+          id: existingCustomer._id as Id<"customer">,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          phone: data.phone,
+          email: data.email ?? "",
+        });
+        setCookie("customerData", customerData, 60); // 60日間保存
+        router.push(`/reserve/${id}/calendar/?id=${existingCustomer._id}`);
+      } else {
+        if (confirmRegister) {
           const customer = await createCustomer({
-            uid: uid,
-            name: data.name,
+            firstName: data.firstName,
+            lastName: data.lastName,
             phone: data.phone,
             email: data.email ?? "",
-            salonIds: data.salonIds,
+            salonId: data.salonId,
           });
           console.log(customer);
-          const customerData = JSON.stringify({
-            uid: uid,
-            name: data.name,
-            phone: data.phone,
-            email: data.email,
-          });
-          setCookie("customerData", customerData, 60); // 60日間保存
-          router.push(`/reserve/${id}/calendar?uid=${uid}`);
         }
+        const customerData = JSON.stringify({
+          id: "anonymous_customer",
+          firstName: data.firstName,
+          lastName: data.lastName,
+          phone: data.phone,
+          email: data.email,
+        });
+        setCookie("customerData", customerData, 60); // 60日間保存
+        router.push(`/reserve/${id}/calendar?id=${"anonymous_customer"}`);
       }
     } catch (error) {
       console.error("予約エラー:", error);
@@ -99,7 +98,10 @@ export default function ReservePage() {
       try {
         const data = JSON.parse(customerDataStr);
         Object.entries(data).forEach(([key, value]) => {
-          setValue(key as "name" | "phone" | "email", value as string);
+          setValue(
+            key as "firstName" | "lastName" | "phone" | "email",
+            value as string
+          );
         });
       } catch (error) {
         console.error("クッキーデータの解析エラー:", error);
@@ -107,14 +109,31 @@ export default function ReservePage() {
     }
   }, [setValue, salonCustomers]);
 
+  const breadcrumbItems = [{ label: "予約者情報の設定", href: `` }];
+
   return (
-    <div className="flex flex-col items-center justify-center h-screen">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <div className="flex flex-col items-center justify-center h-screen max-w-sm mx-auto">
+      <div className="flex flex-col gap-4  w-full">
+        <OriginalBreadcrumb items={breadcrumbItems} />
+        <h1 className="text-2xl font-bold">予約者情報の設定</h1>
+      </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 w-full my-5">
         <div>
-          <Label htmlFor="name">名前</Label>
-          <Input placeholder="名前" {...register("name")} />
-          {errors.name && (
-            <p className="text-red-500  text-sm mt-1">{errors.name.message}</p>
+          <Label htmlFor="lastName">苗字</Label>
+          <Input placeholder="苗字" {...register("lastName")} />
+          {errors.lastName && (
+            <p className="text-red-500  text-sm mt-1">
+              {errors.lastName.message}
+            </p>
+          )}
+        </div>
+        <div>
+          <Label htmlFor="firstName">名前</Label>
+          <Input placeholder="名前" {...register("firstName")} />
+          {errors.firstName && (
+            <p className="text-red-500  text-sm mt-1">
+              {errors.firstName.message}
+            </p>
           )}
         </div>
         <div>
@@ -131,19 +150,19 @@ export default function ReservePage() {
             <p className="text-red-500  text-sm mt-1">{errors.email.message}</p>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 py-2">
           <Checkbox
             id="confirmRegister"
             checked={confirmRegister}
             onCheckedChange={(checked: boolean) => setConfirmRegister(checked)}
           />
           <Label htmlFor="confirmRegister" className="text-xs">
-            予約情報を保持次回からの予約時に自動入力します。
+            予約情報を保存し次回からの予約時に自動入力します。
           </Label>
         </div>
         <div className="flex justify-end">
           <Button type="submit" disabled={isSubmitting}>
-            予約する
+            次へ
           </Button>
         </div>
       </form>

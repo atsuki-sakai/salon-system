@@ -1,16 +1,14 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-
 export default function NotFound() {
   return (
     <div className="flex flex-col items-center justify-center h-screen">
-      <h2 className="text-xl font-bold mb-4">サロンが見つかりませんでした</h2>
-      <p className="text-gray-600 mb-4">URLが正しいかご確認ください</p>
-      <Link href="/reserve">
-        <Button className="bg-green-600 text-white font-bold">
-          予約トップに戻る
-        </Button>
-      </Link>
+      <h1 className="text-4xl font-bold mb-4">
+        500
+        <span className="text-gray-500 text-2xl">Error</span>
+      </h1>
+      <p className="text-xl font-bold mb-4">サロンが見つかりませんでした</p>
+      <span className="text-gray-600 mb-4">
+        時間をおいて再度お試しください。
+      </span>
     </div>
   );
 }

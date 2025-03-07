@@ -1,5 +1,7 @@
+//reserve/[id]/calendar/page.tsx
 "use client";
 
+import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -7,6 +9,8 @@ import { useParams, useRouter } from "next/navigation";
 import { getCookie } from "@/lib/utils";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { reservationSchema } from "@/lib/validations";
+import { OriginalBreadcrumb } from "@/components/common/OriginalBreadcrumb";
 import { toast } from "sonner";
 import type { Doc } from "@/convex/_generated/dataModel";
 import {
@@ -20,17 +24,6 @@ import { z } from "zod";
 import { useZodForm } from "@/hooks/useZodForm";
 import { format } from "date-fns";
 import { useState, useEffect } from "react";
-
-// 予約情報のスキーマ
-const reservationSchema = z.object({
-  customerName: z.string().min(1, "お客様名を入力してください"),
-  customerPhone: z.string().min(1, "電話番号を入力してください"),
-  staffId: z.string().min(1, "スタッフを選択してください"),
-  menuId: z.string().min(1, "メニューを選択してください"),
-  reservationDate: z.string().min(1, "予約日を選択してください"),
-  startTime: z.string().min(1, "開始時間を選択してください"),
-  note: z.string().optional(),
-});
 
 // ユーティリティ関数：時刻文字列 "HH:mm" を分数に変換
 function timeStringToMinutes(time: string): number {
@@ -95,6 +88,7 @@ function computeAvailableTimeSlots(
     }
     return slots;
   }
+  return slots;
 }
 
 export default function CreateReservation() {
@@ -111,23 +105,20 @@ export default function CreateReservation() {
   } = useZodForm(reservationSchema);
 
   // 全スタッフと全メニューの取得
-  const staffs = useQuery(api.staffs.getStaffsBySalonId, {
+  const staffs = useQuery(api.staff.getAllStaffBySalonId, {
     salonId,
   });
-  const menus = useQuery(api.menus.getMenusBySalonId, {
+  const menus = useQuery(api.menu.getMenusBySalonId, {
     salonId,
   });
-  const createReservation = useMutation(api.reservations.create);
-  const salonSettings = useQuery(api.settings.getSetting, {
+  const createReservation = useMutation(api.reservation.add);
+  const salonSettings = useQuery(api.salon_config.getSalonConfig, {
     salonId,
   });
 
   // 選択したメニュー情報、フィルタリングされたスタッフ一覧、終了時刻、及び空き開始時刻候補の状態管理
-  const [selectedMenu, setSelectedMenu] = useState<{
-    timeToMin: number;
-    staffIds: string[];
-  } | null>(null);
-  const [filteredStaffs, setFilteredStaffs] = useState<Doc<"staffs">[]>([]);
+  const [selectedMenu, setSelectedMenu] = useState<Doc<"menu"> | null>(null);
+  const [filteredStaffs, setFilteredStaffs] = useState<Doc<"staff">[]>([]);
   const [endTime, setEndTime] = useState<string>("");
   const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([]);
 
@@ -138,7 +129,7 @@ export default function CreateReservation() {
 
   // 予約済み情報の取得（予約日が入力されている場合のみ）
   const reservationsForDate = useQuery(
-    api.reservations.getReservationsByDate,
+    api.reservation.getReservationsByDate,
     watchedReservationDate ? { salonId, date: watchedReservationDate } : "skip"
   );
 
@@ -209,7 +200,7 @@ export default function CreateReservation() {
     setSelectedMenu(menu);
     if (menu) {
       const availableStaffs = staffs.filter((staff) =>
-        menu.staffIds.includes(staff._id)
+        menu.availableStaffIds.includes(staff._id)
       );
       setFilteredStaffs(availableStaffs);
     } else {
@@ -273,12 +264,11 @@ export default function CreateReservation() {
         customerName: data.customerName,
         customerPhone: data.customerPhone,
         staffId: selectedStaff._id,
-        staffName: selectedStaff.name,
+        staffName: selectedStaff.name ?? "",
         menuId: selectedMenu._id,
         menuName: selectedMenu.name,
         price: selectedMenu.price,
         salonId,
-        salonName: "Salon Name",
         reservationDate: data.reservationDate,
         status: "confirmed",
         startTime: startDateTime,
@@ -294,20 +284,26 @@ export default function CreateReservation() {
     }
   };
 
+  const breadcrumbItems = [
+    { label: "予約者情報の設定", href: `/reserve/${salonId}` },
+    { label: "メニューを選択", href: `/reserve/${salonId}/calendar` },
+  ];
+
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="flex flex-col gap-2 mb-4 sticky top-0 bg-white py-4 z-10">
-        <h1 className="text-2xl font-bold">
-          {salonSettings?.salonName ? salonSettings.salonName : "DEFAULT NAME"}
-          <br />
-          新規予約
-        </h1>
+    <div className="flex flex-col items-center justify-center h-screen max-w-sm mx-auto">
+      <div className="flex flex-col gap-4  w-full">
+        <OriginalBreadcrumb items={breadcrumbItems} />
+        <h1 className="text-2xl font-bold">メニューを選択</h1>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 w-full">
         <div>
           <Label htmlFor="customerName">お客様名</Label>
-          <Input {...register("customerName")} placeholder="例：山田太郎" />
+          <Input
+            {...register("customerName")}
+            placeholder="例：山田太郎"
+            readOnly
+          />
           {errors.customerName && (
             <p className="text-sm text-red-500 mt-1">
               {errors.customerName.message}
@@ -317,7 +313,12 @@ export default function CreateReservation() {
 
         <div>
           <Label htmlFor="customerPhone">電話番号</Label>
-          <Input {...register("customerPhone")} type="tel" />
+          <Input
+            {...register("customerPhone")}
+            type="tel"
+            readOnly
+            className="focus:ring-0 focus:ring-offset-0 focus:outline-none"
+          />
           {errors.customerPhone && (
             <p className="text-sm text-red-500 mt-1">
               {errors.customerPhone.message}
@@ -325,14 +326,14 @@ export default function CreateReservation() {
           )}
         </div>
 
-        <div>
+        <div className="w-full mt-4">
           <Label htmlFor="menuId">メニュー</Label>
           <Select onValueChange={handleMenuSelect}>
             <SelectTrigger>
               <SelectValue placeholder="メニューを選択" />
             </SelectTrigger>
             <SelectContent>
-              {menus.map((menu: Doc<"menus">) => (
+              {menus.map((menu: Doc<"menu">) => (
                 <SelectItem key={menu._id} value={menu._id}>
                   {menu.name} ({menu.timeToMin}分)
                 </SelectItem>
@@ -343,6 +344,18 @@ export default function CreateReservation() {
             <p className="text-sm text-red-500 mt-1">{errors.menuId.message}</p>
           )}
         </div>
+        <div>
+          {menus.map((menu: Doc<"menu">) => (
+            <div key={menu._id}>
+              <Label htmlFor={menu._id}>{menu.name}</Label>
+              <p>{menu.timeToMin}分</p>
+              <span>{menu.price}円</span>
+              <div>
+                <p>{menu.description?.slice(0, 100)}</p>
+              </div>
+            </div>
+          ))}
+        </div>
 
         <div>
           <Label htmlFor="staffId">担当スタッフ</Label>
@@ -352,7 +365,7 @@ export default function CreateReservation() {
             </SelectTrigger>
             <SelectContent>
               {filteredStaffs.length > 0 ? (
-                filteredStaffs.map((staff: Doc<"staffs">) => (
+                filteredStaffs.map((staff: Doc<"staff">) => (
                   <SelectItem key={staff._id} value={staff._id}>
                     {staff.name}
                   </SelectItem>
@@ -413,7 +426,7 @@ export default function CreateReservation() {
 
         <div>
           <Label htmlFor="note">備考</Label>
-          <Input {...register("note")} />
+          <Textarea {...register("note")} rows={8} placeholder="備考を入力" />
           {errors.note && (
             <p className="text-sm text-red-500 mt-1">{errors.note.message}</p>
           )}
@@ -421,7 +434,7 @@ export default function CreateReservation() {
 
         <div className="flex justify-end gap-4">
           <Button type="button" variant="outline" onClick={() => router.back()}>
-            キャンセル
+            戻る
           </Button>
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? "作成中..." : "予約を作成"}
