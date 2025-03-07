@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useZodForm } from "@/hooks/useZodForm";
-import { settingSchema } from "@/lib/validations";
+import { salonConfigSchema } from "@/lib/validations";
 import { z } from "zod";
 import { useMutation, useQuery } from "convex/react";
 import { Trash2 } from "lucide-react";
@@ -32,7 +32,7 @@ export default function SettingPage() {
     formState: { errors, isSubmitting },
     setValue,
     reset,
-  } = useZodForm(settingSchema, {
+  } = useZodForm(salonConfigSchema, {
     defaultValues: {
       salonId: id as string,
     },
@@ -46,19 +46,19 @@ export default function SettingPage() {
     return format(date, "yyyy-MM-dd");
   };
 
-  const createSetting = useMutation(api.settings.createSetting);
-  const updateSetting = useMutation(api.settings.updateSetting);
-  const existSetting = useQuery(api.settings.existSetting, {
+  const createSetting = useMutation(api.salon_config.add);
+  const updateSetting = useMutation(api.salon_config.update);
+  const existSetting = useQuery(api.salon_config.exist, {
     salonId: id as string,
   });
-  const mySettings = useQuery(api.settings.getSetting, {
+  const mySettings = useQuery(api.salon_config.getSalonConfig, {
     salonId: id as string,
   });
 
   // 固定日付選択用の state。初期値は空配列にして、mySettings 取得後に更新する
   const [holidayDates, setHolidayDates] = useState<Date[]>([]);
 
-  const onSubmit = async (data: z.infer<typeof settingSchema>) => {
+  const onSubmit = async (data: z.infer<typeof salonConfigSchema>) => {
     console.log("Form submitted:", data);
     try {
       const settingData = {
@@ -83,15 +83,15 @@ export default function SettingPage() {
       (d) => formatDateToString(d) !== formatDateToString(date)
     );
     setHolidayDates(newDates);
-    setValue("holidays", newDates.map(formatDateToString));
+    setValue("regularHolidays", newDates.map(formatDateToString));
   };
 
   useEffect(() => {
     if (mySettings) {
       console.log("mySettings:", mySettings);
       // holidays は mySettings.holidays が文字列の配列で返ってくると仮定し、Date 型に変換する
-      const holidaysFromSettings = mySettings.holidays
-        ? mySettings.holidays.map((dateStr: string) => new Date(dateStr))
+      const holidaysFromSettings = mySettings.regularHolidays
+        ? mySettings.regularHolidays.map((dateStr: string) => new Date(dateStr))
         : [];
       setHolidayDates(holidaysFromSettings);
 
@@ -100,9 +100,9 @@ export default function SettingPage() {
         email: mySettings.email,
         phone: mySettings.phone,
         address: mySettings.address,
-        openTime: mySettings.openTime,
-        closeTime: mySettings.closeTime,
-        holidays: mySettings.holidays, // ここは文字列の配列
+        regularOpenTime: mySettings.regularOpenTime,
+        regularCloseTime: mySettings.regularCloseTime,
+        regularHolidays: mySettings.regularHolidays, // ここは文字列の配列
         description: mySettings.description,
         salonId: id as string,
       });
@@ -161,10 +161,14 @@ export default function SettingPage() {
           <Label className="text-sm font-medium" htmlFor="openTime">
             営業時間
           </Label>
-          <Input id="openTime" {...register("openTime")} className="mt-2" />
-          {errors.openTime && (
+          <Input
+            id="regularOpenTime"
+            {...register("regularOpenTime")}
+            className="mt-2"
+          />
+          {errors.regularOpenTime && (
             <p className="text-red-500 text-sm mt-1">
-              {errors.openTime.message}
+              {errors.regularOpenTime.message}
             </p>
           )}
         </div>
@@ -172,10 +176,14 @@ export default function SettingPage() {
           <Label className="text-sm font-medium" htmlFor="closeTime">
             閉店時間
           </Label>
-          <Input id="closeTime" {...register("closeTime")} className="mt-2" />
-          {errors.closeTime && (
+          <Input
+            id="regularCloseTime"
+            {...register("regularCloseTime")}
+            className="mt-2"
+          />
+          {errors.regularCloseTime && (
             <p className="text-red-500 text-sm mt-1">
-              {errors.closeTime.message}
+              {errors.regularCloseTime.message}
             </p>
           )}
         </div>
@@ -202,7 +210,10 @@ export default function SettingPage() {
                   onSelect={(dates) => {
                     if (dates) {
                       setHolidayDates(dates);
-                      setValue("holidays", dates.map(formatDateToString));
+                      setValue(
+                        "regularHolidays",
+                        dates.map(formatDateToString)
+                      );
                     }
                   }}
                   locale={ja}

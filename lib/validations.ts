@@ -80,67 +80,102 @@ export const stripeWebhookSchema = z.object({
 
 // サブスクリプション関連の型定義
 export const subscriptionSchema = z.object({
-  customerId: z.string(),
-  priceId: z.string(),
-  subscriptionId: z.string().optional(),
-  status: z.string().optional(),
+  salonId: z.string({ message: "サロンIDが空です" }),
+  customerId: z.string({ message: "顧客IDが空です" }),
+  priceId: z.string({ message: "価格IDが空です" }),
+  subscriptionId: z.string({ message: "サブスクリプションIDが空です" }),
+  status: z.string({ message: "ステータスが空です" }),
+  currentPeriodEnd: z.string().optional(),
 });
 
-// ユーザー関連の型定義
-export const userSchema = z.object({
-  clerkId: z.string(),
-  email: z.string().email(),
-  stripeCustomerId: z.string(),
+export const salonSchema = z.object({
+  clerkId: z.string({ message: "Clerk IDが空です" }),
+  salonId: z.string({ message: "サロンIDが空です" }),
+  email: z.string().email({ message: "有効なメールアドレスを入力してください" }),
+  stripeCustomerId: z.string({ message: "Stripe顧客IDが空です" }),
   subscriptionId: z.string().optional(),
   subscriptionStatus: z.string().optional(),
 });
 
-export const customerSchema = z.object({
-  name: z.string().min(1, { message: "お名前を入力してください" }),
+export const customerAddSchema = z.object({
+  salonId: z.string({ message: "サロンIDが空です" }),
+  firstName: z.string().min(1, { message: "名前を入力してください" }),
+  lastName: z.string().min(1, { message: "苗字を入力してください" }),
   phone: z
     .string()
     .regex(/^(\d{2,4}[-]?\d{2,4}[-]?\d{4})$/, { message: "電話番号の形式が正しくありません" }),
   email: z.string().optional().refine((email) => email === "" || z.string().email().safeParse(email).success, {
     message: "有効なメールアドレスを入力してください",
   }),
-  salonIds: z.array(z.string()),
 });
 
-export const phoneSchema = z.object({
-  phone: z.string().regex(/^(\d{2,4}[-]?\d{2,4}[-]?\d{4})$/, { message: "電話番号の形式が正しくありません" })
+export const customerSchema = z.object({
+  salonId: z.string({ message: "サロンIDが空です" }),
+  email: z.string().optional().refine((email) => email === "" || z.string().email().safeParse(email).success, {
+    message: "有効なメールアドレスを入力してください",
+  }),
+  phone: z
+  .string()
+  .regex(/^(\d{2,4}[-]?\d{2,4}[-]?\d{4})$/, { message: "電話番号の形式が正しくありません" }),
+  firstName: z.string().min(1, { message: "名前を入力してください" }),
+  lastName: z.string().min(1, { message: "苗字を入力してください" }),
+  tags: z.array(z.string()).optional(),
+  lastReservationDate: z.string().optional(),
+  notes: z.string().optional(),
+  age: z.number().optional(),
+  gender: z.enum(["全て", "男性", "女性"]).optional(),
 });
 
 export const staffSchema = z.object({
+  salonId: z.string({ message: "サロンIDが空です" }),
   name: z.string().min(1, { message: "お名前を入力してください" }),
-  email: z.string().email({ message: "有効なメールアドレスを入力してください" }),
-  phone: z.string().regex(/^(\d{2,4}[-]?\d{2,4}[-]?\d{4})$/, { message: "電話番号の形式が正しくありません" }),
+  age: z.number().optional(),
+  gender: z.enum(["全て", "男性", "女性"]).optional(),
+  extraCharge: z.number().optional(),
   description: z.string().optional(),
-  gender: z.enum(["男性", "女性"]).optional(),
-  image: z.string().optional(),
-  menuIds: z.array(z.string()).optional(),
-  holidays: z.array(z.string()).optional(),
+  imgFileId: z.string().optional(),
+  regularHolidays: z.array(z.string()).optional(),
 });
 
 export const menuSchema = z.object({
+  salonId: z.string({ message: "サロンIDが空です" }),
   name: z.string().min(1, "メニュー名を入力してください"),
   price: z.string().min(1, "料金を入力してください"),
   salePrice: z.string().optional(),
   timeToMin: z.string().min(1, "所要時間を入力してください"),
-  image: z.string().optional(),
+  imgFileId: z.string().optional(),
+  availableStaffIds: z.array(z.string()).optional(),
   description: z.string().optional(),
-  staffIds: z.array(z.string()).optional(),
-  targetGender: z.enum(["全て", "男性", "女性"]).default("全て"),
   couponId: z.string().optional(),
+  targetGender: z.enum(["全て", "男性", "女性"]).default("全て"),
 });
 
-export const settingSchema = z.object({
-  salonId: z.string(),
+export const salonConfigSchema = z.object({
+  salonId: z.string({ message: "サロンIDが空です" }),
   salonName: z.string().optional(),
   email: z.string().optional(),
   phone: z.string().optional(),
   address: z.string().optional(),
-  openTime: z.string().optional(),
-  closeTime: z.string().optional(),
+  regularOpenTime: z.string().optional(),
+  regularCloseTime: z.string().optional(),
+  regularHolidays: z.array(z.string()).optional(),
   description: z.string().optional(),
-  holidays: z.array(z.string()).optional(),
+  options: z.array(z.object({
+    name: z.string(),
+    price: z.number(),
+    salePrice: z.number().optional(),
+    maxCount: z.number().optional(),
+  })).optional(),
+  reservationRules: z.string().optional(),
+  imgFileId: z.string().optional(),
+});
+
+export const reservationSchema = z.object({
+  customerName: z.string().min(1, "お客様名を入力してください"),
+  customerPhone: z.string().min(1, "電話番号を入力してください"),
+  staffId: z.string().min(1, "スタッフを選択してください"),
+  menuId: z.string().min(1, "メニューを選択してください"),
+  reservationDate: z.string().min(1, "予約日を選択してください"),
+  startTime: z.string().min(1, "開始時間を選択してください"),
+  note: z.string().optional(),
 });

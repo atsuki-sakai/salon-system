@@ -38,3 +38,14 @@ export const getCookie = (name: string) => {
   if (parts.length === 2) return parts.pop()?.split(";").shift();
   return null;
 };
+
+export const generateUid = (key: string) => {
+  // 16バイト（128ビット）のランダムな値を生成
+  const randomBytes = new Uint8Array(16);
+  crypto.getRandomValues(randomBytes);
+  // バイト列を16進数文字列に変換
+  const hexString = Array.from(randomBytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  return key + "_" + hexString;
+};
