@@ -1,4 +1,4 @@
-export default function Completed() {
+export default function Complete() {
   return (
     <div className="flex flex-col items-center justify-center h-screen">
       <h1 className="text-2xl font-bold">予約完了</h1>
