@@ -1,16 +1,16 @@
 // hooks/useSubscription.ts
-import { useUserDetails } from "@/hooks/useUserDetail";
+import { useSalonCore } from "@/hooks/useSalonCore";
 import { useState } from "react";
 import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
 export function useSubscription() {
-  const { userDetails, isLoading } = useUserDetails();
+  const { salonCore, isLoading } = useSalonCore();
   const [error, setError] = useState("");
     const [isProcessing, setIsProcessing] = useState(false);
     
-    const createSession = useAction(api.subscriptions.createSubscriptionSession);
-    const createBillingPortal = useAction(api.subscriptions.createBillingPortalSession);
+    const createSession = useAction(api.subscription.createSubscriptionSession);
+    const createBillingPortal = useAction(api.subscription.createBillingPortalSession);
   
     const initiateSubscription = async () => {
       if (isLoading) {
@@ -18,7 +18,7 @@ export function useSubscription() {
         return null;
       }
   
-      if (!userDetails?.stripeCustomerId) {
+      if (!salonCore?.stripeCustomerId) {
         setError("Stripeの顧客情報が見つかりません");
         return null;
       }
@@ -26,8 +26,8 @@ export function useSubscription() {
       setIsProcessing(true);
       try {
         const result = await createSession({
-          stripeCustomerId: userDetails.stripeCustomerId,
-          clerkUserId: userDetails?.clerkId ?? "",
+          stripeCustomerId: salonCore.stripeCustomerId,
+          clerkUserId: salonCore?.clerkId ?? "",
           priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID!,
           baseUrl: process.env.NEXT_PUBLIC_URL!,
         });
@@ -47,7 +47,7 @@ export function useSubscription() {
     };
   
     const openBillingPortal = async () => {
-      if (!userDetails?.stripeCustomerId) {
+      if (!salonCore?.stripeCustomerId) {
         setError("Stripeの顧客情報が見つかりません");
         return null;
       }
@@ -55,8 +55,8 @@ export function useSubscription() {
       setIsProcessing(true);
       try {
         const result = await createBillingPortal({
-          customerId: userDetails.stripeCustomerId,
-          returnUrl: `${process.env.NEXT_PUBLIC_URL}/dashboard/${userDetails?.clerkId}`,
+          customerId: salonCore.stripeCustomerId,
+          returnUrl: `${process.env.NEXT_PUBLIC_URL}/dashboard/${salonCore?.clerkId}`,
         });
         
         return result?.portalUrl;
@@ -79,7 +79,7 @@ export function useSubscription() {
       isProcessing,
       initiateSubscription,
       openBillingPortal,
-      isSubscribed: userDetails?.subscriptionStatus === "active",
+      isSubscribed: salonCore?.subscriptionStatus === "active",
     };
   }
   
