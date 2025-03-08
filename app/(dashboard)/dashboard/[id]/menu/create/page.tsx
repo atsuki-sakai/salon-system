@@ -121,6 +121,7 @@ export default function MenuCreatePage() {
         couponId: data.couponId || "",
         salePrice: data.salePrice ? Number(data.salePrice) : undefined,
         targetGender: data.targetGender as "全て" | "男性" | "女性",
+        category: data.category, // 追加：カテゴリー情報を送信
       });
       toast.success("メニューを追加しました");
 
@@ -248,6 +249,18 @@ export default function MenuCreatePage() {
           {errors.description && (
             <p className="text-sm mt-1 text-red-500">
               {errors.description.message}
+            </p>
+          )}
+        </div>
+        {/* ここからカテゴリー入力フィールドを追加 */}
+        <div>
+          <Label htmlFor="category" className="font-bold">
+            カテゴリー
+          </Label>
+          <Input {...register("category")} placeholder="カテゴリーを入力" />
+          {errors.category && (
+            <p className="text-sm mt-1 text-red-500">
+              {errors.category.message}
             </p>
           )}
         </div>

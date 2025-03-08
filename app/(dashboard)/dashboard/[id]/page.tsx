@@ -51,6 +51,11 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+      {/* サロンの本日の予約を現在以降で直近に対応する最新の10件表示 */}
+      <div className=" p-4 rounded-lg bg-gray-50">
+        <h4 className="text-2xl font-bold">サロンの本日の予約</h4>
+        <div className="flex flex-col gap-4"></div>
+      </div>
     </div>
   );
 }

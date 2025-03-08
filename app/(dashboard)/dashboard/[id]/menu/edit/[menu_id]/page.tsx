@@ -60,8 +60,6 @@ export default function MenuEditPage() {
     id: menu_id as Id<"menu">,
   });
 
-  // 初期選択スタッフの詳細情報取得（参考用）
-
   // サロン内の全スタッフ情報を取得
   const salonStaffs = useQuery(api.staff.getAllStaffBySalonId, {
     salonId: id as Id<"salon">,
@@ -86,6 +84,7 @@ export default function MenuEditPage() {
         description: menu.description || "",
         targetGender: menu.targetGender || "全て",
         couponId: menu.couponId || "",
+        category: menu.category || "", // カテゴリーの初期値を追加
       });
       setSelectedStaffIds(menu.availableStaffIds || []);
       setSelectedTargetGender(menu.targetGender || "全て");
@@ -143,6 +142,7 @@ export default function MenuEditPage() {
         description: data.description || "",
         couponId: data.couponId || "",
         targetGender: data.targetGender || "全て",
+        category: data.category, // カテゴリー情報を更新
       });
 
       // 新しい画像がアップロードされた場合、古い画像が存在すれば削除する
@@ -280,6 +280,18 @@ export default function MenuEditPage() {
           {errors.description && (
             <p className="text-sm mt-1 text-red-500">
               {errors.description.message}
+            </p>
+          )}
+        </div>
+        {/* カテゴリー入力フィールドを追加 */}
+        <div>
+          <Label htmlFor="category" className="font-bold">
+            カテゴリー
+          </Label>
+          <Input {...register("category")} placeholder="カテゴリーを入力" />
+          {errors.category && (
+            <p className="text-sm mt-1 text-red-500">
+              {errors.category.message}
             </p>
           )}
         </div>

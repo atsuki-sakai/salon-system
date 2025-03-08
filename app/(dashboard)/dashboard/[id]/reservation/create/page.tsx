@@ -270,6 +270,7 @@ export default function CreateReservation() {
         startTime: startDateTime,
         endTime: endDateTime,
         notes: data.note || "",
+        selectedOptions: [],
       });
 
       toast.success("予約を作成しました");
