@@ -1,3 +1,4 @@
+
 // lib/validations.ts
 import { z } from "zod";
 
@@ -143,23 +144,27 @@ export const menuSchema = z.object({
   salePrice: z.number().optional(),
   timeToMin: z.string().min(1, { message: "所要時間を入力してください" }),
   imgFileId: z.string().optional(),
+  category: z.string().optional(),
   availableStaffIds: z.array(z.string()).optional(),
   description: z.string().optional(),
   couponId: z.string().optional(),
   targetGender: z.enum(["全て", "男性", "女性"]).default("全て"),
 });
 
+// HH:mm形式（00:00～23:59）をチェックする正規表現
+const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
 export const salonConfigSchema = z.object({
   salonId: z.string({ message: "サロンIDが空です" }),
   salonName: z.string().optional(),
   email: z.string().optional(),
   phone: z.string().optional(),
   address: z.string().optional(),
-  regularOpenTime: z.string().optional(),
-  regularCloseTime: z.string().optional(),
+  regularOpenTime: z.string().regex(timeRegex, { message: "開始時間の形式が正しくありません" }).optional(),
+  regularCloseTime: z.string().regex(timeRegex, { message: "開始時間の形式が正しくありません" }).optional(),
   regularHolidays: z.array(z.string()).optional(),
   description: z.string().optional(),
   options: z.array(z.object({
+    id: z.string(),
     name: z.string(),
     price: z.number(),
     salePrice: z.number().optional(),
@@ -177,4 +182,10 @@ export const reservationSchema = z.object({
   reservationDate: z.string().min(1, "予約日を選択してください"),
   startTime: z.string().min(1, "開始時間を選択してください"),
   notes: z.string().optional(),
+  selectedOptions: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    price: z.number(),
+    salePrice: z.number().optional(),
+  })).optional(),
 });
