@@ -18,6 +18,7 @@ import {
   Bars3Icon,
   CalendarIcon,
   Cog6ToothIcon,
+  UserCircleIcon,
   DocumentDuplicateIcon,
   FolderIcon,
   HomeIcon,
@@ -65,6 +66,11 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
       name: "メニュー一覧",
       href: `/dashboard/${salon?.id}/menu`,
       icon: DocumentDuplicateIcon,
+    },
+    {
+      name: "顧客一覧",
+      href: `/dashboard/${salon?.id}/customer`,
+      icon: UserCircleIcon,
     },
     {
       name: "サブスクリプション",

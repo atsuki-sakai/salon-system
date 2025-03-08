@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useParams, useRouter } from "next/navigation";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation, usePaginatedQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useZodForm } from "@/hooks/useZodForm";
 import { z } from "zod";
@@ -36,13 +36,19 @@ export default function ReservePage() {
 
   const addCustomer = useMutation(api.customer.add);
   const updateCustomer = useMutation(api.customer.update);
-  const salonCustomers = useQuery(api.customer.getCustomersBySalonId, {
-    salonId: id,
-  });
+  const salonCustomers = usePaginatedQuery(
+    api.customer.getCustomersBySalonId,
+    {
+      salonId: id,
+    },
+    {
+      initialNumItems: 10,
+    }
+  );
 
   const onSubmit = async (data: z.infer<typeof customerAddSchema>) => {
     try {
-      const existingCustomer = salonCustomers?.find(
+      const existingCustomer = salonCustomers?.results.find(
         (customer) => customer.email === data.email
       );
       if (existingCustomer) {

@@ -117,7 +117,7 @@ export default function MenuPage() {
                     return staff ? (
                       <span
                         key={staffId}
-                        className={`mr-2 whitespace-nowrap text-sm border border-gray-200 rounded-md px-2 py-1 bg-orange-100`}
+                        className={`mr-2 whitespace-nowrap text-xs border font-semibold text-blue-600 rounded-md px-2 bg-blue-100`}
                       >
                         {staff.name}
                       </span>
