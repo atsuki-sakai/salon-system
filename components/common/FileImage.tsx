@@ -11,9 +11,15 @@ type FileImageProps = {
   fileId?: string; // スタッフの imageFile（ファイルID）
   alt?: string;
   size?: number;
+  fullSize?: boolean;
 };
 
-export default function FileImage({ fileId, alt, size }: FileImageProps) {
+export default function FileImage({
+  fileId,
+  alt,
+  size,
+  fullSize,
+}: FileImageProps) {
   // ファイルIDがなければデフォルト画像を使用
   const imageUrl = useQuery(api.storage.getUrl, {
     storageId: fileId || DEFAULT_STORAGE_ID,
@@ -28,7 +34,7 @@ export default function FileImage({ fileId, alt, size }: FileImageProps) {
       height={size ? size * 1 : 44}
       placeholder="blur"
       blurDataURL={DEFAULT_IMAGE_URL}
-      className={`size-${size || 44} rounded-full object-cover`}
+      className={`  ${fullSize ? "w-full h-auto object-center" : "rounded-full object-cover size-${size || 44}"}`}
     />
   );
 }
