@@ -242,8 +242,7 @@ const styles = {
   bottomBarContent:
     "max-w-4xl mx-auto flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3",
   bottomBarBadges: "flex flex-wrap items-center gap-1 text-xs",
-  selectionBadges:
-    "overflow-x-auto flex flex-nowrap items-center gap-1 pb-1 max-w-[calc(100vw-160px)]",
+  selectionBadges: "overflow-x-auto flex flex-nowrap items-center gap-1 pb-1",
 };
 
 // セクションコンポーネント（モバイル最適化）
