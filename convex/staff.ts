@@ -16,6 +16,7 @@ export const add = mutation({
     const staff = await ctx.db.insert("staff", {
       name: args.name,
       salonId: args.salonId,
+     
       description: args.description,
       gender: args.gender,
       imgFileId: args.imgFileId,

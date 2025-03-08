@@ -14,6 +14,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { format, isSameDay, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
 import { useRouter } from "next/navigation";
+import { useSalonCore } from "@/hooks/useSalonCore";
 import {
   Select,
   SelectContent,
@@ -39,7 +40,7 @@ export default function StaffCreatePage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
-
+  const { isSubscribed } = useSalonCore();
   // 休暇日の状態を管理
   const [vacationDates, setVacationDates] = useState<Date[]>([]);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -139,6 +140,13 @@ export default function StaffCreatePage() {
     }
   };
 
+  if (!isSubscribed) {
+    return (
+      <div className="text-center text-sm text-gray-500 min-h-[500px] flex items-center justify-center">
+        サブスクリプション契約が必要です。
+      </div>
+    );
+  }
   return (
     <div className="max-w-5xl mx-auto">
       <div className="flex flex-col gap-2 mb-4 sticky top-0 bg-white py-4 z-10">

@@ -10,9 +10,10 @@ import { useParams } from "next/navigation";
 import { Id } from "@/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { toast } from "sonner";
-
+import { useSalonCore } from "@/hooks/useSalonCore";
 export default function MenuPage() {
   const { id } = useParams();
+  const { isSubscribed } = useSalonCore();
   const menus = useQuery(api.menu.getMenusBySalonId, {
     salonId: id as Id<"salon">,
   });
@@ -21,6 +22,13 @@ export default function MenuPage() {
     salonId: id as Id<"salon">,
   });
 
+  if (!isSubscribed) {
+    return (
+      <div className="text-center text-sm text-gray-500 min-h-[500px] flex items-center justify-center">
+        サブスクリプション契約が必要です。
+      </div>
+    );
+  }
   if (!menus) {
     return <Loading />;
   }

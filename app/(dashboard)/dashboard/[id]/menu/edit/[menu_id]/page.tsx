@@ -15,6 +15,7 @@ import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
 import { Id, Doc } from "@/convex/_generated/dataModel";
 import { Loading } from "@/components/common";
+import { useSalonCore } from "@/hooks/useSalonCore";
 import {
   Select,
   SelectContent,
@@ -36,7 +37,7 @@ export default function MenuEditPage() {
   >("全て");
   const [selectValue, setSelectValue] = useState(""); // Selectの内部状態を管理
   const fileInputRef = useRef<HTMLInputElement>(null);
-
+  const { isSubscribed } = useSalonCore();
   const handleStaffSelect = (staffId: string) => {
     if (staffId === "all") {
       const allStaffIds =
@@ -184,6 +185,13 @@ export default function MenuEditPage() {
   };
 
   if (!menu) return <Loading />;
+  if (!isSubscribed) {
+    return (
+      <div className="text-center text-sm text-gray-500 min-h-[500px] flex items-center justify-center">
+        サブスクリプション契約が必要です。
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-5xl mx-auto">

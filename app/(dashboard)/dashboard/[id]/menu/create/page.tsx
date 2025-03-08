@@ -24,10 +24,11 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
-
+import { useSalonCore } from "@/hooks/useSalonCore";
 export default function MenuCreatePage() {
   const params = useParams();
   const router = useRouter();
+  const { isSubscribed } = useSalonCore();
   const id = typeof params.id === "string" ? params.id : "";
   // ファイルアップロード用の ref を追加
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -56,6 +57,13 @@ export default function MenuCreatePage() {
     return <Loading />;
   }
 
+  if (!isSubscribed) {
+    return (
+      <div className="text-center text-sm text-gray-500 min-h-[500px] flex items-center justify-center">
+        サブスクリプション契約が必要です。
+      </div>
+    );
+  }
   const handleStaffSelect = (staffId: string) => {
     if (staffId === "all") {
       const allStaffIds = salonStaffs?.map((staff) => staff._id) || [];

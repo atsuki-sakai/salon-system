@@ -188,4 +188,5 @@ export const reservationSchema = z.object({
     price: z.number(),
     salePrice: z.number().optional(),
   })).optional(),
+  staffExtraCharge: z.number().optional(),
 });

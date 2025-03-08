@@ -1148,6 +1148,7 @@ export default function ReservationTimePicker() {
       const reservationId = await createReservation({
         menuId: selectedMenuId,
         staffId: selectedStaffId,
+        staffExtraCharge: selectedStaff?.extraCharge ?? 0,
         salonId: salonId,
         salonName: salonConfig?.salonName ?? "",
         reservationDate: dateString,

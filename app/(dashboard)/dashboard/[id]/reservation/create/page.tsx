@@ -11,6 +11,7 @@ import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
 import { Loading } from "@/components/common";
 import type { Doc } from "@/convex/_generated/dataModel";
+import { useSalonCore } from "@/hooks/useSalonCore";
 import {
   Select,
   SelectContent,
@@ -101,6 +102,7 @@ export default function CreateReservation() {
   const params = useParams();
   const router = useRouter();
   const salonId = params.id as string;
+  const { isSubscribed } = useSalonCore();
 
   const {
     register,
@@ -322,6 +324,13 @@ export default function CreateReservation() {
     }
   };
 
+  if (!isSubscribed) {
+    return (
+      <div className="text-center text-sm text-gray-500 min-h-[500px] flex items-center justify-center">
+        サブスクリプション契約が必要です。
+      </div>
+    );
+  }
   return (
     <div className="max-w-2xl mx-auto">
       <div className="flex flex-col gap-2 mb-4 sticky top-0 bg-white py-4 z-10">

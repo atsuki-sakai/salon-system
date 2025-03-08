@@ -61,5 +61,5 @@ export function useSalonCore() {
   const salonCore = (isCurrentSalonCoreCache && cachedSalonCore) || salon;
   const isLoading = !user ? true : (isCurrentSalonCoreCache && cachedSalonCore ? false : !salon);
 
-  return { clerkUser: user, salonCore, isLoading };
+  return { clerkUser: user, salonCore, isLoading, isSubscribed: salonCore?.subscriptionStatus === "active" };
 }

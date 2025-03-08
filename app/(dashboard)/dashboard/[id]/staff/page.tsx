@@ -17,12 +17,13 @@ import {
 import { CalendarIcon, PencilIcon } from "lucide-react";
 import { useParams } from "next/navigation";
 import { Id, Doc } from "@/convex/_generated/dataModel";
-
+import { useSalonCore } from "@/hooks/useSalonCore";
 // 日付関連のユーティリティ関数を追加
 const getTodayISOString = () => new Date().toISOString().split("T")[0];
 
 export default function StaffPage() {
   const { id } = useParams();
+  const { isSubscribed } = useSalonCore();
   const staffs = useQuery(api.staff.getAllStaffBySalonId, {
     salonId: id as Id<"salon">,
   });
@@ -57,6 +58,14 @@ export default function StaffPage() {
   };
 
   console.log(getUrl);
+
+  if (!isSubscribed) {
+    return (
+      <div className="text-center text-sm text-gray-500 min-h-[500px] flex items-center justify-center">
+        サブスクリプション契約が必要です。
+      </div>
+    );
+  }
   return (
     <div className="px-4 sm:px-6 lg:px-8">
       {/* ヘッダー部分 */}

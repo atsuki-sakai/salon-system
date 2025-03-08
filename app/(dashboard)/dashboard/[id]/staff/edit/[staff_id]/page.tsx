@@ -14,6 +14,7 @@ import Link from "next/link";
 import { FileImage } from "@/components/common";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { useSalonCore } from "@/hooks/useSalonCore";
 import {
   Select,
   SelectContent,
@@ -42,6 +43,7 @@ export default function EditStaffPage() {
   const { staff_id } = useParams();
   const { id } = useParams(); // salonId
   const router = useRouter();
+  const { isSubscribed } = useSalonCore();
 
   // スタッフ情報の取得
   const staff = useQuery(api.staff.getStaff, {
@@ -209,6 +211,13 @@ export default function EditStaffPage() {
   // ローディング表示
   if (!staff) {
     return <Loading />;
+  }
+  if (!isSubscribed) {
+    return (
+      <div className="text-center text-sm text-gray-500 min-h-[500px] flex items-center justify-center">
+        サブスクリプション契約が必要です。
+      </div>
+    );
   }
   console.log("staff.gender", staff.gender);
   console.log("selectedGender", selectedGender);

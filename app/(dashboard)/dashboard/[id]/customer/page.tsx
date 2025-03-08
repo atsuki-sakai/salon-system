@@ -50,12 +50,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
+import { useSalonCore } from "@/hooks/useSalonCore";
 export default function CustomerPage() {
   const { id } = useParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState("lastName");
   const [sortDirection, setSortDirection] = useState("asc");
+  const { isSubscribed } = useSalonCore();
 
   // usePaginatedQuery フックを利用。ここでは salonId と sortDirection を渡します。
   // ページ分割されたクエリは内部でカーソルを管理するため、初期取得件数を third 引数で指定します。
@@ -68,6 +69,14 @@ export default function CustomerPage() {
     { salonId: id as string, sortDirection: "desc" },
     { initialNumItems: 10 }
   );
+
+  if (!isSubscribed) {
+    return (
+      <div className="text-center text-sm text-gray-500 min-h-[500px] flex items-center justify-center">
+        サブスクリプション契約が必要です。
+      </div>
+    );
+  }
 
   // クライアント側でさらに検索・フィルタ・ソート（ページ内での加工）
   const filteredCustomers = customers

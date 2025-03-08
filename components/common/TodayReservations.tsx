@@ -27,8 +27,19 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 export default function TodayReservations({ salonId }: { salonId: string }) {
-  // Convex クエリで本日の予約を全件取得
-  const today = new Date().toISOString().split("T")[0]; // "YYYY-MM-DD"形式
+  // 日本時間で本日の日付を取得（YYYY-MM-DD形式）
+  const getTodayInJST = (): string => {
+    // 日本時間のタイムゾーンオフセットを指定して日付を取得
+    const now = new Date();
+    // 日本のタイムゾーンオフセット（+9時間）を考慮
+    const jstDate = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+    // ローカルの日付文字列から日付部分のみを抽出（YYYY-MM-DD形式）
+    return jstDate.toISOString().split("T")[0]!;
+  };
+
+  const today: string = getTodayInJST();
+  // デバッグ用に固定日付を使用する場合はコメントを外す
+  // const today = "2025-03-08";
 
   const reservations = useQuery(api.reservation.getReservationsByDate, {
     salonId,
@@ -100,7 +111,7 @@ export default function TodayReservations({ salonId }: { salonId: string }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <h2 className="text-xl font-bold tracking-tight">本日の予約</h2>
         <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full border">
@@ -122,13 +133,13 @@ export default function TodayReservations({ salonId }: { salonId: string }) {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {upcomingReservations.map((reservation) => (
             <Card
               key={reservation._id}
               className="overflow-hidden border-gray-200 transition-all hover:shadow-md flex flex-col"
             >
-              <CardHeader className="pb-2 bg-gradient-to-r from-indigo-50 to-blue-50 flex-shrink-0">
+              <CardHeader className="pb-2 bg-gradient-to-r from-indigo-50 to-blue-50 flex-shrink-0 p-2">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
                   <div>
                     <CardTitle className="font-bold text-gray-800 mb-1 line-clamp-1">
@@ -156,7 +167,7 @@ export default function TodayReservations({ salonId }: { salonId: string }) {
                 </div>
               </CardHeader>
 
-              <CardContent className="pt-4 pb-2 flex-grow">
+              <CardContent className="pt-4 pb-2 flex-grow p-2">
                 <div className="flex flex-col gap-4">
                   <div className="flex-1 space-y-3">
                     <div className="flex items-center gap-2">

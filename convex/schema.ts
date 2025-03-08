@@ -88,6 +88,7 @@ export default defineSchema({
     customerPhone: v.string(),
     staffId: v.string(),
     staffName: v.string(),
+    staffExtraCharge: v.optional(v.number()),
     menuId: v.string(),
     menuName: v.string(),
     price: v.number(),

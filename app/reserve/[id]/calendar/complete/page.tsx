@@ -82,15 +82,15 @@ export default function CompletePage() {
     if (!reservation) return;
 
     const startDateTime = new Date(
-      `${reservation.reservationDate}T${reservation.startTime}`
+      `${reservation.reservationDate}T${reservation.startTime.split("T")[1]}`
     );
     const endDateTime = new Date(
-      `${reservation.reservationDate}T${reservation.endTime}`
+      `${reservation.reservationDate}T${reservation.endTime.split("T")[1]}`
     );
 
     // Google カレンダー用のリンクを作成
-    const text = `${reservation.menuName} @ ${reservation.salonName ?? ""}`;
-    const details = `予約ID: ${reservation._id}\nスタッフ: ${reservation.staffName}\n開始時間: ${reservation.startTime}\n終了時間: ${reservation.endTime}`;
+    const text = `${reservation.menuName} / ${reservation.salonName ?? ""}`;
+    const details = `予約ID: ${reservation._id}\nメニュー: ${reservation.menuName}\n料金: ${reservation.price.toLocaleString()}円\nスタッフ: ${reservation.staffName}\n開始時間: ${reservation.startTime.split("T")[1]}\n終了時間: ${reservation.endTime.split("T")[1]}`;
 
     const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
       text
@@ -106,7 +106,7 @@ export default function CompletePage() {
   const shareReservation = () => {
     if (!reservation) return;
 
-    const shareText = `${reservation.salonName}に${format(new Date(reservation.reservationDate), "M月d日", { locale: ja })}の${reservation.startTime}から予約しました！`;
+    const shareText = `${reservation.salonName}に${format(new Date(reservation.reservationDate), "M月d日", { locale: ja })}の${reservation.startTime.split("T")[1]}から予約しました！!\nメニューは${reservation.menuName}です。${reservation.staffName}が担当します。料金は${reservation.price.toLocaleString()}円です。`;
 
     if (navigator.share) {
       navigator
@@ -227,10 +227,12 @@ export default function CompletePage() {
 
     const optionsTotal =
       reservation.selectedOptions?.reduce(
-        (total, opt) => total + opt.price,
+        (total, opt) => total + (opt.salePrice || opt.price),
         0
       ) || 0;
-    return reservation.price + optionsTotal;
+    return (
+      reservation.price + optionsTotal + (reservation.staffExtraCharge ?? 0)
+    );
   };
 
   // 日付フォーマット関数
@@ -291,8 +293,6 @@ export default function CompletePage() {
                 予約が完了しました
               </CardTitle>
               <CardDescription className="text-center text-slate-600">
-                ご予約ありがとうございます。以下に詳細をご確認ください。
-                <br />
                 メールアドレスにも予約完了のメールを送信していますので、ご確認ください。
               </CardDescription>
               <div className="mt-4">
@@ -410,7 +410,10 @@ export default function CompletePage() {
                                     {option.name}
                                   </span>
                                   <span className="font-medium text-slate-800">
-                                    ¥{option.price.toLocaleString()}
+                                    ¥
+                                    {option.salePrice
+                                      ? option.salePrice.toLocaleString()
+                                      : option.price.toLocaleString()}
                                   </span>
                                 </div>
                               )
@@ -418,14 +421,29 @@ export default function CompletePage() {
                           </>
                         )}
 
-                      <Separator />
-                      <div className="flex justify-between items-center">
-                        <span className="font-semibold text-slate-700">
-                          合計
-                        </span>
-                        <span className="font-bold text-xl text-green-600">
-                          ¥{calculateTotalPrice().toLocaleString()}
-                        </span>
+                      {reservation.staffExtraCharge ? (
+                        <div>
+                          <Separator />
+                          <div className="flex justify-between items-center mt-3">
+                            <span className="text-sm text-slate-600">
+                              指名料金
+                            </span>
+                            <span className="font-medium text-slate-800">
+                              ¥{reservation.staffExtraCharge.toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+                      ) : null}
+                      <div>
+                        <Separator />
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold text-slate-700">
+                            合計
+                          </span>
+                          <span className="font-bold text-xl text-green-600">
+                            ¥{calculateTotalPrice().toLocaleString()}
+                          </span>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
