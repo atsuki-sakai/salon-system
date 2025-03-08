@@ -9,6 +9,7 @@ import { useZodForm } from "@/hooks/useZodForm";
 import { salonConfigSchema } from "@/lib/validations";
 import { z } from "zod";
 import { useMutation, useQuery } from "convex/react";
+import { useSalonCore } from "@/hooks/useSalonCore";
 import {
   Building2,
   Mail,
@@ -78,7 +79,7 @@ type OptionType = {
 
 export default function SettingPage() {
   const { id } = useParams();
-
+  const { isSubscribed } = useSalonCore();
   const {
     register,
     handleSubmit,
@@ -345,6 +346,13 @@ export default function SettingPage() {
     }
   }, [mySettings, reset, id]);
 
+  if (!isSubscribed) {
+    return (
+      <div className="text-center text-sm text-gray-500 min-h-[500px] flex items-center justify-center">
+        サブスクリプション契約が必要です。
+      </div>
+    );
+  }
   return (
     <div className="container max-w-5xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-8">
