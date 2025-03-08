@@ -12,6 +12,15 @@ export const add = mutation({
     regularCloseTime: v.optional(v.string()),
     regularHolidays: v.optional(v.array(v.string())),
     description: v.optional(v.string()),
+    options: v.optional(v.array(v.object({
+      id: v.string(),
+      name: v.string(),
+      price: v.number(),
+      salePrice: v.optional(v.number()),
+      maxCount: v.optional(v.number()),
+    }))),
+    reservationRules: v.optional(v.string()),
+    imgFileId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const salonConfig = await ctx.db.insert("salon_config", {
@@ -24,6 +33,9 @@ export const add = mutation({
       regularCloseTime: args.regularCloseTime,
       regularHolidays: args.regularHolidays,
       description: args.description,
+      options: args.options,
+      reservationRules: args.reservationRules,
+      imgFileId: args.imgFileId,
     });
     return salonConfig;
   },
@@ -50,6 +62,15 @@ export const update = mutation({
     regularCloseTime: v.optional(v.string()),
     regularHolidays: v.optional(v.array(v.string())),
     description: v.optional(v.string()),
+    options: v.optional(v.array(v.object({
+      id: v.string(),
+      name: v.string(),
+      price: v.number(),
+      salePrice: v.optional(v.number()),
+      maxCount: v.optional(v.number()),
+    }))),
+    reservationRules: v.optional(v.string()),
+    imgFileId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const salonConfig = await ctx.db
@@ -70,6 +91,9 @@ export const update = mutation({
       regularCloseTime: args.regularCloseTime,
       regularHolidays: args.regularHolidays,
       description: args.description,
+      options: args.options,
+      reservationRules: args.reservationRules,
+      imgFileId: args.imgFileId,
     });
     return updatedSalonConfigData;
   },

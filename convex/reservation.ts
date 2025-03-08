@@ -67,6 +67,13 @@ export const add = mutation({
     startTime: v.string(),
     endTime: v.string(),
     notes: v.string(),
+    selectedOptions: v.array(v.object({
+      id: v.string(),
+      name: v.string(),
+      price: v.number(),
+      salePrice: v.optional(v.number()),
+      maxCount: v.optional(v.number()),
+    })),
   },
   handler: async (ctx, args) => {
     // 予約日付をYYYY-MM-DD形式に変換
@@ -176,7 +183,7 @@ export const findOptimalTimeSlots = query({
       return { success: false, message: "指定されたメニューが見つかりません" };
     }
     
-    // 2. サロン設定から営業時間の取得（設定がなければデフォルト: 09:00〜20:00）
+    // 2. サロン設定から営業時間と休日の取得（設定がなければデフォルト: 09:00〜20:00）
     const salonConfig = await ctx.db.query("salon_config")
       .filter(q => q.eq(q.field("salonId"), args.salonId))
       .first();
@@ -187,7 +194,17 @@ export const findOptimalTimeSlots = query({
       ? timeStringToMinutes(salonConfig.regularCloseTime) 
       : timeStringToMinutes("20:00");
     
-    // 3. 対応可能なスタッフの取得
+    // 3. 対象の日付（日付部分のみを取得）
+    const targetDate = args.date 
+      ? args.date.split('T')[0]!  // ISO形式の場合はT以前を取得
+      : new Date().toISOString().split("T")[0]!; // 今日の日付
+
+    // 追加: サロンの休日に含まれる場合はエラーを返す
+    if (salonConfig?.regularHolidays && salonConfig.regularHolidays.includes(targetDate)) {
+      return { success: false, message: "選択された日はサロンの休業日です" };
+    }
+    
+    // 4. 対応可能なスタッフの取得
     let staffs = [];
     if (args.staffId) {
       const staff = await ctx.db.get(args.staffId);
@@ -204,11 +221,6 @@ export const findOptimalTimeSlots = query({
         return { success: false, message: "このメニューを施術できるスタッフが存在しません" };
       }
     }
-    
-    // 4. 対象の日付（日付部分のみを取得）
-    const targetDate = args.date 
-      ? args.date.split('T')[0]  // ISO形式の場合はT以前を取得
-      : new Date().toISOString().split("T")[0]; // 今日の日付
     
     // 5. 全スタッフに対して、予約情報から利用可能な時間枠を計算
     const availableSlots: TimeSlot[] = [];

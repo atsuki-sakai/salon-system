@@ -72,6 +72,7 @@ export default defineSchema({
     price: v.number(),
     salePrice: v.optional(v.number()),
     timeToMin: v.number(),
+    category: v.optional(v.string()),
     imgFileId: v.optional(v.string()),
     availableStaffIds: v.array(v.string()),
     description: v.optional(v.string()),
@@ -96,6 +97,13 @@ export default defineSchema({
     startTime: v.string(),
     endTime: v.string(),
     notes: v.optional(v.string()),
+    selectedOptions: v.optional(v.array(v.object({
+      id: v.string(),
+      name: v.string(),
+      price: v.number(),
+      salePrice: v.optional(v.number()),
+      maxCount: v.optional(v.number()),
+    }))),
   })
   .index("by_customer_id", ["customerId"])
   .index("by_staff_id", ["staffId"])
@@ -115,6 +123,7 @@ export default defineSchema({
     regularHolidays: v.optional(v.array(v.string())),
     description: v.optional(v.string()),
     options: v.optional(v.array(v.object({
+      id: v.string(),
       name: v.string(),
       price: v.number(),
       salePrice: v.optional(v.number()),
