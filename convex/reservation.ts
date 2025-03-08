@@ -33,6 +33,16 @@ export const getAllReservations = query({
   },
 });
 
+export const get = query({
+  args: {
+    reservationId: v.id("reservation"),
+  },
+  handler: async (ctx, args) => {
+    const reservation = await ctx.db.get(args.reservationId);
+    return reservation;
+  },
+});
+
 export const getAllReservationsForCompact = query({
   args: {
     salonId: v.string(),
@@ -62,6 +72,7 @@ export const add = mutation({
     menuName: v.string(),
     price: v.number(),
     salonId: v.string(),
+    salonName: v.optional(v.string()),
     reservationDate: v.string(),
     status: v.string(),
     startTime: v.string(),

@@ -68,7 +68,7 @@ export default function ReservePage() {
           phone: data.phone,
           email: data.email ?? "",
         });
-        setCookie("salonapp-customer-cookie", customerData, 60); // 60日間保存
+        setCookie("__salonapp_session", customerData, 60); // 60日間保存
         router.push(`/reserve/${id}/calendar`);
         return;
       } else {
@@ -88,7 +88,7 @@ export default function ReservePage() {
             phone: data.phone,
             email: data.email,
           });
-          setCookie("salonapp-customer-cookie", customerData, 60); // 60日間保存
+          setCookie("__salonapp_session", customerData, 60); // 60日間保存
           router.push(`/reserve/${id}/calendar`);
         } else {
           const customerData = JSON.stringify({
@@ -98,7 +98,7 @@ export default function ReservePage() {
             phone: data.phone,
             email: data.email,
           });
-          setCookie("salonapp-customer-cookie", customerData, 60); // 60日間保存
+          setCookie("__salonapp_session", customerData, 60); // 60日間保存
           router.push(`/reserve/${id}/calendar`);
         }
       }
@@ -110,7 +110,7 @@ export default function ReservePage() {
 
   // フォーム初期化時にクッキーからデータを読み込む
   useEffect(() => {
-    const customerDataStr = getCookie("salonapp-customer-cookie");
+    const customerDataStr = getCookie("__salonapp_session");
     if (customerDataStr) {
       try {
         const data = JSON.parse(customerDataStr);

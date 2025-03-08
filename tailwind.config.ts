@@ -60,21 +60,42 @@ const config: Config = {
   		},
   		keyframes: {
   			wave: {
-  				'0%, 100%': { transform: 'scaleY(1)' },
-  				'50%': { transform: 'scaleY(2)' },
+  				'0%, 100%': {
+  					transform: 'scaleY(1)'
+  				},
+  				'50%': {
+  					transform: 'scaleY(2)'
+  				}
   			},
-			
+  			'accordion-down': {
+  				from: {
+  					height: '0'
+  				},
+  				to: {
+  					height: 'var(--radix-accordion-content-height)'
+  				}
+  			},
+  			'accordion-up': {
+  				from: {
+  					height: 'var(--radix-accordion-content-height)'
+  				},
+  				to: {
+  					height: '0'
+  				}
+  			}
   		},
   		animation: {
-  			'wave': 'wave 1.3s ease-in-out infinite',
+  			wave: 'wave 1.3s ease-in-out infinite',
+  			'accordion-down': 'accordion-down 0.2s ease-out',
+  			'accordion-up': 'accordion-up 0.2s ease-out'
   		},
   		animationDelay: {
   			'0': '0s',
   			'200': '0.2s',
   			'400': '0.4s',
   			'600': '0.6s',
-  			'800': '0.8s',
-  		},
+  			'800': '0.8s'
+  		}
   	}
   },
   plugins: [

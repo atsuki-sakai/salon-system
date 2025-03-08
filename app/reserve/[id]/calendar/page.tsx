@@ -7,6 +7,7 @@ import React, {
   ReactNode,
   ReactElement,
 } from "react";
+
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -39,7 +40,6 @@ import {
   InfoIcon,
   MinusCircle,
   Scissors,
-  Sparkles,
   AlertCircle,
   Search,
   Clock,
@@ -92,6 +92,14 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  type CarouselApi,
+} from "@/components/ui/carousel";
 
 interface TimeSlot {
   date?: string;
@@ -145,17 +153,6 @@ interface ReservationConfirmationDialogProps {
   formatDateJP: (dateStr: string) => string;
 }
 
-// アニメーション定義
-const containerVariants = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
 const cardVariants = {
   hidden: { y: 20, opacity: 0 },
   show: { y: 0, opacity: 1 },
@@ -166,25 +163,25 @@ const cardVariants = {
 const styles = {
   stepBadge: {
     default:
-      "bg-gray-100 text-gray-600 border-gray-200 py-1 px-2 text-xs font-semibold",
+      "bg-gray-100 text-gray-600 border-gray-200 py-1 px-2 text-base font-semibold",
     active:
-      "bg-primary-100 text-primary-700 border-primary-300 py-1 px-2 text-xs font-semibold",
+      "bg-yellow-100 text-yellow-700 border-yellow-300 py-1 px-2 text-base font-semibold",
     complete:
-      "bg-green-100 text-green-700 border-green-300 py-1 px-2 text-xs font-semibold",
+      "bg-green-100 text-green-700 border-green-300 py-1 px-2 text-base font-semibold",
     disabled:
-      "bg-gray-100 text-gray-400 border-gray-200 py-1 px-2 text-xs font-semibold opacity-60",
+      "bg-gray-100 text-gray-400 border-gray-200 py-1 px-2 text-base font-semibold opacity-60",
   },
   stepTitle: {
-    default: "text-sm font-medium text-gray-700",
-    active: "text-sm font-bold text-primary-800",
-    complete: "text-sm font-medium text-green-700",
-    disabled: "text-sm font-medium text-gray-400",
+    default: "text-base font-medium text-gray-700",
+    active: "text-base font-medium text-yellow-700",
+    complete: "text-base font-medium text-green-700",
+    disabled: "text-base font-medium text-gray-400",
   },
   sectionWrapper: {
     default:
       "space-y-4 p-4 sm:p-6 rounded-lg border bg-white transition-all duration-200",
     active:
-      "space-y-4 p-4 sm:p-6 rounded-lg border-2 border-primary-200 bg-primary-50/30 shadow-sm transition-all duration-200",
+      "space-y-4 p-4 sm:p-6 rounded-lg border-2 border-yellow-200 bg-yellow-50/30 shadow-sm transition-all duration-200",
     complete:
       "space-y-4 p-4 sm:p-6 rounded-lg border border-green-200 bg-green-50/20 transition-all duration-200",
     disabled:
@@ -195,15 +192,14 @@ const styles = {
     h-auto py-2 px-3 sm:py-3 sm:px-4 flex flex-col items-start justify-center rounded-lg
     transition-all duration-200 hover:shadow-md border-2 w-full
   `,
-  timeButtonSelected:
-    "bg-primary-50 text-primary-800 border-primary-300 shadow-sm",
+  timeButtonSelected: "bg-slate-50 text-slate-800 border-slate-300 shadow-sm",
   timeButtonDefault:
-    "bg-white text-gray-700 border-gray-200 hover:border-primary-200 hover:bg-gray-50",
+    "bg-white text-gray-700 border-gray-200 hover:border-slate-200 hover:bg-gray-50",
   optionCard: {
     default:
-      "border border-gray-200 rounded-lg cursor-pointer transition-all duration-200 overflow-hidden hover:shadow-sm hover:border-primary-200",
+      "border border-gray-200 rounded-lg cursor-pointer transition-all duration-200 overflow-hidden hover:shadow-sm hover:border-slate-200",
     selected:
-      "border-2 border-primary-300 bg-primary-50 shadow-md rounded-lg cursor-pointer transition-all duration-200 overflow-hidden",
+      "border-2 border-slate-300 bg-slate-50 shadow-md rounded-lg cursor-pointer transition-all duration-200 overflow-hidden",
   },
   badge: {
     count: "bg-white text-blue-600 border-blue-200",
@@ -212,13 +208,13 @@ const styles = {
     category: "bg-indigo-50 border-indigo-200 text-indigo-700 text-xs",
   },
   alertHeader:
-    "bg-gradient-to-r from-primary-600 to-blue-700 p-4 sm:p-6 sticky top-0 z-10",
+    "bg-gradient-to-r from-slate-600 to-blue-700 p-4 sm:p-6 sticky top-0 z-10",
   progressSteps: 4,
   selectionCard: {
     default:
-      "border border-gray-200 rounded-lg transition-all duration-200 hover:shadow-md cursor-pointer hover:border-primary-200 flex flex-col h-full",
+      "border border-gray-200 rounded-lg transition-all duration-200 hover:shadow-md cursor-pointer hover:border-slate-200 flex flex-col h-full",
     selected:
-      "border-2 border-primary-400 bg-primary-50/50 shadow-md rounded-lg transition-all duration-200 cursor-pointer flex flex-col h-full",
+      "border-2 border-slate-400 bg-slate-50/50 shadow-md rounded-lg transition-all duration-200 cursor-pointer flex flex-col h-full",
   },
   imageContainer:
     "relative w-full min-h-[140px] sm:min-h-[180px] aspect-video bg-gray-100 overflow-hidden rounded-t-lg",
@@ -236,13 +232,18 @@ const styles = {
   progressContainer:
     "bg-white/95 backdrop-blur-sm px-3 py-3 sm:px-6 sm:py-4 rounded-lg shadow-sm flex items-center justify-between",
   infoText: "text-xs text-gray-500",
-  activeStep: "text-sm font-bold text-primary-700",
+  activeStep: "text-sm font-bold text-slate-700",
   bottomBar:
-    "fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-50 px-2 sm:px-4 py-3",
+    "fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-50 w-full px-4 py-3",
   bottomBarContent:
-    "max-w-4xl mx-auto flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3",
+    "w-full max-w-4xl mx-auto flex sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3",
   bottomBarBadges: "flex flex-wrap items-center gap-1 text-xs",
   selectionBadges: "overflow-x-auto flex flex-nowrap items-center gap-1 pb-1",
+  carouselItem: "basis-1/2 md:basis-1/2 lg:basis-1/3  md:px-2",
+  carouselNav: "absolute right-0 top-1/2 -translate-y-1/2 flex gap-1",
+  carouselContainer: "relative",
+  carouselCounter:
+    "text-xs text-gray-500 absolute top-0 right-0 bg-white px-2 py-1 rounded-md shadow-sm",
 };
 
 // セクションコンポーネント（モバイル最適化）
@@ -300,7 +301,7 @@ const Section: React.FC<SectionProps> = ({
           </Badge>
         )}
         {icon && (
-          <span className={isActive ? "text-primary-500" : "text-gray-400"}>
+          <span className={isActive ? "text-slate-500" : "text-gray-400"}>
             {icon}
           </span>
         )}
@@ -400,11 +401,11 @@ const ReservationConfirmationDialog: React.FC<
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className="max-w-lg p-0 gap-0 rounded-xl overflow-hidden max-h-[95vh] w-[95vw] sm:w-auto">
         <AlertDialogHeader className={styles.alertHeader}>
-          <AlertDialogTitle className="text-xl font-bold flex items-center gap-2">
+          <AlertDialogTitle className="text-xl font-bold flex items-center gap-2 text-white">
             <CalendarCheck className="h-5 w-5 sm:h-6 sm:w-6" />
             予約内容の確認
           </AlertDialogTitle>
-          <AlertDialogDescription className="text-indigo-500 text-sm">
+          <AlertDialogDescription className="text-indigo-100 text-sm">
             以下の内容で予約を確定しますか？
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -412,9 +413,9 @@ const ReservationConfirmationDialog: React.FC<
         <ScrollArea className="max-h-[calc(95vh-11rem)]">
           <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
             {/* 予約日時情報 */}
-            <Card className="border-primary-200 shadow-sm overflow-hidden">
-              <CardHeader className="bg-primary-50 pb-2 pt-3 px-3 sm:pb-3 sm:pt-4 sm:px-4">
-                <CardTitle className="text-sm sm:text-base text-primary-800">
+            <Card className="border-slate-200 shadow-sm overflow-hidden">
+              <CardHeader className="bg-slate-50 pb-2 pt-3 px-3 sm:pb-3 sm:pt-4 sm:px-4">
+                <CardTitle className="text-sm sm:text-base text-slate-800">
                   予約日時
                 </CardTitle>
               </CardHeader>
@@ -424,8 +425,8 @@ const ReservationConfirmationDialog: React.FC<
                     <div className="text-xs text-gray-500 font-medium">
                       予約日
                     </div>
-                    <h3 className="text-base sm:text-lg font-bold text-primary-800 flex items-center">
-                      <CalendarIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 text-primary-600" />
+                    <h3 className="text-base sm:text-lg font-bold text-slate-800 flex items-center">
+                      <CalendarIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 text-slate-600" />
                       {selectedTimeSlot
                         ? formatDateJP(selectedTimeSlot.date || "")
                         : ""}
@@ -436,8 +437,8 @@ const ReservationConfirmationDialog: React.FC<
                       予約時間
                     </div>
                     <div className="flex items-center gap-1">
-                      <ClockIcon className="h-3 w-3 sm:h-4 sm:w-4 text-primary-600" />
-                      <span className="text-base sm:text-lg font-bold text-primary-800 tracking-wide">
+                      <ClockIcon className="h-3 w-3 sm:h-4 sm:w-4 text-slate-600" />
+                      <span className="text-base sm:text-lg font-bold text-slate-800 tracking-wide">
                         {selectedTimeSlot
                           ? `${selectedTimeSlot.startTime.split("T")[1]}〜${selectedTimeSlot.endTime.split("T")[1]}`
                           : ""}
@@ -445,8 +446,8 @@ const ReservationConfirmationDialog: React.FC<
                     </div>
                   </div>
                 </div>
-                <div className="mt-3 text-xs text-primary-700 bg-primary-50 p-2 sm:p-3 rounded-md border border-primary-200 flex items-start gap-2">
-                  <InfoIcon className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0 text-primary-500 mt-0.5" />
+                <div className="mt-3 text-xs text-slate-700 bg-slate-50 p-2 sm:p-3 rounded-md border border-slate-200 flex items-start gap-2">
+                  <InfoIcon className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0 text-slate-500 mt-0.5" />
                   <span>
                     開始時間の5分前にはお店にお越し頂けますと幸いです。
                   </span>
@@ -455,9 +456,9 @@ const ReservationConfirmationDialog: React.FC<
             </Card>
 
             {/* 予約メニュー情報 */}
-            <Card className="border-primary-200 shadow-sm overflow-hidden">
-              <CardHeader className="bg-primary-50 pb-2 pt-3 px-3 sm:pb-3 sm:pt-4 sm:px-4">
-                <CardTitle className="text-sm sm:text-base text-primary-800 flex items-center gap-2">
+            <Card className="border-slate-200 shadow-sm overflow-hidden">
+              <CardHeader className="bg-slate-50 pb-2 pt-3 px-3 sm:pb-3 sm:pt-4 sm:px-4">
+                <CardTitle className="text-sm sm:text-base text-slate-800 flex items-center gap-2">
                   <Scissors className="h-3 w-3 sm:h-4 sm:w-4" />
                   予約メニュー
                 </CardTitle>
@@ -469,7 +470,7 @@ const ReservationConfirmationDialog: React.FC<
                   </span>
                   <Badge
                     variant="outline"
-                    className="bg-primary-50 text-primary-700 border-primary-200 font-medium text-xs shrink-0 ml-1"
+                    className="bg-slate-50 text-slate-700 border-slate-200 font-medium text-xs shrink-0 ml-1"
                   >
                     {selectedMenuDuration}分
                   </Badge>
@@ -600,7 +601,7 @@ const ReservationConfirmationDialog: React.FC<
             </Card>
 
             {/* 備考欄 */}
-            <div className="space-y-2">
+            <div className="space-y-2 pb-2">
               <label
                 htmlFor="notes"
                 className="font-medium text-slate-800 text-xs sm:text-sm flex items-center gap-2"
@@ -610,7 +611,8 @@ const ReservationConfirmationDialog: React.FC<
               </label>
               <Textarea
                 id="notes"
-                className="text-sm tracking-wide resize-none min-h-20 sm:min-h-28 border-2 focus:border-primary-300 rounded-lg"
+                rows={5}
+                className="text-sm tracking-wide resize-none min-h-20 sm:min-h-28 border-2 focus:border-slate-300 rounded-lg"
                 placeholder="特別なご要望がございましたらご記入ください"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -619,9 +621,9 @@ const ReservationConfirmationDialog: React.FC<
           </div>
         </ScrollArea>
 
-        <AlertDialogFooter className="sticky bottom-0 px-4 sm:px-6 py-3 sm:py-4 border-t  z-10 gap-2 sm:gap-3 shadow-md flex flex-col sm:flex-row">
+        <AlertDialogFooter className="sticky bottom-0 bg-white px-4 sm:px-6 py-3 sm:py-4 border-t z-10 gap-2 sm:gap-3 shadow-md flex flex-col sm:flex-row">
           <AlertDialogAction
-            className="shadow-lg gap-2 sm:flex-[2]"
+            className="shadow-lg gap-2 sm:flex-[2] bg-slate-800 hover:bg-slate-900"
             onClick={onConfirm}
           >
             <CheckCircle2 className="h-4 w-4" />
@@ -648,7 +650,7 @@ const SalonInfoSheet: React.FC<{
         <Button
           variant="outline"
           size="sm"
-          className="text-xs h-8 px-2 gap-1 sm:hidden"
+          className="text-xs h-8 px-2 gap-1 sm:hidden bg-indigo-50 text-indigo-700 border-indigo-200"
         >
           <InfoIcon className="h-3 w-3" />
           サロン情報
@@ -662,7 +664,7 @@ const SalonInfoSheet: React.FC<{
         <div className="space-y-4">
           {salonConfig?.imgFileId && (
             <div className="flex flex-col items-center">
-              <div className="overflow-hidden rounded-lg border border-gray-200 shadow-sm mb-3 w-full max-w-[200px]">
+              <div className="overflow-hidden shadow-sm mb-3 w-full max-w-[200px]">
                 <FileImage
                   fileId={salonConfig.imgFileId}
                   alt={salonConfig.salonName}
@@ -670,7 +672,7 @@ const SalonInfoSheet: React.FC<{
                   fullSize
                 />
               </div>
-              <h3 className="text-lg font-bold text-gray-800">
+              <h3 className="text-xl font-bold text-gray-800">
                 {salonConfig.salonName}
               </h3>
               <p className="text-sm text-gray-600 mt-1">
@@ -686,18 +688,18 @@ const SalonInfoSheet: React.FC<{
               </h4>
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm">
-                  <Phone className="h-4 w-4 text-primary-500" />
+                  <Phone className="h-4 w-4 text-slate-500" />
                   <a
-                    className="text-primary-600 hover:underline"
+                    className="text-indigo-600 hover:underline"
                     href={`tel:${salonConfig?.phone}`}
                   >
                     {salonConfig?.phone}
                   </a>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
-                  <Mail className="h-4 w-4 text-primary-500" />
+                  <Mail className="h-4 w-4 text-slate-500" />
                   <a
-                    className="text-primary-600 hover:underline"
+                    className="text-indigo-600 hover:underline"
                     href={`mailto:${salonConfig?.email}`}
                   >
                     {salonConfig?.email}
@@ -712,7 +714,7 @@ const SalonInfoSheet: React.FC<{
               </h4>
               <div className="space-y-2 text-sm">
                 <div className="flex items-start gap-2">
-                  <ClockIcon className="h-4 w-4 text-primary-500 mt-0.5" />
+                  <ClockIcon className="h-4 w-4 text-slate-500 mt-0.5" />
                   <div>
                     <p className="text-gray-800">
                       {salonConfig?.regularOpenTime} 〜{" "}
@@ -721,9 +723,10 @@ const SalonInfoSheet: React.FC<{
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
-                  <CalendarIcon className="h-4 w-4 text-primary-500 mt-0.5" />
                   <div>
-                    <p className="text-gray-800">定休日</p>
+                    <h5 className="text-sm font-semibold text-gray-700 mb-2">
+                      定休日
+                    </h5>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {salonConfig?.regularHolidays
                         ?.slice(0, 6)
@@ -731,11 +734,14 @@ const SalonInfoSheet: React.FC<{
                           <Badge
                             key={holiday}
                             variant="outline"
-                            className="bg-red-50 text-red-700 border-red-200 text-xs"
+                            className="bg-red-50 text-red-700 border-red-200 text-xs px-2 py-1"
                           >
                             {holiday}
                           </Badge>
                         ))}
+                      <span className="text-xs text-gray-500">
+                        直近の定休日を表示しています。
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -747,7 +753,7 @@ const SalonInfoSheet: React.FC<{
                 <h4 className="text-sm font-semibold text-gray-700 mb-2">
                   サロン概要
                 </h4>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 tracking-wide leading-5">
                   {salonConfig.description}
                 </p>
               </div>
@@ -771,10 +777,45 @@ const SalonInfoSheet: React.FC<{
   );
 };
 
+// カルーセルカウンターコンポーネント
+const CarouselCounter = ({
+  api,
+  totalItems,
+}: {
+  api: CarouselApi | null;
+  totalItems: number;
+}) => {
+  const [current, setCurrent] = React.useState(0);
+
+  React.useEffect(() => {
+    if (!api) return;
+
+    setCurrent(api.selectedScrollSnap() + 1);
+
+    api.on("select", () => {
+      setCurrent(api.selectedScrollSnap() + 1);
+    });
+  }, [api]);
+
+  return (
+    <div className="text-xs text-gray-500 bg-white/80 backdrop-blur-sm px-2 py-1 rounded-full border shadow-sm">
+      {current} / {totalItems}
+    </div>
+  );
+};
+
 export default function ReservationTimePicker() {
   const { id } = useParams();
   const salonId = id as string;
   const router = useRouter();
+
+  // カルーセルAPI状態
+  const [menuCarouselApi, setMenuCarouselApi] = useState<CarouselApi | null>(
+    null
+  );
+  const [staffCarouselApi, setStaffCarouselApi] = useState<CarouselApi | null>(
+    null
+  );
 
   // 状態変数の設定
   const [selectedMenuId, setSelectedMenuId] = useState<string>("");
@@ -789,9 +830,8 @@ export default function ReservationTimePicker() {
   const [notes, setNotes] = useState<string>("");
   const [disableDates, setDisableDates] = useState<Date[]>([]);
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
-  const [loginCustomer, setLoginCustomer] = useState<Doc<"customer"> | null>(
-    null
-  );
+  const [sessionCustomer, setSessionCustomer] =
+    useState<Doc<"customer"> | null>(null);
   const [availableStaffs, setAvailableStaffs] = useState<Doc<"staff">[]>([]);
   const [progress, setProgress] = useState<number>(0);
   const [currentStep, setCurrentStep] = useState<number>(1);
@@ -1003,11 +1043,11 @@ export default function ReservationTimePicker() {
 
   // ユーザーログイン情報の確認
   useEffect(() => {
-    const customerData = getCookie("salonapp-customer-cookie");
+    const customerData = getCookie("__salonapp_session");
     if (!salonId) return;
 
     if (customerData) {
-      setLoginCustomer(JSON.parse(customerData));
+      setSessionCustomer(JSON.parse(customerData));
     } else {
       router.push(`/reserve/${salonId}`);
     }
@@ -1079,7 +1119,7 @@ export default function ReservationTimePicker() {
     setStaffDetailOpen(null);
   };
 
-  const handleConfirmReservation = (): void => {
+  const handleConfirmReservation = async (): Promise<void> => {
     try {
       if (!selectedDate || !selectedTimeSlot) {
         toast.error("日付または時間が選択されていません");
@@ -1105,18 +1145,19 @@ export default function ReservationTimePicker() {
         (option: MenuOption) => selectedOptions.includes(option.id)
       );
 
-      createReservation({
+      const reservationId = await createReservation({
         menuId: selectedMenuId,
         staffId: selectedStaffId,
         salonId: salonId,
+        salonName: salonConfig?.salonName ?? "",
         reservationDate: dateString,
         startTime: fullStartTime,
         endTime: fullEndTime,
         menuName: selectedMenu?.name ?? "",
         price: selectedMenu?.price ?? 0,
-        customerId: loginCustomer?._id ?? "only-session",
-        customerName: loginCustomer?.firstName ?? "未設定",
-        customerPhone: loginCustomer?.phone ?? "未設定",
+        customerId: sessionCustomer?._id ?? "only-session",
+        customerName: sessionCustomer?.firstName ?? "未設定",
+        customerPhone: sessionCustomer?.phone ?? "未設定",
         status: "confirmed",
         notes: notes,
         staffName: selectedStaff?.name ?? "",
@@ -1125,7 +1166,9 @@ export default function ReservationTimePicker() {
 
       setDialogOpen(false);
       toast.success("予約が確定されました");
-      router.push(`/reserve/${salonId}/calendar/complete`);
+      router.push(
+        `/reserve/${salonId}/calendar/complete?reservationId=${reservationId}`
+      );
     } catch (error) {
       console.error("予約エラー:", error);
       toast.error("予約に失敗しました");
@@ -1149,7 +1192,7 @@ export default function ReservationTimePicker() {
       {/* ヘッダー（固定表示） */}
       <div className={styles.headerContainer}>
         <Card className="border-none shadow-md rounded-none">
-          <CardHeader className=" pt-3 pb-3 px-3 sm:pt-5 sm:pb-4 sm:px-6">
+          <CardHeader className="pt-3 pb-3 px-3 sm:pt-5 sm:pb-4 sm:px-6">
             <div className="mb-2 sm:mb-3 flex justify-between items-center">
               <div className="flex-1 overflow-hidden">
                 <OriginalBreadcrumb items={breadcrumbItems} />
@@ -1170,7 +1213,7 @@ export default function ReservationTimePicker() {
                     </p>
                   </div>
                   <p className="text-right">
-                    <span className="text-lg sm:text-xl font-bold text-primary-600">
+                    <span className="text-lg sm:text-xl font-bold text-slate-600">
                       {Math.round(progress)}%
                     </span>
                     <span className="text-xs text-gray-500 block">完了</span>
@@ -1185,9 +1228,9 @@ export default function ReservationTimePicker() {
 
       <div className="px-3 sm:px-4 mx-auto">
         {/* サロン情報カード（PCのみ表示） */}
-        <Card className="mb-6 border-primary-100 overflow-hidden shadow-sm hidden sm:block">
-          <CardHeader className="bg-gradient-to-r from-primary-50/60 to-blue-50/80 pt-4 pb-3">
-            <CardTitle className="text-lg font-bold text-primary-800 flex items-center gap-2">
+        <Card className="mb-6 border-slate-100 overflow-hidden shadow-sm hidden sm:block">
+          <CardHeader className="bg-gradient-to-r from-slate-50/60 to-blue-50/80 pt-4 pb-3">
+            <CardTitle className="text-lg font-bold text-slate-800 flex items-center gap-2">
               <InfoIcon className="h-5 w-5" />
               サロン情報
             </CardTitle>
@@ -1220,18 +1263,18 @@ export default function ReservationTimePicker() {
                     </h4>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-sm">
-                        <Phone className="h-4 w-4 text-primary-500" />
+                        <Phone className="h-4 w-4 text-slate-500" />
                         <a
-                          className="text-primary-600 hover:underline"
+                          className="text-slate-600 hover:underline"
                           href={`tel:${salonConfig?.phone}`}
                         >
                           {salonConfig?.phone}
                         </a>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
-                        <Mail className="h-4 w-4 text-primary-500" />
+                        <Mail className="h-4 w-4 text-slate-500" />
                         <a
-                          className="text-primary-600 hover:underline"
+                          className="text-slate-600 hover:underline"
                           href={`mailto:${salonConfig?.email}`}
                         >
                           {salonConfig?.email}
@@ -1245,7 +1288,7 @@ export default function ReservationTimePicker() {
                     </h4>
                     <div className="space-y-2 text-sm">
                       <div className="flex items-start gap-2">
-                        <ClockIcon className="h-4 w-4 text-primary-500 mt-0.5" />
+                        <ClockIcon className="h-4 w-4 text-slate-500 mt-0.5" />
                         <div>
                           <p className="text-gray-800">
                             {salonConfig?.regularOpenTime} 〜{" "}
@@ -1254,7 +1297,7 @@ export default function ReservationTimePicker() {
                         </div>
                       </div>
                       <div className="flex items-start gap-2">
-                        <CalendarIcon className="h-4 w-4 text-primary-500 mt-0.5" />
+                        <CalendarIcon className="h-4 w-4 text-slate-500 mt-0.5" />
                         <div>
                           <p className="text-gray-800">定休日</p>
                           <div className="flex flex-wrap gap-1 mt-1">
@@ -1303,14 +1346,14 @@ export default function ReservationTimePicker() {
           </CardContent>
         </Card>
 
-        <div className="space-y-6 sm:space-y-8">
+        <div className="space-y-6 pt-4">
           {/* STEP 1: メニュー選択 */}
           <Section
             badge="STEP 1"
             title="メニューを選択"
             isComplete={isStepOneComplete}
             isActive={currentStep === 1}
-            icon={<Scissors className="h-4 w-4" />}
+            icon={<Scissors className="h-6 w-6" />}
           >
             <div className="space-y-4">
               {/* メニュー検索ボックス */}
@@ -1318,7 +1361,7 @@ export default function ReservationTimePicker() {
                 <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                 <Input
                   placeholder="メニューを検索..."
-                  className="pl-10 rounded-lg border-2 focus:border-primary-300"
+                  className="pl-10 rounded-sm border focus:border-slate-300 text-sm tracking-wide"
                   value={menuSearchQuery}
                   onChange={(e) => setMenuSearchQuery(e.target.value)}
                 />
@@ -1335,118 +1378,157 @@ export default function ReservationTimePicker() {
               </div>
 
               {filteredMenus.length > 0 ? (
-                <motion.div
-                  variants={containerVariants}
-                  initial="hidden"
-                  animate="show"
-                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"
-                >
-                  {filteredMenus.map((menu) => (
-                    <motion.div
-                      key={menu._id}
-                      variants={cardVariants}
-                      whileHover="hover"
-                      className="h-full"
-                    >
-                      <Card
-                        className={cn(
-                          selectedMenuId === menu._id
-                            ? styles.selectionCard.selected
-                            : styles.selectionCard.default
-                        )}
-                        onClick={() => handleMenuSelect(menu._id)}
-                      >
-                        {selectedMenuId === menu._id && (
-                          <div className="absolute top-2 right-2 z-10">
-                            <Badge className="bg-primary-600 border-none text-xs">
-                              選択中
-                            </Badge>
-                          </div>
-                        )}
-                        <div className={styles.imageContainer}>
-                          {menu.imgFileId ? (
-                            <FileImage
-                              fileId={menu.imgFileId}
-                              alt={menu.name}
-                              size={300}
-                              fullSize
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                              <Scissors className="h-8 w-8 sm:h-10 sm:w-10 text-gray-300" />
-                            </div>
-                          )}
-                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2 sm:p-3">
-                            <div className="flex items-center gap-1">
-                              <Badge className="bg-white/90 text-primary-700 border-none text-xs">
-                                <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
-                                {menu.timeToMin}分
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-
-                        <CardContent className="p-3 sm:p-4">
-                          <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base line-clamp-2">
-                            {menu.name}
-                          </h3>
-
-                          {menu.salePrice ? (
-                            <div className="flex items-baseline gap-1 sm:gap-2">
-                              <span className={styles.priceDisplay.lineThrough}>
-                                ¥{menu.price.toLocaleString()}
-                              </span>
-                              <span className={styles.priceDisplay.sale}>
-                                ¥{menu.salePrice.toLocaleString()}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className={styles.priceDisplay.default}>
-                              ¥{menu.price.toLocaleString()}
-                            </span>
-                          )}
-
-                          {menu.description && (
-                            <Collapsible
-                              open={menuDetailOpen === menu._id}
-                              onOpenChange={(open: boolean) => {
-                                // イベントの伝播を防ぐ
-                                setMenuDetailOpen(open ? menu._id : null);
-                              }}
+                <div className={styles.carouselContainer}>
+                  <Carousel
+                    setApi={setMenuCarouselApi}
+                    className="w-full"
+                    opts={{
+                      align: "start",
+                      loop: true,
+                    }}
+                  >
+                    <CarouselContent>
+                      {filteredMenus.map((menu) => (
+                        <CarouselItem
+                          key={menu._id}
+                          className={styles.carouselItem}
+                        >
+                          <motion.div
+                            variants={cardVariants}
+                            whileHover="hover"
+                            className="h-full"
+                            animate={{ opacity: 1, y: 0 }}
+                            initial={{ opacity: 0, y: 20 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <Card
+                              className={cn(
+                                selectedMenuId === menu._id
+                                  ? styles.selectionCard.selected
+                                  : styles.selectionCard.default
+                              )}
+                              onClick={() => handleMenuSelect(menu._id)}
                             >
-                              <CollapsibleTrigger
-                                onClick={(
-                                  e: React.MouseEvent<HTMLButtonElement>
-                                ) => {
-                                  e.stopPropagation();
-                                }}
-                                className="text-xs text-primary-600 mt-2 flex items-center hover:underline"
-                              >
-                                {menuDetailOpen === menu._id ? (
-                                  <ChevronDown className="h-3 w-3 mr-1" />
+                              {selectedMenuId === menu._id && (
+                                <div className="absolute top-2 right-2 z-10">
+                                  <Badge className="bg-green-600 border-none text-xs">
+                                    選択中
+                                  </Badge>
+                                </div>
+                              )}
+                              <div className={styles.imageContainer}>
+                                {menu.imgFileId ? (
+                                  <FileImage
+                                    fileId={menu.imgFileId}
+                                    alt={menu.name}
+                                    size={300}
+                                    fullSize
+                                  />
                                 ) : (
-                                  <ChevronRight className="h-3 w-3 mr-1" />
+                                  <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                                    <Scissors className="h-8 w-8 sm:h-10 sm:w-10 text-gray-300" />
+                                  </div>
                                 )}
-                                詳細を
-                                {menuDetailOpen === menu._id
-                                  ? "閉じる"
-                                  : "見る"}
-                              </CollapsibleTrigger>
-                              <CollapsibleContent
-                                onClick={(e) => e.stopPropagation()}
-                                className="mt-2"
-                              >
-                                <p className="text-xs text-gray-600 bg-gray-50 p-2 sm:p-3 rounded-md border border-gray-100">
-                                  {menu.description}
-                                </p>
-                              </CollapsibleContent>
-                            </Collapsible>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  ))}
-                </motion.div>
+                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2 sm:p-3">
+                                  <div className="flex items-center gap-1">
+                                    <Badge className="bg-gray-50 text-gray-700 border-none text-xs">
+                                      <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
+                                      {menu.timeToMin}分
+                                    </Badge>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <CardContent className="p-3 sm:p-4">
+                                <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base line-clamp-2">
+                                  {menu.name}
+                                </h3>
+
+                                {menu.salePrice ? (
+                                  <div className="flex items-baseline gap-1 sm:gap-2">
+                                    <span
+                                      className={
+                                        styles.priceDisplay.lineThrough
+                                      }
+                                    >
+                                      ¥{menu.price.toLocaleString()}
+                                    </span>
+                                    <span className={styles.priceDisplay.sale}>
+                                      ¥{menu.salePrice.toLocaleString()}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <span className={styles.priceDisplay.default}>
+                                    ¥{menu.price.toLocaleString()}
+                                  </span>
+                                )}
+
+                                {menu.description && (
+                                  <Collapsible
+                                    open={menuDetailOpen === menu._id}
+                                    onOpenChange={(open: boolean) => {
+                                      // イベントの伝播を防ぐ
+                                      setMenuDetailOpen(open ? menu._id : null);
+                                    }}
+                                  >
+                                    <CollapsibleTrigger
+                                      onClick={(
+                                        e: React.MouseEvent<HTMLButtonElement>
+                                      ) => {
+                                        e.stopPropagation();
+                                      }}
+                                      className="text-xs text-slate-600 mt-2 flex items-center hover:underline"
+                                    >
+                                      {menuDetailOpen === menu._id ? (
+                                        <ChevronDown className="h-3 w-3 mr-1" />
+                                      ) : (
+                                        <ChevronRight className="h-3 w-3 mr-1" />
+                                      )}
+                                      詳細を
+                                      {menuDetailOpen === menu._id
+                                        ? "閉じる"
+                                        : "見る"}
+                                    </CollapsibleTrigger>
+                                    <CollapsibleContent
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="mt-2"
+                                    >
+                                      <p className="text-xs text-gray-600">
+                                        {menu.description}
+                                      </p>
+                                    </CollapsibleContent>
+                                  </Collapsible>
+                                )}
+                              </CardContent>
+                            </Card>
+                          </motion.div>
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+
+                    <div className="flex items-center justify-center mt-2 gap-2">
+                      <CarouselPrevious className="static transform-none mx-1" />
+                      <div className="text-xs text-slate-500">
+                        横にスワイプしてもっと見る
+                      </div>
+                      <CarouselNext className="static transform-none mx-1" />
+                    </div>
+
+                    <div className="absolute top-2 right-2">
+                      <CarouselCounter
+                        api={menuCarouselApi}
+                        totalItems={Math.ceil(
+                          filteredMenus.length /
+                            (window.innerWidth < 768
+                              ? 1
+                              : window.innerWidth < 1024
+                                ? 2
+                                : 3)
+                        )}
+                      />
+                    </div>
+                  </Carousel>
+                </div>
               ) : (
                 <EmptyState
                   icon={<AlertCircle className="h-8 w-8 sm:h-10 sm:w-10" />}
@@ -1476,7 +1558,7 @@ export default function ReservationTimePicker() {
                   <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                   <Input
                     placeholder="スタッフを検索..."
-                    className="pl-10 rounded-lg border-2 focus:border-primary-300"
+                    className="pl-10 rounded-sm text-sm tracking-wide border focus:border-slate-300"
                     value={staffSearchQuery}
                     onChange={(e) => setStaffSearchQuery(e.target.value)}
                   />
@@ -1493,121 +1575,159 @@ export default function ReservationTimePicker() {
                 </div>
 
                 {filteredStaffs.length > 0 ? (
-                  <motion.div
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="show"
-                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"
-                  >
-                    {filteredStaffs.map((staff) => (
-                      <motion.div
-                        key={staff._id}
-                        variants={cardVariants}
-                        whileHover="hover"
-                        className="h-full"
-                      >
-                        <Card
-                          className={cn(
-                            selectedStaffId === staff._id
-                              ? styles.selectionCard.selected
-                              : styles.selectionCard.default
-                          )}
-                          onClick={() => handleStaffSelect(staff._id)}
-                        >
-                          {selectedStaffId === staff._id && (
-                            <div className="absolute top-2 right-2 z-10">
-                              <Badge className="bg-primary-600 border-none text-xs">
-                                選択中
-                              </Badge>
-                            </div>
-                          )}
-                          <div className={styles.imageContainer}>
-                            {staff.imgFileId ? (
-                              <FileImage
-                                fileId={staff.imgFileId}
-                                alt={staff.name}
-                                size={300}
-                                fullSize
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                                <Users className="h-8 w-8 sm:h-10 sm:w-10 text-gray-300" />
-                              </div>
-                            )}
-                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2 sm:p-3">
-                              <div className="flex items-center gap-1">
-                                {staff.gender && (
-                                  <Badge className="bg-white/90 text-gray-800 border-none text-xs">
-                                    {staff.gender}
-                                  </Badge>
+                  <div className={styles.carouselContainer}>
+                    <Carousel
+                      setApi={setStaffCarouselApi}
+                      className="w-full"
+                      opts={{
+                        align: "start",
+                        loop: false,
+                      }}
+                    >
+                      <CarouselContent>
+                        {filteredStaffs.map((staff) => (
+                          <CarouselItem
+                            key={staff._id}
+                            className={styles.carouselItem}
+                          >
+                            <motion.div
+                              variants={cardVariants}
+                              whileHover="hover"
+                              className="h-full"
+                              animate={{ opacity: 1, y: 0 }}
+                              initial={{ opacity: 0, y: 20 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <Card
+                                className={cn(
+                                  selectedStaffId === staff._id
+                                    ? styles.selectionCard.selected +
+                                        " relative"
+                                    : styles.selectionCard.default + " relative"
                                 )}
-                                {staff.age && (
-                                  <Badge className="bg-white/90 text-gray-800 border-none text-xs">
-                                    {staff.age}歳
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-
-                          <CardContent className="p-3 sm:p-4">
-                            <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">
-                              {staff.name}
-                            </h3>
-
-                            {staff.extraCharge ? (
-                              <div className="text-xs sm:text-sm text-gray-700">
-                                指名料:{" "}
-                                <span className="font-semibold">
-                                  ¥{staff.extraCharge.toLocaleString()}
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="text-xs sm:text-sm text-green-600 font-medium">
-                                指名料無料
-                              </span>
-                            )}
-
-                            {staff.description && (
-                              <Collapsible
-                                open={staffDetailOpen === staff._id}
-                                onOpenChange={(open: boolean) => {
-                                  setStaffDetailOpen(open ? staff._id : null);
-                                }}
+                                onClick={() => handleStaffSelect(staff._id)}
                               >
-                                <CollapsibleTrigger
-                                  onClick={(
-                                    e: React.MouseEvent<HTMLButtonElement>
-                                  ) => {
-                                    e.stopPropagation();
-                                  }}
-                                  className="text-xs text-primary-600 mt-2 flex items-center hover:underline"
-                                >
-                                  {staffDetailOpen === staff._id ? (
-                                    <ChevronDown className="h-3 w-3 mr-1" />
+                                {selectedStaffId === staff._id && (
+                                  <div className="absolute top-2 right-2 z-10">
+                                    <Badge className="bg-slate-600 border-none text-xs">
+                                      選択中
+                                    </Badge>
+                                  </div>
+                                )}
+                                <div className={styles.imageContainer}>
+                                  {staff.imgFileId ? (
+                                    <FileImage
+                                      fileId={staff.imgFileId}
+                                      alt={staff.name}
+                                      size={300}
+                                      fullSize
+                                    />
                                   ) : (
-                                    <ChevronRight className="h-3 w-3 mr-1" />
+                                    <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                                      <Users className="h-8 w-8 sm:h-10 sm:w-10 text-gray-300" />
+                                    </div>
                                   )}
-                                  詳細を
-                                  {staffDetailOpen === staff._id
-                                    ? "閉じる"
-                                    : "見る"}
-                                </CollapsibleTrigger>
-                                <CollapsibleContent
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="mt-2"
-                                >
-                                  <p className="text-xs text-gray-600 bg-gray-50 p-2 sm:p-3 rounded-md border border-gray-100">
-                                    {staff.description}
-                                  </p>
-                                </CollapsibleContent>
-                              </Collapsible>
-                            )}
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-                    ))}
-                  </motion.div>
+                                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2 sm:p-3">
+                                    <div className="flex items-center gap-1">
+                                      {staff.gender && (
+                                        <Badge className="bg-white/90 text-gray-800 border-none text-xs">
+                                          {staff.gender}
+                                        </Badge>
+                                      )}
+                                      {staff.age && (
+                                        <Badge className="bg-white/90 text-gray-800 border-none text-xs">
+                                          {staff.age}歳
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <CardContent className="p-3 sm:p-4">
+                                  <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">
+                                    {staff.name}
+                                  </h3>
+
+                                  {staff.extraCharge ? (
+                                    <div className="text-xs sm:text-sm text-gray-700">
+                                      指名料:{" "}
+                                      <span className="font-semibold">
+                                        ¥{staff.extraCharge.toLocaleString()}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-xs sm:text-sm text-green-600 font-medium">
+                                      指名料無料
+                                    </span>
+                                  )}
+
+                                  {staff.description && (
+                                    <Collapsible
+                                      open={staffDetailOpen === staff._id}
+                                      onOpenChange={(open: boolean) => {
+                                        setStaffDetailOpen(
+                                          open ? staff._id : null
+                                        );
+                                      }}
+                                    >
+                                      <CollapsibleTrigger
+                                        onClick={(
+                                          e: React.MouseEvent<HTMLButtonElement>
+                                        ) => {
+                                          e.stopPropagation();
+                                        }}
+                                        className="text-xs text-slate-600 mt-2 flex items-center hover:underline"
+                                      >
+                                        {staffDetailOpen === staff._id ? (
+                                          <ChevronDown className="h-3 w-3 mr-1" />
+                                        ) : (
+                                          <ChevronRight className="h-3 w-3 mr-1" />
+                                        )}
+                                        詳細を
+                                        {staffDetailOpen === staff._id
+                                          ? "閉じる"
+                                          : "見る"}
+                                      </CollapsibleTrigger>
+                                      <CollapsibleContent
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="mt-2"
+                                      >
+                                        <p className="text-xs text-gray-600 bg-gray-50 p-2 sm:p-3 rounded-md border border-gray-100">
+                                          {staff.description}
+                                        </p>
+                                      </CollapsibleContent>
+                                    </Collapsible>
+                                  )}
+                                </CardContent>
+                              </Card>
+                            </motion.div>
+                          </CarouselItem>
+                        ))}
+                      </CarouselContent>
+
+                      <div className="flex items-center justify-center mt-2 gap-2">
+                        <CarouselPrevious className="static transform-none mx-1" />
+                        <div className="text-xs text-slate-500">
+                          横にスワイプしてもっと見る
+                        </div>
+                        <CarouselNext className="static transform-none mx-1" />
+                      </div>
+
+                      <div className="absolute top-2 right-2">
+                        <CarouselCounter
+                          api={staffCarouselApi}
+                          totalItems={Math.ceil(
+                            filteredStaffs.length /
+                              (window.innerWidth < 768
+                                ? 1
+                                : window.innerWidth < 1024
+                                  ? 2
+                                  : 3)
+                          )}
+                        />
+                      </div>
+                    </Carousel>
+                  </div>
                 ) : (
                   <EmptyState
                     icon={<AlertCircle className="h-8 w-8 sm:h-10 sm:w-10" />}
@@ -1625,6 +1745,190 @@ export default function ReservationTimePicker() {
               />
             )}
           </Section>
+
+          {/* オプション選択（サイドバーに移動） */}
+          <div>
+            <Section
+              badge="STEP 3-1"
+              title="オプションを選択"
+              isOptional={true}
+              isActive={currentStep === 3 && isStepThreeComplete}
+              icon={<Tag className="h-4 w-4" />}
+            >
+              {salonConfig?.options && salonConfig.options.length > 0 ? (
+                <ScrollArea className="h-fit max-h-64">
+                  <motion.div
+                    className="space-y-2"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    {salonConfig.options.map((option: MenuOption) => (
+                      <motion.div
+                        key={option.id}
+                        whileTap={{ scale: 0.98 }}
+                        transition={{ duration: 0.1 }}
+                        className="rounded-lg overflow-hidden"
+                      >
+                        <div
+                          className={cn(
+                            selectedOptions.includes(option.id)
+                              ? styles.optionCard.selected
+                              : styles.optionCard.default
+                          )}
+                          onClick={() => handleOptionChange(option.id)}
+                        >
+                          <div className="p-2 sm:p-3 flex items-center justify-between">
+                            <div className="flex items-start gap-2 sm:gap-3">
+                              <Checkbox
+                                id={`option-${option.id}`}
+                                checked={selectedOptions.includes(option.id)}
+                                onCheckedChange={() =>
+                                  handleOptionChange(option.id)
+                                }
+                                className="mt-1 data-[state=checked]:bg-slate-600"
+                              />
+                              <div className="space-y-0.5 sm:space-y-1">
+                                <div className="flex items-center flex-wrap gap-1">
+                                  <label
+                                    htmlFor={`option-${option.id}`}
+                                    className="font-medium text-gray-800 text-xs sm:text-sm line-clamp-2"
+                                  >
+                                    {option.name}
+                                  </label>
+                                  {option.maxCount && (
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Badge
+                                            variant="outline"
+                                            className="text-xs bg-blue-50 border-blue-200 text-blue-700"
+                                          >
+                                            最大{option.maxCount}
+                                          </Badge>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p className="text-xs">
+                                            このオプションは最大
+                                            {option.maxCount}
+                                            つまで選択できます
+                                          </p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  )}
+                                </div>
+                                <div>
+                                  {option.salePrice ? (
+                                    <div className="flex items-center gap-1 sm:gap-2">
+                                      <span className="line-through text-gray-400 text-xs">
+                                        ¥{option.price.toLocaleString()}
+                                      </span>
+                                      <p className="text-red-600 text-sm font-bold">
+                                        ¥{option.salePrice.toLocaleString()}
+                                      </p>
+                                    </div>
+                                  ) : (
+                                    <span className="text-xs sm:text-sm font-medium">
+                                      ¥{option.price.toLocaleString()}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </ScrollArea>
+              ) : (
+                <div className="text-center py-4 sm:py-6 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                  <Tag className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-500 text-xs sm:text-sm">
+                    オプションはありません
+                  </p>
+                </div>
+              )}
+
+              {/* 選択されたオプション表示 */}
+              <AnimatePresence>
+                {selectedOptions.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mt-3 sm:mt-4 overflow-hidden"
+                  >
+                    <Card className="bg-slate-50 border-slate-200">
+                      <CardHeader className="py-2 px-3 sm:py-3 sm:px-4">
+                        <CardTitle className="text-xs sm:text-sm text-slate-800 flex items-center gap-1 sm:gap-2">
+                          <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 text-slate-600" />
+                          選択中のオプション
+                          <Badge
+                            variant="outline"
+                            className="ml-auto bg-white text-slate-600 border-slate-200 text-xs"
+                          >
+                            {selectedOptions.length}個
+                          </Badge>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="py-1 sm:py-2 px-3 sm:px-4">
+                        <ScrollArea className="max-h-24 sm:max-h-32">
+                          <div className="space-y-1">
+                            {selectedOptions.map((optionId) => {
+                              const option = salonConfig?.options?.find(
+                                (o: MenuOption) => o.id === optionId
+                              );
+                              if (!option) return null;
+                              return (
+                                <div
+                                  key={optionId}
+                                  className="flex items-center justify-between py-1"
+                                >
+                                  <span className="text-xs sm:text-sm text-slate-800 mr-2 flex-1 line-clamp-1">
+                                    {option.name}
+                                  </span>
+                                  <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                                    <span className="text-xs font-medium text-slate-700">
+                                      ¥
+                                      {(
+                                        option.salePrice || option.price
+                                      ).toLocaleString()}
+                                    </span>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-5 w-5 sm:h-6 sm:w-6 rounded-full p-0 text-slate-500 hover:text-red-500 hover:bg-transparent"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleOptionChange(optionId);
+                                      }}
+                                    >
+                                      <MinusCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </ScrollArea>
+                      </CardContent>
+                      <CardFooter className="pt-0 pb-2 sm:pb-3 px-3 sm:px-4">
+                        <div className="ml-auto bg-white rounded-full px-3 py-1 border border-slate-200">
+                          <span className="text-xs font-medium text-slate-800">
+                            合計:
+                          </span>{" "}
+                          <span className="text-base sm:text-lg font-bold text-slate-700">
+                            ¥{optionsTotal.toLocaleString()}
+                          </span>
+                        </div>
+                      </CardFooter>
+                    </Card>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </Section>
+          </div>
 
           {/* STEP 3: 日付選択と仕様選択 - モバイル対応レイアウト */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
@@ -1651,11 +1955,11 @@ export default function ReservationTimePicker() {
                           "w-full justify-start text-left font-medium rounded-lg",
                           !selectedDate && "text-gray-500",
                           !isStepTwoComplete && "opacity-50 cursor-not-allowed",
-                          "border-2 focus:border-primary-300 h-10 sm:h-11 text-sm"
+                          "border-2 focus:border-slate-300 h-10 sm:h-11 text-sm"
                         )}
                         disabled={!isStepTwoComplete}
                       >
-                        <CalendarIcon className="mr-2 h-4 w-4 text-primary-600" />
+                        <CalendarIcon className="mr-2 h-4 w-4 text-slate-600" />
                         {selectedDate
                           ? format(selectedDate, "yyyy年MM月dd日（E）", {
                               locale: ja,
@@ -1708,8 +2012,8 @@ export default function ReservationTimePicker() {
                             selectedDate &&
                               format(selectedDate, "yyyy-MM-dd") ===
                                 format(date, "yyyy-MM-dd")
-                              ? "bg-primary-50 text-primary-800 border-primary-300"
-                              : "bg-white text-gray-800 border-gray-200 hover:border-primary-200",
+                              ? "bg-slate-50 text-slate-800 border-slate-300"
+                              : "bg-white text-gray-800 border-gray-200 hover:border-slate-200",
                             !isStepTwoComplete &&
                               "opacity-50 cursor-not-allowed"
                           )}
@@ -1719,191 +2023,6 @@ export default function ReservationTimePicker() {
                       ))}
                   </div>
                 </div>
-              </Section>
-            </div>
-
-            {/* オプション選択（サイドバーに移動） */}
-            <div>
-              <Section
-                badge="STEP 3-1"
-                title="オプションを選択"
-                isOptional={true}
-                isActive={currentStep === 3 && isStepThreeComplete}
-                icon={<Tag className="h-4 w-4" />}
-              >
-                {salonConfig?.options && salonConfig.options.length > 0 ? (
-                  <ScrollArea className="h-fit">
-                    <motion.div
-                      className="space-y-2"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                    >
-                      {salonConfig.options.map((option: MenuOption) => (
-                        <motion.div
-                          key={option.id}
-                          whileTap={{ scale: 0.98 }}
-                          transition={{ duration: 0.1 }}
-                          className="rounded-lg overflow-hidden"
-                        >
-                          <div
-                            className={cn(
-                              selectedOptions.includes(option.id)
-                                ? styles.optionCard.selected
-                                : styles.optionCard.default
-                            )}
-                            onClick={() => handleOptionChange(option.id)}
-                          >
-                            <div className="p-2 sm:p-3 flex items-center justify-between">
-                              <div className="flex items-start gap-2 sm:gap-3">
-                                <Checkbox
-                                  id={`option-${option.id}`}
-                                  checked={selectedOptions.includes(option.id)}
-                                  onCheckedChange={() =>
-                                    handleOptionChange(option.id)
-                                  }
-                                  className="mt-1 data-[state=checked]:bg-blue-600"
-                                />
-                                <div className="space-y-0.5 sm:space-y-1">
-                                  <div className="flex items-center flex-wrap gap-1">
-                                    <label
-                                      htmlFor={`option-${option.id}`}
-                                      className="font-medium text-gray-800 text-xs sm:text-sm line-clamp-2"
-                                    >
-                                      {option.name}
-                                    </label>
-                                    {option.maxCount && (
-                                      <TooltipProvider>
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <Badge
-                                              variant="outline"
-                                              className="text-xs bg-blue-50 border-blue-200 text-blue-700"
-                                            >
-                                              最大{option.maxCount}
-                                            </Badge>
-                                          </TooltipTrigger>
-                                          <TooltipContent>
-                                            <p className="text-xs">
-                                              このオプションは最大
-                                              {option.maxCount}
-                                              つまで選択できます
-                                            </p>
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
-                                    )}
-                                  </div>
-                                  <div>
-                                    {option.salePrice ? (
-                                      <div className="flex items-center gap-1 sm:gap-2">
-                                        <span className="line-through text-gray-400 text-xs">
-                                          ¥{option.price.toLocaleString()}
-                                        </span>
-                                        <Badge className="bg-red-600 text-white border-none text-xs">
-                                          <Sparkles className="h-3 w-3 mr-0.5 sm:mr-1" />
-                                          ¥{option.salePrice.toLocaleString()}
-                                        </Badge>
-                                      </div>
-                                    ) : (
-                                      <span className="text-xs sm:text-sm font-medium">
-                                        ¥{option.price.toLocaleString()}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </motion.div>
-                  </ScrollArea>
-                ) : (
-                  <div className="text-center py-4 sm:py-6 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                    <Tag className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-500 text-xs sm:text-sm">
-                      オプションはありません
-                    </p>
-                  </div>
-                )}
-
-                {/* 選択されたオプション表示 */}
-                <AnimatePresence>
-                  {selectedOptions.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="mt-3 sm:mt-4 overflow-hidden"
-                    >
-                      <Card className="bg-primary-50 border-primary-200">
-                        <CardHeader className="py-2 px-3 sm:py-3 sm:px-4">
-                          <CardTitle className="text-xs sm:text-sm text-primary-800 flex items-center gap-1 sm:gap-2">
-                            <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 text-primary-600" />
-                            選択中のオプション
-                            <Badge
-                              variant="outline"
-                              className="ml-auto bg-white text-primary-600 border-primary-200 text-xs"
-                            >
-                              {selectedOptions.length}個
-                            </Badge>
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="py-1 sm:py-2 px-3 sm:px-4">
-                          <ScrollArea className="max-h-24 sm:max-h-32">
-                            <div className="space-y-1">
-                              {selectedOptions.map((optionId) => {
-                                const option = salonConfig?.options?.find(
-                                  (o: MenuOption) => o.id === optionId
-                                );
-                                if (!option) return null;
-                                return (
-                                  <div
-                                    key={optionId}
-                                    className="flex items-center justify-between py-1"
-                                  >
-                                    <span className="text-xs sm:text-sm text-primary-800 mr-2 flex-1 line-clamp-1">
-                                      {option.name}
-                                    </span>
-                                    <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-                                      <span className="text-xs font-medium text-primary-700">
-                                        ¥
-                                        {(
-                                          option.salePrice || option.price
-                                        ).toLocaleString()}
-                                      </span>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-5 w-5 sm:h-6 sm:w-6 rounded-full p-0 text-primary-500 hover:text-red-500 hover:bg-transparent"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleOptionChange(optionId);
-                                        }}
-                                      >
-                                        <MinusCircle className="h-3 w-3 sm:h-4 sm:w-4" />
-                                      </Button>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </ScrollArea>
-                        </CardContent>
-                        <CardFooter className="pt-0 pb-2 sm:pb-3 px-3 sm:px-4">
-                          <div className="ml-auto bg-white rounded-full px-3 py-1 border border-primary-200">
-                            <span className="text-xs font-medium text-primary-800">
-                              合計:
-                            </span>{" "}
-                            <span className="text-base sm:text-lg font-bold text-primary-700">
-                              ¥{optionsTotal.toLocaleString()}
-                            </span>
-                          </div>
-                        </CardFooter>
-                      </Card>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
               </Section>
             </div>
           </div>
@@ -1931,9 +2050,9 @@ export default function ReservationTimePicker() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3 }}
                     >
-                      <div className="flex items-center gap-2 bg-primary-50 p-2 rounded-md border border-primary-200">
-                        <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-primary-600" />
-                        <h3 className="font-bold text-primary-800 text-sm sm:text-base">
+                      <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-md border border-slate-200">
+                        <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-slate-600" />
+                        <h3 className="font-bold text-slate-800 text-sm sm:text-base">
                           {formatDateJP(date)}
                         </h3>
                       </div>
@@ -2033,39 +2152,31 @@ export default function ReservationTimePicker() {
         <div className={styles.bottomBar}>
           <div className={styles.bottomBarContent}>
             <div className="flex-1">
-              <h3 className="text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                選択内容
+              <h3 className="text-base font-bold tracking-wide whitespace-nowrap text-gray-700 mb-1">
+                {selectedMenuName}
+                {selectedDate && (
+                  <span className="text-sm text-gray-500">
+                    {" - "}
+                    {format(selectedDate, "MM/dd", { locale: ja })}
+                  </span>
+                )}
               </h3>
               <div className={styles.selectionBadges}>
-                {selectedMenuName && (
-                  <Badge
-                    variant="outline"
-                    className="bg-orange-50 text-orange-700 border-orange-200 text-xs whitespace-nowrap"
-                  >
-                    {selectedMenuName}
-                  </Badge>
-                )}
                 {selectedStaff?.name && (
-                  <Badge
-                    variant="outline"
-                    className="bg-blue-50 text-blue-700 border-blue-200 text-xs whitespace-nowrap"
-                  >
-                    {selectedStaff.name}
-                  </Badge>
-                )}
-                {selectedDate && (
-                  <Badge
-                    variant="outline"
-                    className="bg-green-50 text-green-700 border-green-200 text-xs whitespace-nowrap"
-                  >
-                    {format(selectedDate, "MM/dd-HH:mm", { locale: ja })}
-                  </Badge>
+                  <div className="flex items-center gap-1 whitespace-nowrap">
+                    <span className="text-xs text-gray-600 font-500 font-bold border-r border-gray-200 pr-2">
+                      担当者
+                    </span>
+                    <p className="text-sm font-bold tracking-wide text-gray-700">
+                      {selectedStaff.name}
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
 
-            <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 w-full sm:w-auto">
-              <div className="text-right">
+            <div className="flex items-center justify-end gap-2 sm:gap-3 sm:w-auto w-full ">
+              <div className="text-right w-full">
                 <p className="text-xs text-gray-500">合計金額</p>
                 <p className="text-lg sm:text-xl font-bold text-green-600">
                   ¥{calculateTotalPrice.toLocaleString()}
@@ -2075,6 +2186,7 @@ export default function ReservationTimePicker() {
           </div>
         </div>
       )}
+
       {/* 予約確認ダイアログ */}
       <ReservationConfirmationDialog
         open={dialogOpen}

@@ -92,6 +92,7 @@ export default defineSchema({
     menuName: v.string(),
     price: v.number(),
     salonId: v.string(),
+    salonName: v.optional(v.string()),
     reservationDate: v.string(),
     status: v.string(),
     startTime: v.string(),
