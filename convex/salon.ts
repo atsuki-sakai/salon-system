@@ -73,12 +73,12 @@ export const updateSubscription = mutation({
   },
 });
 
-export const getSalonByClerkId = query({
-  args: { clerkId: v.string() },
+export const getBySalonId = query({
+  args: { salonId: v.string() },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("salon")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .withIndex("by_salon_id", (q) => q.eq("salonId", args.salonId))
       .first();
   },
 });

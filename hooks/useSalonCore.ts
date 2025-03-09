@@ -29,8 +29,8 @@ export function useSalonCore() {
   const cachedSalonCore = useAtomValue(salonCoreAtom);
   const setCachedSalonCore = useSetAtom(salonCoreAtom);
   
-  const salon = useQuery(api.salon.getSalonByClerkId, 
-    clerkId ? { clerkId } : "skip"
+  const salon = useQuery(api.salon.getBySalonId, 
+    clerkId ? { salonId: clerkId } : "skip"
   );
 
   // データ更新のロジック

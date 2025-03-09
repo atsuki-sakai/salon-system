@@ -68,7 +68,7 @@ export async function POST(req: Request) {
     const email = email_addresses[0]?.email_address ?? "no-email";
 
     // 既存ユーザーの存在チェック
-    const existingSalon = await fetchQuery(api.salon.getSalonByClerkId, { clerkId: clerkUserId });
+    const existingSalon = await fetchQuery(api.salon.getBySalonId, { salonId: clerkUserId });
     if (!existingSalon) {
       // 新規の場合は Stripe で Customer を作成
       const customer = await stripe.customers.create({
@@ -92,7 +92,7 @@ export async function POST(req: Request) {
   else if (eventType === 'user.deleted') {
     const { id } = data as { id: string };
     const clerkUserId = id;
-    const salonRecord = await fetchQuery(api.salon.getSalonByClerkId, { clerkId: clerkUserId });
+    const salonRecord = await fetchQuery(api.salon.getBySalonId, { salonId: clerkUserId });
     if (salonRecord && salonRecord.stripeCustomerId) {
       try {
         await stripe.customers.del(salonRecord.stripeCustomerId);
