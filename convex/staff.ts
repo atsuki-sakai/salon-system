@@ -34,7 +34,14 @@ export const update = mutation({
   },
   handler: async (ctx, args) => {
     const staffId = await ctx.db.patch(args.id, {
-      ...args,
+      name: args.name,
+      salonId: args.salonId,
+      description: args.description,
+      gender: args.gender,
+      imgFileId: args.imgFileId,
+      regularHolidays: args.regularHolidays,
+      extraCharge: args.extraCharge,
+      age: args.age,
     });
     return staffId;
   },

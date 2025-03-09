@@ -17,10 +17,10 @@ export const add = mutation({
     targetGender: v.optional(v.union(v.literal("全て"), v.literal("男性"), v.literal("女性"))),
   },
   handler: async (ctx, args) => {
-    const menu = await ctx.db.insert("menu", {
+    const menuId = await ctx.db.insert("menu", {
       ...args,
     });
-    return menu;
+    return menuId;
   },
 });
 
@@ -39,7 +39,7 @@ export const update = mutation({
     targetGender: v.optional(v.union(v.literal("全て"), v.literal("男性"), v.literal("女性"))),
   },
   handler: async (ctx, args) => {
-    const menu = await ctx.db.patch(args.id, {
+    const menuId = await ctx.db.patch(args.id, {
       name: args.name,
       price: args.price,
       salePrice: args.salePrice,
@@ -51,7 +51,7 @@ export const update = mutation({
       couponId: args.couponId,
       targetGender: args.targetGender,
     });
-    return menu;
+    return menuId;
   },
 });
 

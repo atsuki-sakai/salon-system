@@ -49,7 +49,15 @@ export const update = mutation({
     }
 
     const customerId = await ctx.db.patch(existingCustomer._id, {
-      ...args,
+      email: args.email,
+      phone: args.phone,
+      firstName: args.firstName,
+      lastName: args.lastName,
+      tags: args.tags,
+      lastReservationDate: args.lastReservationDate,
+      notes: args.notes,
+      age: args.age,
+      gender: args.gender,
     });
     return customerId;
   },
