@@ -76,17 +76,17 @@ export async function POST(req: Request) {
         metadata: { clerkUserId },
       });
       // registerUser で新規登録
-      await fetchMutation(api.salon.add, { clerkId: clerkUserId, email, stripeCustomerId: customer.id });
+      await fetchMutation(api.salon.add, { clerkId: clerkUserId, salonId: clerkUserId, email, stripeCustomerId: customer.id });
     } else {
       // 既に存在する場合は registerUser でメールアドレス更新（Stripe Customer ID はそのまま）
-      await fetchMutation(api.salon.add, { clerkId: clerkUserId, email, stripeCustomerId: existingSalon.stripeCustomerId });
+      await fetchMutation(api.salon.add, { clerkId: clerkUserId, salonId: clerkUserId, email, stripeCustomerId: existingSalon.stripeCustomerId });
     }
   }
   else if (eventType === 'user.updated') {
     const { id, email_addresses } = data;
     const clerkUserId = id;
     const email = email_addresses[0]?.email_address;
-    await fetchMutation(api.salon.add, { clerkId: clerkUserId, email: email ?? "no-email", stripeCustomerId: "" });
+    await fetchMutation(api.salon.add, { clerkId: clerkUserId, salonId: clerkUserId, email: email ?? "no-email", stripeCustomerId: "" });
     // ※既存ユーザーがある前提なので、stripeCustomerId は既に存在しているものを保持する運用とする
   }
   else if (eventType === 'user.deleted') {

@@ -1049,7 +1049,7 @@ export default function ReservationTimePicker() {
     if (customerData) {
       setSessionCustomer(JSON.parse(customerData));
     } else {
-      router.push(`/reserve/${salonId}`);
+      router.push(`/reservation/${salonId}`);
     }
   }, [router, salonId]);
 
@@ -1168,7 +1168,7 @@ export default function ReservationTimePicker() {
       setDialogOpen(false);
       toast.success("予約が確定されました");
       router.push(
-        `/reserve/${salonId}/calendar/complete?reservationId=${reservationId}`
+        `/reservation/${salonId}/calendar/complete?reservationId=${reservationId}`
       );
     } catch (error) {
       console.error("予約エラー:", error);
@@ -1184,7 +1184,7 @@ export default function ReservationTimePicker() {
 
   // パンくずリスト設定
   const breadcrumbItems = [
-    { label: "予約者情報の設定", href: `/reserve/${salonId}` },
+    { label: "予約者情報の設定", href: `/reservation/${salonId}` },
     { label: "予約内容を選択", href: `/reserve/${salonId}/calendar` },
   ];
 

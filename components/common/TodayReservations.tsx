@@ -111,10 +111,10 @@ export default function TodayReservations({ salonId }: { salonId: string }) {
   };
 
   return (
-    <div className="space-y-6 max-w-xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+    <div className="space-y-6 ">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-start gap-2">
         <h2 className="text-xl font-bold tracking-tight">本日の予約</h2>
-        <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full border">
+        <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full border ml-2">
           <CalendarClock className="h-4 w-4 text-gray-500 flex-shrink-0" />
           <span className="text-base font-bold text-slate-700 whitespace-nowrap">
             {format(new Date(), "yyyy年MM月dd日 (EEE)", { locale: ja })}

@@ -1,3 +1,5 @@
+"use client";
+
 import Calendar from "./Calendar";
 import { useSalonCore } from "@/hooks/useSalonCore";
 export default function CalendarPage() {

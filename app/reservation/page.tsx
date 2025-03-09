@@ -1,4 +1,4 @@
-// app/reserve/page.tsx
+// app/reservation/page.tsx
 "use client";
 
 import { useQuery } from "convex/react";
@@ -26,7 +26,7 @@ export default function ReserveRedirectPage() {
         <Card key={salon._id}>
           <CardHeader>
             <CardTitle>{salon.email ?? salon.email}</CardTitle>
-            <Link href={`/reserve/${salon.clerkId}`}>予約する</Link>
+            <Link href={`/reservation/${salon.clerkId}`}>予約する</Link>
           </CardHeader>
         </Card>
       ))}

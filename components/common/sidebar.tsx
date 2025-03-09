@@ -24,6 +24,7 @@ import {
   HomeIcon,
   XMarkIcon,
   CreditCardIcon,
+  ArrowLeftOnRectangleIcon,
 } from "@heroicons/react/24/outline";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import { useClerk } from "@clerk/nextjs";
@@ -154,6 +155,17 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                     </li>
 
                     <li className="mt-auto">
+                      <a
+                        onClick={handleSignOut}
+                        className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-50 hover:text-indigo-600"
+                      >
+                        <ArrowLeftOnRectangleIcon
+                          aria-hidden="true"
+                          className="size-6 shrink-0 text-gray-400 group-hover:text-indigo-600"
+                        />
+                        ログアウト
+                      </a>
+
                       <a
                         href={`/dashboard/${salon?.id}/setting`}
                         className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-50 hover:text-indigo-600"

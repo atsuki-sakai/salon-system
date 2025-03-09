@@ -9,6 +9,7 @@ import { v } from "convex/values";
 export const add = mutation({
   args: { 
     clerkId: v.string(), 
+    salonId: v.string(),
     email: v.string(), 
     stripeCustomerId: v.string() 
   },
@@ -22,6 +23,7 @@ export const add = mutation({
     }
     return await ctx.db.insert("salon", {
       clerkId: args.clerkId,
+      salonId: args.salonId,
       email: args.email,
       stripeCustomerId: args.stripeCustomerId,
       subscriptionId: undefined,

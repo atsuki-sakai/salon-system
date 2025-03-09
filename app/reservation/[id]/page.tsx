@@ -69,7 +69,7 @@ export default function ReservePage() {
           email: data.email ?? "",
         });
         setCookie("__salonapp_session", customerData, 60); // 60日間保存
-        router.push(`/reserve/${id}/calendar`);
+        router.push(`/reservation/${id}/calendar`);
         return;
       } else {
         if (confirmRegister) {
@@ -89,7 +89,7 @@ export default function ReservePage() {
             email: data.email,
           });
           setCookie("__salonapp_session", customerData, 60); // 60日間保存
-          router.push(`/reserve/${id}/calendar`);
+          router.push(`/reservation/${id}/calendar`);
         } else {
           const customerData = JSON.stringify({
             _id: "only_session",
@@ -99,7 +99,7 @@ export default function ReservePage() {
             email: data.email,
           });
           setCookie("__salonapp_session", customerData, 60); // 60日間保存
-          router.push(`/reserve/${id}/calendar`);
+          router.push(`/reservation/${id}/calendar`);
         }
       }
     } catch (error) {
