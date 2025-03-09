@@ -1,7 +1,6 @@
 // convex/schema.ts
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-
 export default defineSchema({
   admin: defineTable({
     clerkId: v.string(),
@@ -38,6 +37,7 @@ export default defineSchema({
 
   customer: defineTable({
     salonId: v.string(),
+    lineId: v.optional(v.string()),
     email: v.string(),
     phone: v.string(),
     firstName: v.string(),

@@ -6,6 +6,7 @@ import { paginationOptsValidator } from "convex/server";
 export const add = mutation({
   args: {
     salonId: v.string(),
+    lineId: v.optional(v.string()),
     email: v.string(),
     phone: v.string(),
     firstName: v.string(),
@@ -18,16 +19,7 @@ export const add = mutation({
   },
   handler: async (ctx, args) => {
     const customerId = await ctx.db.insert("customer", {
-      salonId: args.salonId,
-      email: args.email,
-      phone: args.phone,
-      firstName: args.firstName,
-      lastName: args.lastName,
-      tags: args.tags,
-      lastReservationDate: args.lastReservationDate,
-      notes: args.notes,
-      age: args.age,
-      gender: args.gender,
+      ...args,
     });
     return customerId;
   },
@@ -56,17 +48,10 @@ export const update = mutation({
       throw new Error("Customer not found");
     }
 
-    return await ctx.db.patch(existingCustomer._id, {
-      email: args.email,
-      phone: args.phone,
-      firstName: args.firstName,
-      lastName: args.lastName,
-      tags: args.tags,
-      lastReservationDate: args.lastReservationDate,
-      notes: args.notes,
-      age: args.age,
-      gender: args.gender,
+    const customerId = await ctx.db.patch(existingCustomer._id, {
+      ...args,
     });
+    return customerId;
   },
 });
 

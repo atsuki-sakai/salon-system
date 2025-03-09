@@ -18,17 +18,7 @@ export const add = mutation({
   },
   handler: async (ctx, args) => {
     const menu = await ctx.db.insert("menu", {
-      salonId: args.salonId,
-      name: args.name,
-      price: args.price,
-      salePrice: args.salePrice,
-      timeToMin: args.timeToMin,
-      category: args.category,
-      imgFileId: args.imgFileId,
-      availableStaffIds: args.availableStaffIds,
-      description: args.description,
-      couponId: args.couponId,
-      targetGender: args.targetGender,
+      ...args,
     });
     return menu;
   },

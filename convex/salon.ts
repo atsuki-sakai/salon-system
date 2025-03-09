@@ -22,10 +22,7 @@ export const add = mutation({
       return await ctx.db.patch(existingUser._id, { email: args.email });
     }
     return await ctx.db.insert("salon", {
-      clerkId: args.clerkId,
-      salonId: args.salonId,
-      email: args.email,
-      stripeCustomerId: args.stripeCustomerId,
+      ...args,
       subscriptionId: undefined,
       subscriptionStatus: undefined,
     });

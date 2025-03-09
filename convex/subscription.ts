@@ -30,11 +30,11 @@ export const syncSubscription = mutation({
 
     console.log("Creating new subscription:", args.subscription.id);
     return await ctx.db.insert("subscription", {
-      subscriptionId: args.subscription.id,
-      customerId: args.subscription.customer,
-      status: args.subscription.status,
-      priceId: args.subscription.priceId,
-      currentPeriodEnd: args.subscription.currentPeriodEnd
+        subscriptionId: args.subscription.id,
+        customerId: args.subscription.customer,
+        status: args.subscription.status,
+        priceId: args.subscription.priceId,
+        currentPeriodEnd: args.subscription.currentPeriodEnd
     });
   },
 });

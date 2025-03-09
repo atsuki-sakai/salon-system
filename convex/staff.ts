@@ -13,18 +13,10 @@ export const add = mutation({
     age: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const staff = await ctx.db.insert("staff", {
-      name: args.name,
-      salonId: args.salonId,
-     
-      description: args.description,
-      gender: args.gender,
-      imgFileId: args.imgFileId,
-      regularHolidays: args.regularHolidays,
-      extraCharge: args.extraCharge,
-      age: args.age,
+    const staffId = await ctx.db.insert("staff", {
+      ...args,
     });
-    return staff;
+    return staffId;
   },
 });
 
@@ -41,17 +33,10 @@ export const update = mutation({
     age: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const staff = await ctx.db.patch(args.id, {
-      name: args.name,
-      salonId: args.salonId,
-      description: args.description,
-      gender: args.gender,
-      imgFileId: args.imgFileId,
-      regularHolidays: args.regularHolidays,
-      extraCharge: args.extraCharge,
-      age: args.age,
+    const staffId = await ctx.db.patch(args.id, {
+      ...args,
     });
-    return staff;
+    return staffId;
   },
 });
 

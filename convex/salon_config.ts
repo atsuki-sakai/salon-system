@@ -24,18 +24,7 @@ export const add = mutation({
   },
   handler: async (ctx, args) => {
     const salonConfig = await ctx.db.insert("salon_config", {
-      salonId: args.salonId,
-      salonName: args.salonName,
-      email: args.email,
-      phone: args.phone,
-      address: args.address,
-      regularOpenTime: args.regularOpenTime,
-      regularCloseTime: args.regularCloseTime,
-      regularHolidays: args.regularHolidays,
-      description: args.description,
-      options: args.options,
-      reservationRules: args.reservationRules,
-      imgFileId: args.imgFileId,
+      ...args
     });
     return salonConfig;
   },
@@ -82,19 +71,7 @@ export const update = mutation({
       throw new Error("SalonConfig not found");
     }
 
-    const updatedSalonConfigData = await ctx.db.patch(salonConfig._id, {
-      salonName: args.salonName,
-      email: args.email,
-      phone: args.phone,
-      address: args.address,
-      regularOpenTime: args.regularOpenTime,
-      regularCloseTime: args.regularCloseTime,
-      regularHolidays: args.regularHolidays,
-      description: args.description,
-      options: args.options,
-      reservationRules: args.reservationRules,
-      imgFileId: args.imgFileId,
-    });
+    const updatedSalonConfigData = await ctx.db.patch(salonConfig._id, {...args});
     return updatedSalonConfigData;
   },
 });
