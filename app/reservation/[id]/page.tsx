@@ -13,7 +13,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useEffect } from "react";
 import { setCookie, getCookie } from "@/lib/utils";
 import { Id } from "@/convex/_generated/dataModel";
+import { useCustomer } from "@/hooks/useCustomer";
 import { OriginalBreadcrumb } from "@/components/common/OriginalBreadcrumb";
+import type { CustomerSession } from "@/lib/types";
 export default function ReservePage() {
   const params = useParams();
   const router = useRouter();
@@ -33,6 +35,10 @@ export default function ReservePage() {
       salonId: id,
     },
   });
+
+  const { cookieData } = useCustomer();
+
+  console.log("cookieData: ", cookieData);
 
   const addCustomer = useMutation(api.customer.add);
   const updateCustomer = useMutation(api.customer.update);
@@ -67,7 +73,8 @@ export default function ReservePage() {
           lastName: data.lastName,
           phone: data.phone,
           email: data.email ?? "",
-        });
+          lineId: "",
+        } as CustomerSession);
         setCookie("__salonapp_session", customerData, 60); // 60日間保存
         router.push(`/reservation/${id}/calendar`);
         return;
@@ -87,7 +94,8 @@ export default function ReservePage() {
             lastName: data.lastName,
             phone: data.phone,
             email: data.email,
-          });
+            lineId: "",
+          } as CustomerSession);
           setCookie("__salonapp_session", customerData, 60); // 60日間保存
           router.push(`/reservation/${id}/calendar`);
         } else {
@@ -97,7 +105,8 @@ export default function ReservePage() {
             lastName: data.lastName,
             phone: data.phone,
             email: data.email,
-          });
+            lineId: "",
+          } as CustomerSession);
           setCookie("__salonapp_session", customerData, 60); // 60日間保存
           router.push(`/reservation/${id}/calendar`);
         }

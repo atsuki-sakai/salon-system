@@ -1185,7 +1185,7 @@ export default function ReservationTimePicker() {
   // パンくずリスト設定
   const breadcrumbItems = [
     { label: "予約者情報の設定", href: `/reservation/${salonId}` },
-    { label: "予約内容を選択", href: `/reserve/${salonId}/calendar` },
+    { label: "予約内容を選択", href: `/reservation/${salonId}/calendar` },
   ];
 
   return (
