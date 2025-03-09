@@ -93,10 +93,10 @@ export default function EditStaffPage() {
     if (staff && !isFormInitialized) {
       reset({
         name: staff.name || "",
-        age: staff.age || 0,
+        age: staff.age || undefined,
         gender: staff.gender as "全て" | "男性" | "女性" | undefined,
         description: staff.description || "",
-        extraCharge: staff.extraCharge || 0,
+        extraCharge: staff.extraCharge || undefined,
         imgFileId: staff.imgFileId || "",
         regularHolidays: staff.regularHolidays || [],
       });
@@ -188,6 +188,7 @@ export default function EditStaffPage() {
         name: data.name,
         age: data.age,
         gender: data.gender || "全て",
+        extraCharge: data.extraCharge,
         description: data.description || "",
         imgFileId: imageFileId || staff?.imgFileId,
         salonId: staff?.salonId || "",
@@ -238,7 +239,7 @@ export default function EditStaffPage() {
         className="flex flex-col space-y-6"
       >
         <div className="flex gap-4">
-          <FileImage fileId={staff.imgFileId} alt={staff.name} size={50} />
+          <FileImage fileId={staff.imgFileId} alt={staff.name} size={100} />
           <div>
             <Label htmlFor="imageFile">
               スタッフ画像 <br />
@@ -252,6 +253,17 @@ export default function EditStaffPage() {
               ref={imageFileRef}
               accept="image/*"
             />
+            <Button
+              type="button"
+              onClick={() => {
+                if (imageFileRef.current) {
+                  imageFileRef.current.value = "";
+                }
+              }}
+              className="mt-2"
+            >
+              選択解除
+            </Button>
 
             {errors.imgFileId && <p>{errors.imgFileId.message}</p>}
           </div>

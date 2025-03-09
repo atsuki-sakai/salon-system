@@ -120,14 +120,14 @@ export default function MenuCreatePage() {
 
       await createMenu({
         name: data.name,
-        price: Number(data.price),
+        price: data.price || 0,
         timeToMin: Number(data.timeToMin),
         imgFileId: imageFileId,
         availableStaffIds: selectedStaffIds,
         salonId: id,
         description: data.description || "",
         couponId: data.couponId || "",
-        salePrice: data.salePrice ? Number(data.salePrice) : undefined,
+        salePrice: data.salePrice || 0,
         targetGender: data.targetGender as "全て" | "男性" | "女性",
         category: data.category, // 追加：カテゴリー情報を送信
       });
@@ -184,7 +184,9 @@ export default function MenuCreatePage() {
             料金（円）
           </Label>
           <Input
-            {...register("price", { valueAsNumber: true })}
+            {...register("price", {
+              setValueAs: (val) => (val === "" ? 0 : Number(val)),
+            })}
             type="number"
           />
           {errors.price && (
@@ -196,7 +198,9 @@ export default function MenuCreatePage() {
             セール価格（円）
           </Label>
           <Input
-            {...register("salePrice", { valueAsNumber: true })}
+            {...register("salePrice", {
+              setValueAs: (val) => (val === "" ? 0 : Number(val)),
+            })}
             type="number"
           />
           {errors.salePrice && (

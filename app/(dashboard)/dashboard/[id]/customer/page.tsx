@@ -1,9 +1,6 @@
-"use client";
-
-import { useState } from "react";
-import { usePaginatedQuery } from "convex/react";
+import Link from "next/link";
 import { api } from "@/convex/_generated/api";
-import { useParams } from "next/navigation";
+import { fetchQuery } from "convex/nextjs";
 import {
   Card,
   CardContent,
@@ -22,7 +19,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,42 +39,52 @@ import {
   Phone,
   Calendar,
 } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useSalonCore } from "@/hooks/useSalonCore";
-export default function CustomerPage() {
-  const { id } = useParams();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortField, setSortField] = useState("lastName");
-  const [sortDirection, setSortDirection] = useState("asc");
-  const { isSubscribed } = useSalonCore();
 
-  // usePaginatedQuery フックを利用。ここでは salonId と sortDirection を渡します。
-  // ページ分割されたクエリは内部でカーソルを管理するため、初期取得件数を third 引数で指定します。
-  const {
-    results: customers,
-    status,
-    loadMore,
-  } = usePaginatedQuery(
-    api.customer.getCustomersBySalonId,
-    { salonId: id as string, sortDirection: "desc" },
-    { initialNumItems: 10 }
+// SortIndicator コンポーネント（サーバー側でも問題なく動作します）
+const SortIndicator = ({
+  field,
+  currentSortField,
+  currentSortDirection,
+}: {
+  field: string;
+  currentSortField: string;
+  currentSortDirection: string;
+}) => {
+  if (currentSortField !== field) return null;
+  return currentSortDirection === "asc" ? (
+    <ChevronUp className="ml-1 h-4 w-4" />
+  ) : (
+    <ChevronDown className="ml-1 h-4 w-4" />
   );
+};
 
-  if (!isSubscribed) {
-    return (
-      <div className="text-center text-sm text-gray-500 min-h-[500px] flex items-center justify-center">
-        サブスクリプション契約が必要です。
-      </div>
-    );
-  }
+export default async function CustomerPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams: { search?: string; sortField?: string; sortDirection?: string };
+}) {
+  const searchTerm = searchParams.search || "";
+  const sortField = searchParams.sortField || "lastName";
+  const sortDirection = searchParams.sortDirection || "asc";
 
-  // クライアント側でさらに検索・フィルタ・ソート（ページ内での加工）
+  // サーバー側で顧客データを取得
+  const queryResult = await fetchQuery(api.customer.getCustomersBySalonId, {
+    salonId: params.id,
+    sortDirection: "desc",
+    paginationOpts: {
+      numItems: 10,
+      cursor: null,
+    },
+  });
+  const customers = queryResult.page;
   const filteredCustomers = customers
     ? customers
         .filter(
@@ -102,49 +108,6 @@ export default function CustomerPage() {
         })
     : [];
 
-  const toggleSort = (field: string) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
-  };
-
-  const SortIndicator = ({ field }: { field: string }) => {
-    if (sortField !== field) return null;
-    return sortDirection === "asc" ? (
-      <ChevronUp className="ml-1 h-4 w-4" />
-    ) : (
-      <ChevronDown className="ml-1 h-4 w-4" />
-    );
-  };
-
-  // 初回ページ読み込み中はスケルトン表示
-  if (status === "LoadingFirstPage") {
-    return (
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>顧客一覧</CardTitle>
-          <CardDescription>サロンの顧客データを管理します</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center space-x-4 mb-4">
-            <Skeleton className="h-10 w-64" />
-            <Skeleton className="h-10 w-32" />
-          </div>
-          <div className="space-y-2">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <div className="max-w-5xl mx-auto">
       <Card className="w-full">
@@ -155,28 +118,24 @@ export default function CustomerPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* 検索とフィルター */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
+          {/* 検索フォーム（GET メソッドでサーバー再レンダリング） */}
+          <form
+            method="get"
+            className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6"
+          >
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
+                name="search"
                 placeholder="顧客を検索..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                defaultValue={searchTerm}
                 className="pl-8"
               />
             </div>
-
-            {/* <Button
-              variant="outline"
-              className="ml-auto"
-              onClick={() =>
-                (window.location.href = `/customers/new?salonId=${id}`)
-              }
-            >
-              新規顧客登録
-            </Button> */}
-          </div>
+            <Button type="submit" variant="outline" className="ml-auto">
+              検索
+            </Button>
+          </form>
 
           {/* 顧客テーブル */}
           <div className="rounded-md border">
@@ -186,45 +145,65 @@ export default function CustomerPage() {
               )}
               <TableHeader>
                 <TableRow>
-                  <TableHead
-                    className="cursor-pointer w-[240px]"
-                    onClick={() => toggleSort("lastName")}
-                  >
-                    <div className="flex items-center">
-                      <UserCircle className="mr-2 h-4 w-4" />
-                      氏名
-                      <SortIndicator field="lastName" />
-                    </div>
+                  <TableHead className="w-[240px]">
+                    <Link
+                      href={`?search=${encodeURIComponent(searchTerm)}&sortField=lastName&sortDirection=${sortField === "lastName" && sortDirection === "asc" ? "desc" : "asc"}`}
+                    >
+                      <div className="flex items-center cursor-pointer">
+                        <UserCircle className="mr-2 h-4 w-4" />
+                        氏名
+                        <SortIndicator
+                          field="lastName"
+                          currentSortField={sortField}
+                          currentSortDirection={sortDirection}
+                        />
+                      </div>
+                    </Link>
                   </TableHead>
-                  <TableHead
-                    className="cursor-pointer hidden md:table-cell"
-                    onClick={() => toggleSort("email")}
-                  >
-                    <div className="flex items-center">
-                      <Mail className="mr-2 h-4 w-4" />
-                      メール
-                      <SortIndicator field="email" />
-                    </div>
+                  <TableHead className="hidden md:table-cell">
+                    <Link
+                      href={`?search=${encodeURIComponent(searchTerm)}&sortField=email&sortDirection=${sortField === "email" && sortDirection === "asc" ? "desc" : "asc"}`}
+                    >
+                      <div className="flex items-center cursor-pointer">
+                        <Mail className="mr-2 h-4 w-4" />
+                        メール
+                        <SortIndicator
+                          field="email"
+                          currentSortField={sortField}
+                          currentSortDirection={sortDirection}
+                        />
+                      </div>
+                    </Link>
                   </TableHead>
-                  <TableHead
-                    className="cursor-pointer hidden sm:table-cell"
-                    onClick={() => toggleSort("phone")}
-                  >
-                    <div className="flex items-center">
-                      <Phone className="mr-2 h-4 w-4" />
-                      電話番号
-                      <SortIndicator field="phone" />
-                    </div>
+                  <TableHead className="hidden sm:table-cell">
+                    <Link
+                      href={`?search=${encodeURIComponent(searchTerm)}&sortField=phone&sortDirection=${sortField === "phone" && sortDirection === "asc" ? "desc" : "asc"}`}
+                    >
+                      <div className="flex items-center cursor-pointer">
+                        <Phone className="mr-2 h-4 w-4" />
+                        電話番号
+                        <SortIndicator
+                          field="phone"
+                          currentSortField={sortField}
+                          currentSortDirection={sortDirection}
+                        />
+                      </div>
+                    </Link>
                   </TableHead>
-                  <TableHead
-                    className="cursor-pointer hidden lg:table-cell"
-                    onClick={() => toggleSort("lastReservationDate")}
-                  >
-                    <div className="flex items-center">
-                      <Calendar className="mr-2 h-4 w-4" />
-                      最終予約日
-                      <SortIndicator field="lastReservationDate" />
-                    </div>
+                  <TableHead className="hidden lg:table-cell">
+                    <Link
+                      href={`?search=${encodeURIComponent(searchTerm)}&sortField=lastReservationDate&sortDirection=${sortField === "lastReservationDate" && sortDirection === "asc" ? "desc" : "asc"}`}
+                    >
+                      <div className="flex items-center cursor-pointer">
+                        <Calendar className="mr-2 h-4 w-4" />
+                        最終予約日
+                        <SortIndicator
+                          field="lastReservationDate"
+                          currentSortField={sortField}
+                          currentSortDirection={sortDirection}
+                        />
+                      </div>
+                    </Link>
                   </TableHead>
                   <TableHead className="text-right">操作</TableHead>
                 </TableRow>
@@ -313,12 +292,6 @@ export default function CustomerPage() {
               </TableBody>
             </Table>
           </div>
-          {/* Load Moreボタン */}
-          {status === "CanLoadMore" && (
-            <div className="mt-4 text-center">
-              <Button onClick={() => loadMore(5)}>Load More</Button>
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>
