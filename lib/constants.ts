@@ -24,3 +24,4 @@ export const TIME_TABLES = [
     "22:00",
     "23:00",
   ]
+export const SESSION_KEY = "__salonapp_session";

@@ -25,11 +25,11 @@ export function formatTimestampToDate(timestamp: number): string {
 }
 
 
-const SECRET_KEY = process.env.NEXT_PUBLIC_COOKIE_SECRET_KEY || "salon-system-cookie-secret-key"; // 適切な秘密鍵を設定してください
+const SESSION_SECRET = process.env.NEXT_PUBLIC_COOKIE_SECRET || "";
 
 export const setCookie = (name: string, value: string, days: number) => {
   // 値を暗号化する
-  const encryptedValue = CryptoJS.AES.encrypt(value, SECRET_KEY).toString();
+  const encryptedValue = CryptoJS.AES.encrypt(value, SESSION_SECRET).toString();
   const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString();
   document.cookie = `${name}=${encryptedValue}; expires=${expires}; path=/; ${
     process.env.NODE_ENV === "production" ? "secure;" : ""
@@ -44,7 +44,7 @@ export const getCookie = (name: string) => {
     if (encryptedValue) {
       try {
         // 暗号化された値を復号する
-        const bytes = CryptoJS.AES.decrypt(encryptedValue, SECRET_KEY);
+        const bytes = CryptoJS.AES.decrypt(encryptedValue, SESSION_SECRET);
         const decryptedData = bytes.toString(CryptoJS.enc.Utf8);
         return decryptedData;
       } catch (error) {

@@ -141,7 +141,7 @@ export const staffSchema = z.object({
 export const menuSchema = z.object({
   name: z.string().min(1, { message: "メニュー名を入力してください" }),
   price: z.number().min(1, { message: "料金を入力してください" }),
-  salePrice: z.number().optional(),
+  salePrice: z.preprocess((val) => val || 0, z.number()).optional(),
   timeToMin: z.string().min(1, { message: "所要時間を入力してください" }),
   imgFileId: z.string().optional(),
   category: z.string().optional(),
