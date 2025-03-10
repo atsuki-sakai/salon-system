@@ -68,16 +68,22 @@ export default async function CustomerPage({
   params,
   searchParams,
 }: {
-  params: { id: string };
-  searchParams: { search?: string; sortField?: string; sortDirection?: string };
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{
+    search?: string;
+    sortField?: string;
+    sortDirection?: string;
+  }>;
 }) {
-  const searchTerm = searchParams.search || "";
-  const sortField = searchParams.sortField || "lastName";
-  const sortDirection = searchParams.sortDirection || "asc";
+  const paramsData = await params;
+  const searchParamsData = await searchParams;
+  const searchTerm = searchParamsData.search || "";
+  const sortField = searchParamsData.sortField || "lastName";
+  const sortDirection = searchParamsData.sortDirection || "asc";
 
   // サーバー側で顧客データを取得
   const queryResult = await fetchQuery(api.customer.getCustomersBySalonId, {
-    salonId: params.id,
+    salonId: paramsData.id,
     sortDirection: "desc",
     paginationOpts: {
       numItems: 10,

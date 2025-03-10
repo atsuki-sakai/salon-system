@@ -10,15 +10,7 @@ import React, {
 
 import { ChevronRightIcon } from "lucide-react";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
@@ -56,7 +48,6 @@ import {
   Search,
   Clock,
   X,
-  ChevronDown,
 } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -84,11 +75,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion, AnimatePresence } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import {
   Tooltip,
   TooltipContent,
@@ -260,7 +246,6 @@ const Section: React.FC<SectionProps> = ({
   isDisabled = false,
   icon,
   error,
-  isOptional = false,
   isActive = false,
 }) => {
   // セクションのスタイル決定ロジック
