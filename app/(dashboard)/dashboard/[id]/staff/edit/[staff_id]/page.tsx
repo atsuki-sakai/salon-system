@@ -390,7 +390,7 @@ export default function EditStaffPage() {
                 スタッフの対応メニューはメニュー一覧から編集してください。
                 <Link
                   className="underline text-sm text-indigo-600 ml-2"
-                  href={`/dashboard/${id}/menus`}
+                  href={`/dashboard/${id}/menu`}
                 >
                   メニュー一覧
                 </Link>

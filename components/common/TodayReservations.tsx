@@ -32,12 +32,13 @@ export default function TodayReservations({ salonId }: { salonId: string }) {
     // 日本時間のタイムゾーンオフセットを指定して日付を取得
     const now = new Date();
     // 日本のタイムゾーンオフセット（+9時間）を考慮
-    const jstDate = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+    const jstDate = new Date(now.getTime());
     // ローカルの日付文字列から日付部分のみを抽出（YYYY-MM-DD形式）
-    return jstDate.toISOString().split("T")[0]!;
+    const padZero = (num: number): string => num.toString().padStart(2, "0");
+    return `${jstDate.getFullYear()}-${padZero(jstDate.getMonth() + 1)}-${padZero(jstDate.getDate())}T${padZero(jstDate.getHours())}:${padZero(jstDate.getMinutes())}`;
   };
 
-  const today: string = getTodayInJST();
+  const today: string = getTodayInJST().split("T")[0]!;
   // デバッグ用に固定日付を使用する場合はコメントを外す
   // const today = "2025-03-08";
 
@@ -56,6 +57,9 @@ export default function TodayReservations({ salonId }: { salonId: string }) {
         .slice(0, 10)
     : [];
 
+  console.log(upcomingReservations);
+
+  console.log("currentJPTime: ", getTodayInJST());
   // 状態に応じたバッジの色を設定する関数
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -134,101 +138,107 @@ export default function TodayReservations({ salonId }: { salonId: string }) {
         </Card>
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {upcomingReservations.map((reservation) => (
-            <Card
-              key={reservation._id}
-              className="overflow-hidden border-gray-200 transition-all hover:shadow-md flex flex-col"
-            >
-              <CardHeader className="pb-2 bg-gradient-to-r from-indigo-50 to-blue-50 flex-shrink-0 p-2">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
-                  <div>
-                    <CardTitle className="font-bold text-gray-800 mb-1 line-clamp-1">
-                      {reservation.menuName}
-                    </CardTitle>
-                    <CardDescription className="flex items-center gap-1.5 text-gray-600">
-                      <Clock className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span className="font-medium text-indigo-600 whitespace-nowrap">
-                        {formatTime(reservation.startTime)} -{" "}
-                        {formatTime(reservation.endTime)}
-                      </span>
-                      <span className="text-xs text-gray-500 whitespace-nowrap">
-                        (
-                        {calculateDuration(
-                          reservation.startTime,
-                          reservation.endTime
-                        )}
-                        )
-                      </span>
-                    </CardDescription>
-                  </div>
-                  <div className="flex-shrink-0">
-                    {getStatusBadge(reservation.status)}
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent className="pt-4 pb-2 flex-grow p-2">
-                <div className="flex flex-col gap-4">
-                  <div className="flex-1 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <div className="min-w-0">
-                        <p className="text-xs text-gray-500">担当スタッフ</p>
-                        <p className="font-medium truncate">
-                          {reservation.staffName}
-                        </p>
-                      </div>
+          {upcomingReservations
+            .filter(
+              (reservation) =>
+                new Date(reservation.startTime).getTime() >=
+                new Date(getTodayInJST()).getTime()
+            )
+            .map((reservation) => (
+              <Card
+                key={reservation._id}
+                className="overflow-hidden border-gray-200 transition-all hover:shadow-md flex flex-col"
+              >
+                <CardHeader className="pb-2 bg-gradient-to-r from-indigo-50 to-blue-50 flex-shrink-0 p-2">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                    <div>
+                      <CardTitle className="font-bold text-gray-800 mb-1 line-clamp-1">
+                        {reservation.menuName}
+                      </CardTitle>
+                      <CardDescription className="flex items-center gap-1.5 text-gray-600">
+                        <Clock className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span className="font-medium text-indigo-600 whitespace-nowrap">
+                          {formatTime(reservation.startTime)} -{" "}
+                          {formatTime(reservation.endTime)}
+                        </span>
+                        <span className="text-xs text-gray-500 whitespace-nowrap">
+                          (
+                          {calculateDuration(
+                            reservation.startTime,
+                            reservation.endTime
+                          )}
+                          )
+                        </span>
+                      </CardDescription>
                     </div>
-
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-xs text-gray-500">お客様</p>
-                        <p className="font-medium truncate">
-                          {reservation.customerName}
-                        </p>
-                      </div>
+                    <div className="flex-shrink-0">
+                      {getStatusBadge(reservation.status)}
                     </div>
+                  </div>
+                </CardHeader>
 
-                    {reservation.notes && (
-                      <div className="bg-gray-50 p-2 rounded-md mt-2">
-                        <div className="flex gap-2">
-                          <MessageSquare className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
-                          <p className="text-sm text-gray-600 break-words">
-                            {reservation.notes}
+                <CardContent className="pt-4 pb-2 flex-grow p-2">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex-1 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <div className="min-w-0">
+                          <p className="text-xs text-gray-500">担当スタッフ</p>
+                          <p className="font-medium truncate">
+                            {reservation.staffName}
                           </p>
                         </div>
                       </div>
-                    )}
+
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs text-gray-500">お客様</p>
+                          <p className="font-medium truncate">
+                            {reservation.customerName}
+                          </p>
+                        </div>
+                      </div>
+
+                      {reservation.notes && (
+                        <div className="bg-gray-50 p-2 rounded-md mt-2">
+                          <div className="flex gap-2">
+                            <MessageSquare className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
+                            <p className="text-sm text-gray-600 break-words">
+                              {reservation.notes}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </CardContent>
+                </CardContent>
 
-              <Separator className="my-1" />
+                <Separator className="my-1" />
 
-              <CardFooter className="flex flex-col sm:flex-row sm:justify-between bg-gray-50 p-3 gap-3 flex-shrink-0">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Scissors className="h-4 w-4 flex-shrink-0" />
-                  <span className="font-medium">
-                    ¥{reservation.price.toLocaleString()}
-                  </span>
-                </div>
+                <CardFooter className="flex flex-col sm:flex-row sm:justify-between bg-gray-50 p-3 gap-3 flex-shrink-0">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Scissors className="h-4 w-4 flex-shrink-0" />
+                    <span className="font-medium">
+                      ¥{reservation.price.toLocaleString()}
+                    </span>
+                  </div>
 
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 w-full sm:w-auto"
-                >
-                  <Phone className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
-                  <a
-                    href={`tel:${reservation.customerPhone}`}
-                    className="truncate tracking-wide"
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 w-full sm:w-auto"
                   >
-                    {reservation.customerPhone}
-                  </a>
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
+                    <Phone className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
+                    <a
+                      href={`tel:${reservation.customerPhone}`}
+                      className="truncate tracking-wide"
+                    >
+                      {reservation.customerPhone}
+                    </a>
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
         </div>
       )}
     </div>

@@ -1,3 +1,4 @@
+
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { timeStringToMinutes, minutesToTimeString, computeAvailableTimeSlots, createFullDateTime } from "../lib/scheduling";
@@ -180,6 +181,68 @@ export const add = mutation({
   },
 });
 
+export const update = mutation({
+  args: {
+    reservationId: v.id("reservation"),
+    customerId: v.optional(v.string()),
+    customerName: v.optional(v.string()),
+    customerPhone: v.optional(v.string()),
+    staffId: v.optional(v.string()),
+    staffName: v.optional(v.string()),
+    staffExtraCharge: v.optional(v.number()),
+    menuId: v.optional(v.string()),
+    menuName: v.optional(v.string()),
+    price: v.optional(v.number()),
+    salonId: v.optional(v.string()),
+    salonName: v.optional(v.string()),
+    reservationDate: v.optional(v.string()),
+    status: v.optional(v.string()),
+    startTime: v.optional(v.string()),
+    endTime: v.string(),
+    notes: v.optional(v.string()),
+    selectedOptions: v.optional(v.array(v.object({
+      id: v.string(),
+      name: v.string(),
+      price: v.number(),
+      salePrice: v.optional(v.number()),
+      maxCount: v.optional(v.number()),
+    })))
+  },
+  handler: async (ctx, args) => { 
+    const reservation = await ctx.db.get(args.reservationId);
+    if (!reservation) {
+      throw new Error("予約が見つかりません");
+    }
+    await ctx.db.patch(args.reservationId, {
+      customerId: args.customerId,
+      customerName: args.customerName,
+      customerPhone: args.customerPhone,
+      staffId: args.staffId,
+      staffName: args.staffName,
+      staffExtraCharge: args.staffExtraCharge,
+      menuId: args.menuId,
+      menuName: args.menuName,
+      price: args.price,
+      salonId: args.salonId,
+      salonName: args.salonName,
+      reservationDate: args.reservationDate,
+      status: args.status,
+      startTime: args.startTime,
+      endTime: args.endTime,
+      notes: args.notes,
+      selectedOptions: args.selectedOptions,
+    });
+  },
+});
+
+export const trash = mutation({
+  args: {
+    reservationId: v.id("reservation"),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.reservationId);
+  },
+});
 // findOptimalTimeSlots関数も同様に修正
 export const findOptimalTimeSlots = query({
   args: {

@@ -242,7 +242,13 @@ export default function MenuEditPage() {
           <Label htmlFor="salePrice" className="font-bold">
             セール価格（円）
           </Label>
-          <Input {...register("salePrice")} type="number" />
+          <Input
+            {...register("salePrice", {
+              valueAsNumber: true,
+              setValueAs: (value) => (value === "" ? undefined : Number(value)),
+            })}
+            type="number"
+          />
           {errors.salePrice && (
             <p className="text-sm mt-1 text-red-500">
               {errors.salePrice.message}

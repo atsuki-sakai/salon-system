@@ -612,6 +612,16 @@ export default function Calendar() {
                                   ? selectedReservation.notes
                                   : "なし"}
                               </p>
+
+                              <div className="flex justify-end mt-4">
+                                <Link
+                                  href={`/dashboard/${salonId}/reservation/edit/${selectedReservation._id}`}
+                                >
+                                  <p className="text-sm text-indigo-700 hover:underline">
+                                    編集
+                                  </p>
+                                </Link>
+                              </div>
                             </div>
                           )}
                         </PopoverContent>

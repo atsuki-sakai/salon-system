@@ -178,9 +178,15 @@ export const reservationSchema = z.object({
   customerName: z.string().min(1, "お客様名を入力してください"),
   customerPhone: z.string().min(1, "電話番号を入力してください"),
   staffId: z.string().min(1, "スタッフを選択してください"),
+  staffName: z.string().min(1, "スタッフ名を入力してください"),
+  staffExtraCharge: z.number().optional(),
   menuId: z.string().min(1, "メニューを選択してください"),
+  menuName: z.string().min(1, "メニュー名を入力してください"),
+  price: z.number().min(1, "料金を入力してください"),
   reservationDate: z.string().min(1, "予約日を選択してください"),
+  status: z.string().min(1, "ステータスを選択してください"),
   startTime: z.string().min(1, "開始時間を選択してください"),
+  endTime: z.string().min(1, "終了時間を選択してください"),
   notes: z.string().optional(),
   selectedOptions: z.array(z.object({
     id: z.string(),
@@ -188,5 +194,4 @@ export const reservationSchema = z.object({
     price: z.number(),
     salePrice: z.number().optional(),
   })).optional(),
-  staffExtraCharge: z.number().optional(),
 });
