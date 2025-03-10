@@ -8,6 +8,18 @@ import React, {
   ReactElement,
 } from "react";
 
+import { ChevronRightIcon } from "lucide-react";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -44,7 +56,6 @@ import {
   Search,
   Clock,
   X,
-  ChevronRight,
   ChevronDown,
 } from "lucide-react";
 import { format, addDays } from "date-fns";
@@ -153,35 +164,29 @@ interface ReservationConfirmationDialogProps {
   formatDateJP: (dateStr: string) => string;
 }
 
-const cardVariants = {
-  hidden: { y: 20, opacity: 0 },
-  show: { y: 0, opacity: 1 },
-  hover: { y: -5, boxShadow: "0 10px 30px rgba(0, 0, 0, 0.1)" },
-};
-
 // スタイル定義（モバイル最適化）
 const styles = {
   stepBadge: {
     default:
-      "bg-gray-100 text-gray-600 border-gray-200 py-1 px-2 text-base font-semibold",
+      "bg-gray-100 text-gray-600 border-gray-200 py-1 px-3 text-base font-semibold",
     active:
-      "bg-yellow-100 text-yellow-700 border-yellow-300 py-1 px-2 text-base font-semibold",
+      "bg-red-100 text-amber-700 border-amber-300 py-1 px-3 text-base font-semibold",
     complete:
       "bg-green-100 text-green-700 border-green-300 py-1 px-2 text-base font-semibold",
     disabled:
       "bg-gray-100 text-gray-400 border-gray-200 py-1 px-2 text-base font-semibold opacity-60",
   },
   stepTitle: {
-    default: "text-base font-medium text-gray-700",
-    active: "text-base font-medium text-yellow-700",
-    complete: "text-base font-medium text-green-700",
-    disabled: "text-base font-medium text-gray-400",
+    default: "text-base font-medium text-gray-700 px-3",
+    active: "text-base font-medium text-amber-700 px-3",
+    complete: "text-base font-medium text-green-700 px-3",
+    disabled: "text-base font-medium text-gray-400 px-3",
   },
   sectionWrapper: {
     default:
-      "space-y-4 p-4 sm:p-6 rounded-lg border bg-white transition-all duration-200",
+      "space-y-4 p-4 sm:p-6 rounded-lg border bg-white transition-all duration-200 ",
     active:
-      "space-y-4 p-4 sm:p-6 rounded-lg border-2 border-yellow-200 bg-yellow-50/30 shadow-sm transition-all duration-200",
+      "space-y-4 p-4 sm:p-6 rounded-lg border-2 border-amber-200 bg-amber-50/30 shadow-sm transition-all duration-200",
     complete:
       "space-y-4 p-4 sm:p-6 rounded-lg border border-green-200 bg-green-50/20 transition-all duration-200",
     disabled:
@@ -214,7 +219,7 @@ const styles = {
     default:
       "border border-gray-200 rounded-lg transition-all duration-200 hover:shadow-md cursor-pointer hover:border-slate-200 flex flex-col h-full",
     selected:
-      "border-2 border-slate-400 bg-slate-50/50 shadow-md rounded-lg transition-all duration-200 cursor-pointer flex flex-col h-full",
+      "border-2 border-green-700 bg-slate-50/50 shadow-md rounded-md transition-all duration-200 cursor-pointer flex flex-col h-full",
   },
   imageContainer:
     "relative w-full min-h-[140px] sm:min-h-[180px] aspect-video bg-gray-100 overflow-hidden rounded-t-lg",
@@ -234,12 +239,12 @@ const styles = {
   infoText: "text-xs text-gray-500",
   activeStep: "text-sm font-bold text-slate-700",
   bottomBar:
-    "fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-50 w-full px-4 py-3",
+    "fixed bottom-0 left-0 right-0 bg-white border-t border-r border-l shadow-lg z-50 w-full max-w-4xl mx-auto px-4 py-3",
   bottomBarContent:
     "w-full max-w-4xl mx-auto flex sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3",
   bottomBarBadges: "flex flex-wrap items-center gap-1 text-xs",
   selectionBadges: "overflow-x-auto flex flex-nowrap items-center gap-1 pb-1",
-  carouselItem: "basis-1/2 md:basis-1/2 lg:basis-1/3  md:px-2",
+  carouselItem: "basis-1/2 md:basis-1/2 lg:basis-1/3 relative",
   carouselNav: "absolute right-0 top-1/2 -translate-y-1/2 flex gap-1",
   carouselContainer: "relative",
   carouselCounter:
@@ -287,24 +292,18 @@ const Section: React.FC<SectionProps> = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 justify-start w-fit">
         <Badge variant="outline" className={getBadgeStyle()}>
           {badge}
         </Badge>
         <span className={getTitleStyle()}>{title}</span>
-        {isOptional && (
-          <Badge
-            variant="outline"
-            className="bg-gray-100 text-gray-500 text-xs border-gray-200"
-          >
-            任意
-          </Badge>
-        )}
+
         {icon && (
           <span className={isActive ? "text-slate-500" : "text-gray-400"}>
             {icon}
           </span>
         )}
+
         {isComplete && (
           <CheckCircle2 className="ml-auto h-5 w-5 text-green-500" />
         )}
@@ -687,19 +686,19 @@ const SalonInfoSheet: React.FC<{
                 連絡先
               </h4>
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <Phone className="h-4 w-4 text-slate-500" />
+                <div className="flex items-center gap-2 text-sm text-slate-700">
+                  <Phone className="h-4 w-4" />
                   <a
-                    className="text-indigo-600 hover:underline"
+                    className="hover:underline"
                     href={`tel:${salonConfig?.phone}`}
                   >
                     {salonConfig?.phone}
                   </a>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Mail className="h-4 w-4 text-slate-500" />
+                <div className="flex items-center gap-2 text-sm text-slate-700">
+                  <Mail className="h-4 w-4 " />
                   <a
-                    className="text-indigo-600 hover:underline"
+                    className="hover:underline"
                     href={`mailto:${salonConfig?.email}`}
                   >
                     {salonConfig?.email}
@@ -739,9 +738,9 @@ const SalonInfoSheet: React.FC<{
                             {holiday}
                           </Badge>
                         ))}
-                      <span className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-500">
                         直近の定休日を表示しています。
-                      </span>
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -760,12 +759,12 @@ const SalonInfoSheet: React.FC<{
             )}
 
             {salonConfig?.reservationRules && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                <h4 className="text-sm font-semibold text-amber-800 mb-1 flex items-center gap-2">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <h4 className="text-sm font-semibold text-blue-800 mb-1 flex items-center gap-2">
                   <AlertCircle className="h-4 w-4" />
                   予約時の注意事項
                 </h4>
-                <p className="text-xs text-amber-700">
+                <p className="text-xs text-blue-700">
                   {salonConfig.reservationRules}
                 </p>
               </div>
@@ -835,14 +834,18 @@ export default function ReservationTimePicker() {
   const [availableStaffs, setAvailableStaffs] = useState<Doc<"staff">[]>([]);
   const [progress, setProgress] = useState<number>(0);
   const [currentStep, setCurrentStep] = useState<number>(1);
+  const [menuDetailDialogOpen, setMenuDetailDialogOpen] =
+    useState<boolean>(false);
+  const [staffDetailDialogOpen, setStaffDetailDialogOpen] =
+    useState<boolean>(false);
+  const [selectedMenuDetail, setSelectedMenuDetail] =
+    useState<Doc<"menu"> | null>(null);
+  const [selectedStaffDetail, setSelectedStaffDetail] =
+    useState<Doc<"staff"> | null>(null);
 
   // 検索フィルタリング用の状態
   const [menuSearchQuery, setMenuSearchQuery] = useState<string>("");
   const [staffSearchQuery, setStaffSearchQuery] = useState<string>("");
-
-  // メニューとスタッフの詳細表示制御
-  const [menuDetailOpen, setMenuDetailOpen] = useState<string | null>(null);
-  const [staffDetailOpen, setStaffDetailOpen] = useState<string | null>(null);
 
   // 日付文字列（YYYY-MM-DD形式）
   const dateString = selectedDate
@@ -972,6 +975,19 @@ export default function ReservationTimePicker() {
         ),
     [salonConfig, selectedOptions]
   );
+
+  // 詳細表示用の関数を追加
+  const openMenuDetail = (menu: Doc<"menu">, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedMenuDetail(menu);
+    setMenuDetailDialogOpen(true);
+  };
+
+  const openStaffDetail = (staff: Doc<"staff">, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedStaffDetail(staff);
+    setStaffDetailDialogOpen(true);
+  };
 
   // 進捗状況と現在のステップの更新
   useEffect(() => {
@@ -1111,12 +1127,10 @@ export default function ReservationTimePicker() {
     setSelectedMenuId(menuId);
     // メニューが変わったらスタッフ選択をリセット
     setSelectedStaffId("");
-    setMenuDetailOpen(null);
   };
 
   const handleStaffSelect = (staffId: string): void => {
     setSelectedStaffId(staffId);
-    setStaffDetailOpen(null);
   };
 
   const handleConfirmReservation = async (): Promise<void> => {
@@ -1189,7 +1203,7 @@ export default function ReservationTimePicker() {
   ];
 
   return (
-    <div className="w-full max-w-4xl mx-auto pb-24">
+    <div className="w-full pb-24 max-w-4xl mx-auto">
       {/* ヘッダー（固定表示） */}
       <div className={styles.headerContainer}>
         <Card className="border-none shadow-md rounded-none">
@@ -1227,7 +1241,7 @@ export default function ReservationTimePicker() {
         </Card>
       </div>
 
-      <div className="px-3 sm:px-4 mx-auto">
+      <div className="px-3 py-5 sm:px-4 mx-auto">
         {/* サロン情報カード（PCのみ表示） */}
         <Card className="mb-6 border-slate-100 overflow-hidden shadow-sm hidden sm:block">
           <CardHeader className="bg-gradient-to-r from-slate-50/60 to-blue-50/80 pt-4 pb-3">
@@ -1298,7 +1312,7 @@ export default function ReservationTimePicker() {
                         </div>
                       </div>
                       <div className="flex items-start gap-2">
-                        <CalendarIcon className="h-4 w-4 text-slate-500 mt-0.5" />
+                        <CalendarIcon className="h-9 w-9 text-slate-500 -mt-2" />
                         <div>
                           <p className="text-gray-800">定休日</p>
                           <div className="flex flex-wrap gap-1 mt-1">
@@ -1332,12 +1346,12 @@ export default function ReservationTimePicker() {
                 )}
 
                 {salonConfig?.reservationRules && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                    <h4 className="text-sm font-semibold text-amber-800 mb-1 flex items-center gap-2">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <h4 className="text-sm font-semibold text-blue-800 mb-1 flex items-center gap-2">
                       <AlertCircle className="h-4 w-4" />
                       予約時の注意事項
                     </h4>
-                    <p className="text-xs text-amber-700">
+                    <p className="text-xs text-blue-700">
                       {salonConfig.reservationRules}
                     </p>
                   </div>
@@ -1385,7 +1399,6 @@ export default function ReservationTimePicker() {
                     className="w-full"
                     opts={{
                       align: "start",
-                      loop: true,
                     }}
                   >
                     <CarouselContent>
@@ -1394,14 +1407,7 @@ export default function ReservationTimePicker() {
                           key={menu._id}
                           className={styles.carouselItem}
                         >
-                          <motion.div
-                            variants={cardVariants}
-                            whileHover="hover"
-                            className="h-full"
-                            animate={{ opacity: 1, y: 0 }}
-                            initial={{ opacity: 0, y: 20 }}
-                            transition={{ duration: 0.3 }}
-                          >
+                          <div>
                             <Card
                               className={cn(
                                 selectedMenuId === menu._id
@@ -1411,8 +1417,8 @@ export default function ReservationTimePicker() {
                               onClick={() => handleMenuSelect(menu._id)}
                             >
                               {selectedMenuId === menu._id && (
-                                <div className="absolute top-2 right-2 z-10">
-                                  <Badge className="bg-green-600 border-none text-xs">
+                                <div className="absolute top-0 right-0 z-10">
+                                  <Badge className="bg-green-600 border-none text-xs px-1 py-1">
                                     選択中
                                   </Badge>
                                 </div>
@@ -1464,45 +1470,18 @@ export default function ReservationTimePicker() {
                                   </span>
                                 )}
 
-                                {menu.description && (
-                                  <Collapsible
-                                    open={menuDetailOpen === menu._id}
-                                    onOpenChange={(open: boolean) => {
-                                      // イベントの伝播を防ぐ
-                                      setMenuDetailOpen(open ? menu._id : null);
-                                    }}
+                                <div className="flex items-center justify-end mt-2">
+                                  <button
+                                    className="text-blue-600 text-xs tracking-wide hover:underline"
+                                    onClick={(e) => openMenuDetail(menu, e)}
                                   >
-                                    <CollapsibleTrigger
-                                      onClick={(
-                                        e: React.MouseEvent<HTMLButtonElement>
-                                      ) => {
-                                        e.stopPropagation();
-                                      }}
-                                      className="text-xs text-slate-600 mt-2 flex items-center hover:underline"
-                                    >
-                                      {menuDetailOpen === menu._id ? (
-                                        <ChevronDown className="h-3 w-3 mr-1" />
-                                      ) : (
-                                        <ChevronRight className="h-3 w-3 mr-1" />
-                                      )}
-                                      詳細を
-                                      {menuDetailOpen === menu._id
-                                        ? "閉じる"
-                                        : "見る"}
-                                    </CollapsibleTrigger>
-                                    <CollapsibleContent
-                                      onClick={(e) => e.stopPropagation()}
-                                      className="mt-2"
-                                    >
-                                      <p className="text-xs text-gray-600">
-                                        {menu.description}
-                                      </p>
-                                    </CollapsibleContent>
-                                  </Collapsible>
-                                )}
+                                    詳細を表示
+                                  </button>
+                                  <ChevronRightIcon className="h-4 w-4 text-blue-600" />
+                                </div>
                               </CardContent>
                             </Card>
-                          </motion.div>
+                          </div>
                         </CarouselItem>
                       ))}
                     </CarouselContent>
@@ -1591,26 +1570,18 @@ export default function ReservationTimePicker() {
                             key={staff._id}
                             className={styles.carouselItem}
                           >
-                            <motion.div
-                              variants={cardVariants}
-                              whileHover="hover"
-                              className="h-full"
-                              animate={{ opacity: 1, y: 0 }}
-                              initial={{ opacity: 0, y: 20 }}
-                              transition={{ duration: 0.3 }}
-                            >
+                            <div className="relative">
                               <Card
                                 className={cn(
                                   selectedStaffId === staff._id
-                                    ? styles.selectionCard.selected +
-                                        " relative"
-                                    : styles.selectionCard.default + " relative"
+                                    ? styles.selectionCard.selected
+                                    : styles.selectionCard.default
                                 )}
                                 onClick={() => handleStaffSelect(staff._id)}
                               >
                                 {selectedStaffId === staff._id && (
-                                  <div className="absolute top-2 right-2 z-10">
-                                    <Badge className="bg-slate-600 border-none text-xs">
+                                  <div className="absolute top-0 right-0 z-10">
+                                    <Badge className="bg-green-600 border-none text-xs px-1 py-1">
                                       選択中
                                     </Badge>
                                   </div>
@@ -1662,46 +1633,17 @@ export default function ReservationTimePicker() {
                                     </span>
                                   )}
 
-                                  {staff.description && (
-                                    <Collapsible
-                                      open={staffDetailOpen === staff._id}
-                                      onOpenChange={(open: boolean) => {
-                                        setStaffDetailOpen(
-                                          open ? staff._id : null
-                                        );
-                                      }}
+                                  <div className="mt-2">
+                                    <button
+                                      className="text-blue-600 text-xs tracking-wide hover:underline"
+                                      onClick={(e) => openStaffDetail(staff, e)}
                                     >
-                                      <CollapsibleTrigger
-                                        onClick={(
-                                          e: React.MouseEvent<HTMLButtonElement>
-                                        ) => {
-                                          e.stopPropagation();
-                                        }}
-                                        className="text-xs text-slate-600 mt-2 flex items-center hover:underline"
-                                      >
-                                        {staffDetailOpen === staff._id ? (
-                                          <ChevronDown className="h-3 w-3 mr-1" />
-                                        ) : (
-                                          <ChevronRight className="h-3 w-3 mr-1" />
-                                        )}
-                                        詳細を
-                                        {staffDetailOpen === staff._id
-                                          ? "閉じる"
-                                          : "見る"}
-                                      </CollapsibleTrigger>
-                                      <CollapsibleContent
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="mt-2"
-                                      >
-                                        <p className="text-xs text-gray-600 bg-gray-50 p-2 sm:p-3 rounded-md border border-gray-100">
-                                          {staff.description}
-                                        </p>
-                                      </CollapsibleContent>
-                                    </Collapsible>
-                                  )}
+                                      詳細を表示
+                                    </button>
+                                  </div>
                                 </CardContent>
                               </Card>
-                            </motion.div>
+                            </div>
                           </CarouselItem>
                         ))}
                       </CarouselContent>
@@ -1750,7 +1692,7 @@ export default function ReservationTimePicker() {
           {/* オプション選択（サイドバーに移動） */}
           <div>
             <Section
-              badge="STEP 3-1"
+              badge="任意"
               title="オプションを選択"
               isOptional={true}
               isActive={currentStep === 3 && isStepThreeComplete}
@@ -2155,20 +2097,17 @@ export default function ReservationTimePicker() {
             <div className="flex-1">
               <h3 className="text-base font-bold tracking-wide whitespace-nowrap text-gray-700 mb-1">
                 {selectedMenuName}
-                {selectedDate && (
-                  <span className="text-sm text-gray-500">
-                    {" - "}
-                    {format(selectedDate, "MM/dd", { locale: ja })}
-                  </span>
-                )}
               </h3>
               <div className={styles.selectionBadges}>
                 {selectedStaff?.name && (
                   <div className="flex items-center gap-1 whitespace-nowrap">
-                    <span className="text-xs text-gray-600 font-500 font-bold border-r border-gray-200 pr-2">
-                      担当者
-                    </span>
-                    <p className="text-sm font-bold tracking-wide text-gray-700">
+                    {selectedDate && (
+                      <span className="text-sm text-blue-500 tracking-wide mr-2">
+                        {format(selectedDate, "MM/dd", { locale: ja })}
+                      </span>
+                    )}
+
+                    <p className="text-xs tracking-wide text-gray-700">
                       {selectedStaff.name}
                     </p>
                   </div>
@@ -2205,6 +2144,196 @@ export default function ReservationTimePicker() {
         onConfirm={handleConfirmReservation}
         formatDateJP={formatDateJP}
       />
+      <>
+        <MenuDetailDialog
+          menu={selectedMenuDetail}
+          staffs={staffs ?? []}
+          open={menuDetailDialogOpen}
+          onOpenChange={setMenuDetailDialogOpen}
+        />
+
+        <StaffDetailDialog
+          staff={selectedStaffDetail}
+          open={staffDetailDialogOpen}
+          onOpenChange={setStaffDetailDialogOpen}
+        />
+      </>
     </div>
   );
 }
+
+// 追加Menu,Staffの詳細Modal
+// メニュー詳細用ダイアログコンポーネント
+const MenuDetailDialog: React.FC<{
+  menu: Doc<"menu"> | null;
+  staffs: Doc<"staff">[] | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}> = ({ menu, staffs, open, onOpenChange }) => {
+  if (!menu) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="overflow-x-hidden overflow-y-auto rounded-lg  h-fit max-h-[90vh] w-[90vw]">
+        <div className="py-4 space-y-4">
+          <div className="flex items-start gap-4">
+            {menu.imgFileId ? (
+              <div className="w-1/2 min-w-24 rounded-md overflow-hidden border border-gray-200">
+                <FileImage
+                  fileId={menu.imgFileId}
+                  alt={menu.name}
+                  size={300}
+                  fullSize
+                />
+              </div>
+            ) : (
+              <div className="w-1/3 min-w-24 aspect-square bg-gray-100 rounded-md flex items-center justify-center">
+                <Scissors className="h-10 w-10 text-gray-300" />
+              </div>
+            )}
+
+            <div className="flex-1 space-y-2">
+              <h3 className="font-bold text-base text-gray-900">{menu.name}</h3>
+
+              <div className="flex flex-col items-start gap-2">
+                <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+                  <Clock className="h-3 w-3 mr-1" />
+                  <span className="text-sm font-bold">{menu.timeToMin}分</span>
+                </Badge>
+
+                {menu.salePrice ? (
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-xs text-gray-400 line-through">
+                      ¥{menu.price.toLocaleString()}
+                    </span>
+                    <span className="text-base font-bold text-red-600">
+                      ¥{menu.salePrice.toLocaleString()}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-base font-bold text-gray-800">
+                    ¥{menu.price.toLocaleString()}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {menu.description && (
+            <div className="mt-4 tracking-wide">
+              <p className="text-sm text-gray-600">
+                {menu.description.replaceAll(/。/g, "。\n")}
+              </p>
+            </div>
+          )}
+        </div>
+        <div className="pt-6 border-t flex flex-col">
+          <h5 className="text-sm font-bold text-gray-700 whitespace-nowrap">
+            対応可能なスタッフ
+          </h5>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {staffs
+              ?.filter((staff) => menu.availableStaffIds.includes(staff._id))
+              .map((staff) => (
+                <div key={staff._id} className="w-fit">
+                  <p className="text-xs tracking-wide font-bold text-green-900 bg-green-100 py-1 px-2 rounded-md">
+                    {staff.name}
+                  </p>
+                </div>
+              ))}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// スタッフ詳細用ダイアログコンポーネント
+const StaffDetailDialog: React.FC<{
+  staff: Doc<"staff"> | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}> = ({ staff, open, onOpenChange }) => {
+  if (!staff) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg p-0 overflow-x-hidden overflow-y-auto rounded-lg h-fit max-h-[90vh] w-[90vw] ">
+        <div className="p-4 space-y-4 mt-4">
+          <div className="flex items-start gap-4">
+            {staff.imgFileId ? (
+              <div className="w-3/5 min-w-24 rounded-md overflow-hidden border border-gray-200">
+                <FileImage
+                  fileId={staff.imgFileId}
+                  alt={staff.name}
+                  size={300}
+                  fullSize
+                />
+              </div>
+            ) : (
+              <div className="w-1/3 min-w-24 aspect-square bg-gray-100 rounded-md flex items-center justify-center">
+                <Users className="h-10 w-10 text-gray-300" />
+              </div>
+            )}
+
+            <div className="flex-1 space-y-2">
+              <h3 className="font-bold text-lg text-gray-900">{staff.name}</h3>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                {staff.gender && (
+                  <Badge className="bg-gray-100 text-gray-700 hover:bg-gray-100">
+                    {staff.gender}
+                  </Badge>
+                )}
+
+                {staff.age && (
+                  <Badge className="bg-gray-100 text-gray-700 hover:bg-gray-100">
+                    {staff.age}歳
+                  </Badge>
+                )}
+              </div>
+              {staff.extraCharge ? (
+                <div className="text-sm text-gray-700">
+                  指名料:{" "}
+                  <span className="font-semibold">
+                    ¥{staff.extraCharge.toLocaleString()}
+                  </span>
+                </div>
+              ) : (
+                <Badge className="bg-green-100 text-green-700 border-green-200 hover:bg-green-100">
+                  指名料無料
+                </Badge>
+              )}
+            </div>
+          </div>
+          <div className="text-sm text-gray-700">
+            <p>お休みの日</p>
+            <div className="flex flex-wrap gap-2">
+              {staff.regularHolidays
+                ?.sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+                .map((holiday) => (
+                  <Badge
+                    key={holiday}
+                    className="bg-gray-100 text-gray-700 hover:bg-gray-100"
+                  >
+                    {holiday}
+                  </Badge>
+                ))}
+            </div>
+          </div>
+
+          {staff.description && (
+            <div className="mt-4">
+              <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                プロフィール
+              </h4>
+              <div className="text-sm text-gray-600 p-3 bg-gray-50 rounded-md border border-gray-200">
+                {staff.description}
+              </div>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
