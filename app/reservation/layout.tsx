@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { LiffProvider } from "@/components/providers/LiffProvider";
 import "../../app/globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -17,12 +18,12 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <div>
+    <LiffProvider liffId={process.env.NEXT_PUBLIC_LIFF_ID!}>
       <div
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
       </div>
-    </div>
+    </LiffProvider>
   );
 }

@@ -86,7 +86,7 @@ export default function EditReservationForm({
     setValue("notes", reservation.notes);
   }, [reservation, setValue]);
 
-  console.log(reservation);
+  console.log("reservation: ", reservation);
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>

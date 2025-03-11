@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useSignUp } from "@clerk/nextjs";
+import { useSignUp, useClerk } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -134,6 +134,7 @@ export default function SignUpPage() {
     useState<PasswordStrength>("empty");
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+  const clerkClient = useClerk();
 
   const {
     register,
@@ -306,6 +307,8 @@ export default function SignUpPage() {
     if (!isLoaded) return;
 
     try {
+      console.log(data);
+      console.log(clerkClient);
       // Clerkでユーザー作成
       await signUp.create({
         emailAddress: data.email,
@@ -362,7 +365,6 @@ export default function SignUpPage() {
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
       <div className="w-full max-w-md p-6 bg-white rounded shadow">
         <h2 className="text-2xl font-bold mb-4 text-center">会員登録</h2>
-
         {!pendingVerification ? (
           <form
             onSubmit={handleSubmit(onSignUpSubmit)}
@@ -494,7 +496,6 @@ export default function SignUpPage() {
             </p>
           </form>
         )}
-
         <div className="text-center mt-6">
           <p className="text-sm text-gray-600">
             すでにアカウントをお持ちですか？{" "}

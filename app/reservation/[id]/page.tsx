@@ -16,11 +16,15 @@ import { Id } from "@/convex/_generated/dataModel";
 import { useCustomer } from "@/hooks/useCustomer";
 import { OriginalBreadcrumb } from "@/components/common/OriginalBreadcrumb";
 import type { CustomerSession } from "@/lib/types";
+import { useLiff } from "@/hooks/useLiff";
+import { LINE_LOGIN_SESSION_KEY } from "@/lib/constants";
 export default function ReservePage() {
   const params = useParams();
   const router = useRouter();
+  const { liff, isLoggedIn } = useLiff();
   const id = params.id as string;
   const [confirmRegister, setConfirmRegister] = useState(true);
+
   const {
     register,
     handleSubmit,
@@ -135,6 +139,29 @@ export default function ReservePage() {
     }
   }, [setValue, salonCustomers]);
 
+  useEffect(() => {
+    if (liff?.isLoggedIn()) {
+      console.log("liff is logged in");
+    } else {
+      console.log("liff is not logged in");
+    }
+  }, [liff, isLoggedIn]);
+
+  const handleLogout = () => {
+    liff?.logout();
+    window.location.reload();
+  };
+
+  const handleLogin = () => {
+    if (!liff?.isInClient()) {
+      const session = JSON.stringify({
+        storeId: id,
+      });
+      setCookie(LINE_LOGIN_SESSION_KEY, session, 60);
+      liff?.login();
+    }
+  };
+
   const breadcrumbItems = [{ label: "予約者情報の設定", href: `` }];
 
   return (
@@ -202,6 +229,18 @@ export default function ReservePage() {
             </Button>
           </div>
         </form>
+      </div>
+      <div className="w-full py-4 bg-gray-100">
+        <Button className="bg-green-600 px-4 py-2" onClick={handleLogin}>
+          LINEログイン
+        </Button>
+        <Button
+          className="bg-red-600 px-4 py-2"
+          onClick={handleLogout}
+          disabled={!isLoggedIn}
+        >
+          ログアウト
+        </Button>
       </div>
     </div>
   );

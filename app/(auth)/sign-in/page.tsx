@@ -52,6 +52,7 @@ export default function SignInPage() {
         );
       }
     } catch (err: unknown) {
+      console.log(err);
       const appError = handleError(err);
       if (
         appError.type === ErrorType.SERVER ||
@@ -97,8 +98,12 @@ export default function SignInPage() {
               <p className="mb-4 text-red-600">{errors.password.message}</p>
             )}
           </div>
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            ログイン
+          <Button
+            type="submit"
+            className={`w-full ${isSubmitting ? "bg-gray-500" : ""}`}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "ログイン中..." : "ログイン"}
           </Button>
           {isSubmitted && (
             <Link href="/sign-in/reset-password">
