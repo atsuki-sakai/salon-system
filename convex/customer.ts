@@ -7,6 +7,7 @@ export const add = mutation({
   args: {
     salonId: v.string(),
     lineId: v.optional(v.string()),
+    lineUserName: v.optional(v.string()),
     email: v.string(),
     phone: v.string(),
     firstName: v.string(),
@@ -28,6 +29,8 @@ export const add = mutation({
 export const update = mutation({
   args: {
     id: v.id("customer"),
+    lineId: v.optional(v.string()),
+    lineUserName: v.optional(v.string()),
     email: v.string(),
     phone: v.string(),
     firstName: v.string(),
@@ -49,6 +52,8 @@ export const update = mutation({
     }
 
     const customerId = await ctx.db.patch(existingCustomer._id, {
+      lineId: args.lineId,
+      lineUserName: args.lineUserName,
       email: args.email,
       phone: args.phone,
       firstName: args.firstName,
@@ -141,6 +146,20 @@ export const getCustomerById = query({
     const customer = await ctx.db
       .query("customer")
       .filter(q => q.eq(q.field("_id"), args.id))
+      .first();
+    
+    return customer;
+  },
+});
+
+export const getCustomersByLineId = query({
+  args: {
+    lineId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const customer = await ctx.db
+      .query("customer")
+      .filter(q => q.eq(q.field("lineId"), args.lineId))
       .first();
     
     return customer;

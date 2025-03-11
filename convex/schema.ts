@@ -38,6 +38,7 @@ export default defineSchema({
   customer: defineTable({
     salonId: v.string(),
     lineId: v.optional(v.string()),
+    lineUserName: v.optional(v.string()),
     email: v.string(),
     phone: v.string(),
     firstName: v.string(),
