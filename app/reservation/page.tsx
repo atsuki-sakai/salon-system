@@ -9,15 +9,15 @@ import { getCookie } from "@/lib/utils";
 export default function ReserveRedirectPage() {
   console.log("liff");
 
-  const { liff, isLoggedIn, profile: userProfile } = useLiff();
+  const { liff } = useLiff();
   // const router = useRouter();
   useEffect(() => {
     const initLiff = async () => {
       if (liff?.isLoggedIn()) {
-        console.log("isLoggedIn", isLoggedIn);
         const profile = await liff?.getProfile();
-        console.log("liff profile", profile);
-        console.log("userProfile", userProfile);
+        console.log("profile", profile);
+        const isLoggedIn = liff?.isLoggedIn();
+        console.log("isLoggedIn", isLoggedIn);
         const session = getCookie(LINE_LOGIN_SESSION_KEY);
         if (session) {
           const { storeId } = JSON.parse(session);
