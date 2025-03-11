@@ -57,7 +57,8 @@ export const createSubscriptionSession = action({
     clerkUserId: v.string(),
     stripeCustomerId: v.string(),
     priceId: v.string(),
-    baseUrl: v.string()
+    baseUrl: v.string(),
+    trialPeriodDays: v.optional(v.number())
   },
   handler: async (ctx, args) => {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -75,6 +76,9 @@ export const createSubscriptionSession = action({
       metadata: {
         clerkUserId: args.clerkUserId,
       },
+      subscription_data: {
+        trial_period_days: args.trialPeriodDays ?? 14,
+      }
     });
 
     return { checkoutUrl: session.url };
