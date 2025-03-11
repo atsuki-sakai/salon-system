@@ -9,29 +9,33 @@ import { getCookie } from "@/lib/utils";
 export default function ReserveRedirectPage() {
   console.log("liff");
 
-  const { liff, isLoggedIn, profile } = useLiff();
+  const { liff, isLoggedIn } = useLiff();
   // const router = useRouter();
   useEffect(() => {
-    if (liff?.isLoggedIn()) {
-      console.log("isLoggedIn", isLoggedIn);
-      console.log("profile", profile);
-      console.log("liff profile", liff?.getProfile());
-      const session = getCookie(LINE_LOGIN_SESSION_KEY);
-      if (session) {
-        const { storeId } = JSON.parse(session);
-        if (storeId) {
-          const redirectUrl = `/reservation/${storeId}/calendar`;
-          console.log("redirectUrl", redirectUrl);
-          // router.push(redirectUrl);
+    const initLiff = async () => {
+      if (liff?.isLoggedIn()) {
+        console.log("isLoggedIn", isLoggedIn);
+        const profile = await liff?.getProfile();
+        console.log("liff profile", profile);
+        const session = getCookie(LINE_LOGIN_SESSION_KEY);
+        if (session) {
+          const { storeId } = JSON.parse(session);
+          if (storeId) {
+            const redirectUrl = `/reservation/${storeId}/calendar`;
+            console.log("redirectUrl", redirectUrl);
+            // router.push(redirectUrl);
+          } else {
+            console.log("storeId is not found");
+            // router.push("/");
+          }
         } else {
-          console.log("storeId is not found");
+          console.log("session is not found");
           // router.push("/");
         }
-      } else {
-        console.log("session is not found");
-        // router.push("/");
       }
-    }
+    };
+
+    initLiff();
   }, [liff]);
 
   return (

@@ -43,6 +43,7 @@ export function LiffProvider({
         if (liff.isLoggedIn()) {
           setIsLoggedIn(true);
           const profile = await liff.getProfile();
+          console.log("profile", profile);
           setProfile({
             userId: profile.userId,
             displayName: profile.displayName,
