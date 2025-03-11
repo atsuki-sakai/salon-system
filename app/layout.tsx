@@ -12,8 +12,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Dashboard",
-  description: "Dashboard",
+  title: "Booker - 美容院・サロン向け - 予約Saasサービス",
+  description: "Booker - 美容院・サロン向け - 予約Saasサービス",
 };
 
 export default function RootLayout({

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useSalonCore } from "@/hooks/useSalonCore";
@@ -291,6 +292,14 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                       transition
                       className="absolute right-0 z-10 mt-2.5 w-32 origin-top-right rounded-md bg-white py-2 ring-1 shadow-lg ring-gray-900/5 transition focus:outline-hidden data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
                     >
+                      <MenuItem key="signOut">
+                        <Link
+                          href={`/dashboard/${salon?.id}/setting/change-password`}
+                          className="block px-3 py-1 text-sm/6 text-gray-900 data-focus:bg-gray-50 data-focus:outline-hidden"
+                        >
+                          パスワード変更
+                        </Link>
+                      </MenuItem>
                       <MenuItem key="signOut">
                         <a
                           onClick={handleSignOut}
