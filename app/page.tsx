@@ -577,7 +577,7 @@ export default function Home() {
                         </div>
                       </div>
                       <blockquote className="mt-6 text-gray-700 italic">
-                        "{testimonial.content}"
+                        &quot;{testimonial.content}&quot;
                       </blockquote>
                     </CardContent>
                   </Card>
