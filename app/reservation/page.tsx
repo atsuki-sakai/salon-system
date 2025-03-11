@@ -28,9 +28,10 @@ export default function ReserveRedirectPage() {
               storeId: storeId,
               lineId: profile.userId,
               displayName: profile.displayName,
-              email: liff.getDecodedIDToken()?.email,
             });
             setCookie(LINE_LOGIN_SESSION_KEY, newSession, 60);
+            const userEmail = liff.getDecodedIDToken()?.email;
+            console.log("userEmail", userEmail);
             const redirectUrl = `/reservation/${storeId}/calendar`;
             console.log("redirectUrl", redirectUrl);
             router.push(redirectUrl);

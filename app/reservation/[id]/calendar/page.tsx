@@ -9,7 +9,7 @@ import React, {
 } from "react";
 import { ChevronRightIcon } from "lucide-react";
 import { LINE_LOGIN_SESSION_KEY } from "@/lib/constants";
-
+import { useLiff } from "@/hooks/useLiff";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 import { useRouter } from "next/navigation";
@@ -792,6 +792,7 @@ export default function ReservationTimePicker() {
   const { id } = useParams();
   const salonId = id as string;
   const router = useRouter();
+  const { liff, isLoggedIn, profile } = useLiff();
   // カルーセルAPI状態
   const [menuCarouselApi, setMenuCarouselApi] = useState<CarouselApi | null>(
     null
@@ -1181,12 +1182,15 @@ export default function ReservationTimePicker() {
   };
 
   useEffect(() => {
+    console.log("liff", liff?.isLoggedIn());
+    console.log("isLoggedIn", isLoggedIn);
+    console.log("profile", profile);
     const session = getCookie(LINE_LOGIN_SESSION_KEY);
     if (session) {
       const sessionData = JSON.parse(session);
       console.log("session data", sessionData);
     }
-  }, []);
+  }, [isLoggedIn, profile, liff]);
 
   // パンくずリスト設定
   const breadcrumbItems = [
