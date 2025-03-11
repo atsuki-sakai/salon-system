@@ -20,7 +20,6 @@ export const clearUserCache = clearSalonCoreAtoms;
 export function useSalonCore() {
   const { user } = useUser();
   const clerkId = user?.id ?? "";
-  
   // データ更新のフラグ
   const hasUpdatedRef = useRef(false);
   
@@ -35,10 +34,18 @@ export function useSalonCore() {
 
   // データ更新のロジック
   useEffect(() => {
+    console.log("[DEBUG] useEffect triggered", { salon, cachedSalonCore, clerkId, hasUpdated: hasUpdatedRef.current });
+    
     if (hasUpdatedRef.current) return;
+    if (hasUpdatedRef.current) {
+      console.log("[DEBUG] Skipping update because hasUpdatedRef is true");
+      return;
+    }
     if (!salon) return;
+    console.log("[DEBUG] useEffect triggered", { salon, cachedSalonCore, clerkId, hasUpdated: hasUpdatedRef.current });
     
     if (cachedSalonCore?.clerkId !== clerkId) {
+      console.log("[DEBUG] Updating cachedSalonCore due to clerkId mismatch", { cachedClerkId: cachedSalonCore?.clerkId, clerkId });
       setCachedSalonCore(salon);
       hasUpdatedRef.current = true;
       return;
@@ -47,8 +54,11 @@ export function useSalonCore() {
     const cachedStr = JSON.stringify(cachedSalonCore);
     const convexStr = JSON.stringify(salon);
     if (cachedStr !== convexStr) {
+      console.log("[DEBUG] Updating cachedSalonCore due to JSON mismatch", { cachedStr, convexStr });
       setCachedSalonCore(salon);
       hasUpdatedRef.current = true;
+    }else {
+      console.log("[DEBUG] No update needed; cached data is equal to queried data");
     }
   }, [salon, clerkId, setCachedSalonCore, cachedSalonCore]);
 

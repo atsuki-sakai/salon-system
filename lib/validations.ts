@@ -195,3 +195,13 @@ export const reservationSchema = z.object({
     salePrice: z.number().optional(),
   })).optional(),
 });
+
+export const resetPasswordSchema = z.object({
+  email: z.string().email({ message: "有効なメールアドレスを入力してください" }),
+  newPassword: z.string().min(1, { message: "新しいパスワードを入力してください" }).optional(),
+  confirmPassword: z.string().min(1, { message: "確認用パスワードを入力してください" }).optional(),
+  code: z.string().optional(),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "パスワードと確認用パスワードが一致しません",
+  path: ["confirmPassword"],
+});
