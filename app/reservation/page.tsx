@@ -9,7 +9,7 @@ import { getCookie } from "@/lib/utils";
 export default function ReserveRedirectPage() {
   console.log("liff");
 
-  const { liff, isLoggedIn } = useLiff();
+  const { liff, isLoggedIn, profile: userProfile } = useLiff();
   // const router = useRouter();
   useEffect(() => {
     const initLiff = async () => {
@@ -17,6 +17,7 @@ export default function ReserveRedirectPage() {
         console.log("isLoggedIn", isLoggedIn);
         const profile = await liff?.getProfile();
         console.log("liff profile", profile);
+        console.log("userProfile", userProfile);
         const session = getCookie(LINE_LOGIN_SESSION_KEY);
         if (session) {
           const { storeId } = JSON.parse(session);
