@@ -21,7 +21,7 @@ import { LINE_LOGIN_SESSION_KEY } from "@/lib/constants";
 export default function ReservePage() {
   const params = useParams();
   const router = useRouter();
-  const { liff, isLoggedIn } = useLiff();
+  const { liff } = useLiff();
   const id = params.id as string;
   const [confirmRegister, setConfirmRegister] = useState(true);
 
@@ -139,14 +139,6 @@ export default function ReservePage() {
     }
   }, [setValue, salonCustomers]);
 
-  useEffect(() => {
-    if (liff?.isLoggedIn()) {
-      console.log("liff is logged in");
-    } else {
-      console.log("liff is not logged in");
-    }
-  }, [liff, isLoggedIn]);
-
   const handleLogout = () => {
     liff?.logout();
     window.location.reload();
@@ -234,11 +226,7 @@ export default function ReservePage() {
         <Button className="bg-green-600 px-4 py-2" onClick={handleLogin}>
           LINEログイン
         </Button>
-        <Button
-          className="bg-red-600 px-4 py-2"
-          onClick={handleLogout}
-          disabled={!isLoggedIn}
-        >
+        <Button className="bg-red-600 px-4 py-2" onClick={handleLogout}>
           ログアウト
         </Button>
       </div>
