@@ -7,8 +7,8 @@ import React, {
   ReactNode,
   ReactElement,
 } from "react";
-
 import { ChevronRightIcon } from "lucide-react";
+import { LINE_LOGIN_SESSION_KEY } from "@/lib/constants";
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
@@ -1179,6 +1179,14 @@ export default function ReservationTimePicker() {
     const date = new Date(dateStr);
     return format(date, "M月d日（E）", { locale: ja });
   };
+
+  useEffect(() => {
+    const session = getCookie(LINE_LOGIN_SESSION_KEY);
+    if (session) {
+      const sessionData = JSON.parse(session);
+      console.log("session data", sessionData);
+    }
+  }, []);
 
   // パンくずリスト設定
   const breadcrumbItems = [
