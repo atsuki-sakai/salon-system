@@ -2,7 +2,7 @@ import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 // 認証不要なパス
-const publicPaths = ["/sign-in", "/sign-up", "/api", "/reservation"];
+const publicPaths = ["/","/sign-in", "/sign-up", "/api", "/reservation"];
 
 const isPublicPath = (pathname: string): boolean =>
   publicPaths.some(

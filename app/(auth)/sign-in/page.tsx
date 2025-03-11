@@ -7,15 +7,17 @@ import { useZodForm } from "@/hooks/useZodForm";
 import * as Sentry from "@sentry/nextjs";
 import { AppError, ErrorType, handleError } from "@/lib/errors";
 import { signInSchema } from "@/lib/validations";
-
+import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { z } from "zod";
 import { toast } from "sonner";
 
 export default function SignInPage() {
   const { isLoaded, signIn, setActive } = useSignIn();
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const router = useRouter();
 
   const {
@@ -24,7 +26,7 @@ export default function SignInPage() {
     formState: { errors, isSubmitting },
   } = useZodForm(signInSchema);
 
-  const onSubmit = async (data: { email: string; password: string }) => {
+  const onSubmit = async (data: z.infer<typeof signInSchema>) => {
     if (!isLoaded) return;
 
     try {
@@ -59,6 +61,8 @@ export default function SignInPage() {
       }
       console.log(appError.message);
       toast.error("ログインに失敗しました");
+    } finally {
+      setIsSubmitted(true);
     }
   };
 
@@ -96,6 +100,13 @@ export default function SignInPage() {
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             ログイン
           </Button>
+          {isSubmitted && (
+            <Link href="/sign-in/reset-password">
+              <p className="text-sm text-center text-blue-600 underline mt-5">
+                パスワードをお忘れですか？
+              </p>
+            </Link>
+          )}
         </form>
 
         <div className="text-end mt-4">
