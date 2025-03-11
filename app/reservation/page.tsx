@@ -4,13 +4,14 @@
 import { useEffect } from "react";
 import { useLiff } from "@/hooks/useLiff";
 import { LINE_LOGIN_SESSION_KEY } from "@/lib/constants";
-import { getCookie } from "@/lib/utils";
-// import { useRouter } from "next/navigation";
+import { getCookie, setCookie, deleteCookie } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+
 export default function ReserveRedirectPage() {
   console.log("liff");
 
   const { liff } = useLiff();
-  // const router = useRouter();
+  const router = useRouter();
   useEffect(() => {
     const initLiff = async () => {
       if (liff?.isLoggedIn()) {
@@ -22,16 +23,24 @@ export default function ReserveRedirectPage() {
         if (session) {
           const { storeId } = JSON.parse(session);
           if (storeId) {
+            deleteCookie(LINE_LOGIN_SESSION_KEY);
+            const newSession = JSON.stringify({
+              storeId: storeId,
+              lineId: profile.userId,
+              displayName: profile.displayName,
+              email: liff.getDecodedIDToken()?.email,
+            });
+            setCookie(LINE_LOGIN_SESSION_KEY, newSession, 60);
             const redirectUrl = `/reservation/${storeId}/calendar`;
             console.log("redirectUrl", redirectUrl);
-            // router.push(redirectUrl);
+            router.push(redirectUrl);
           } else {
             console.log("storeId is not found");
-            // router.push("/");
+            router.push("/");
           }
         } else {
           console.log("session is not found");
-          // router.push("/");
+          router.push("/");
         }
       }
     };

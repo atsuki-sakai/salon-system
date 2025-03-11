@@ -55,6 +55,11 @@ export const getCookie = (name: string) => {
   return null;
 };
 
+export const deleteCookie = (name: string) => {
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; ${
+    process.env.NODE_ENV === "production" ? "secure;" : ""
+  }`;
+};
 export const generateUid = (key: string) => {
   // 16バイト（128ビット）のランダムな値を生成
   const randomBytes = new Uint8Array(16);

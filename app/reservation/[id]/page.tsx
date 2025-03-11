@@ -154,6 +154,14 @@ export default function ReservePage() {
     }
   };
 
+  useEffect(() => {
+    const session = getCookie(LINE_LOGIN_SESSION_KEY);
+    if (session) {
+      const sessionData = JSON.parse(session);
+      console.log("session data", sessionData);
+    }
+  }, []);
+
   const breadcrumbItems = [{ label: "予約者情報の設定", href: `` }];
 
   return (
