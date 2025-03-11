@@ -792,7 +792,6 @@ export default function ReservationTimePicker() {
   const { id } = useParams();
   const salonId = id as string;
   const router = useRouter();
-
   // カルーセルAPI状態
   const [menuCarouselApi, setMenuCarouselApi] = useState<CarouselApi | null>(
     null
