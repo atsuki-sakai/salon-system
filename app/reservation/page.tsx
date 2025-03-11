@@ -15,6 +15,7 @@ export default function ReserveRedirectPage() {
     if (liff?.isLoggedIn()) {
       console.log("isLoggedIn", isLoggedIn);
       console.log("profile", profile);
+      console.log("liff profile", liff?.getProfile());
       const session = getCookie(LINE_LOGIN_SESSION_KEY);
       if (session) {
         const { storeId } = JSON.parse(session);
