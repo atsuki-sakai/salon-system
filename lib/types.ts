@@ -16,3 +16,11 @@ export type TimeSlot = {
     phone: string;
     email: string;
   };
+
+  export type MenuOption = {
+    id: string;
+    name: string;
+    price: number;
+    salePrice?: number;
+    maxCount?: number;
+  }

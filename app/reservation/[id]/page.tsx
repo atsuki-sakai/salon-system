@@ -1,11 +1,27 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useParams } from "next/navigation";
 import { setCookie } from "@/lib/utils";
-import { OriginalBreadcrumb } from "@/components/common/OriginalBreadcrumb";
 import { useLiff } from "@/hooks/useLiff";
 import { LINE_LOGIN_SESSION_KEY } from "@/lib/constants";
+import {
+  MessageSquare,
+  Lock,
+  Bell,
+  CheckCircle,
+  ChevronRight,
+} from "lucide-react";
+import { motion } from "framer-motion";
+
 export default function ReservePage() {
   const params = useParams();
   const { liff } = useLiff();
@@ -21,33 +37,98 @@ export default function ReservePage() {
     }
   };
 
-  const breadcrumbItems = [{ label: "予約者情報の設定", href: `` }];
+  const benefits = [
+    {
+      icon: <Bell className="h-5 w-5 text-green-600" />,
+      text: "予約の確認や変更の通知をLINEで受け取れます",
+    },
+    {
+      icon: <Lock className="h-5 w-5 text-green-600" />,
+      text: "安全なログインで個人情報を保護します",
+    },
+    {
+      icon: <CheckCircle className="h-5 w-5 text-green-600" />,
+      text: "次回からの予約がスムーズになります",
+    },
+  ];
 
   return (
-    <div className="w-full max-w-3xl mx-auto">
-      <div className="flex flex-col items-center justify-center mx-4 py-5">
-        <div className="flex flex-col gap-3  w-full">
-          <OriginalBreadcrumb items={breadcrumbItems} />
-          <h1 className="text-2xl font-bold">予約者情報の設定</h1>
+    <div className="w-full max-w-3xl mx-auto bg-gradient-to-b from-gray-50 to-white min-h-screen">
+      <div className="flex flex-col items-start justify-center px-4 py-6">
+        <div className="flex flex-col gap-3 w-full">
+          <h1 className="text-2xl font-bold text-blue-800">Booker</h1>
         </div>
       </div>
-      <div className="flex flex-col justify-center bg-gray-50 max-w-md py-6 mx-auto rounded-md shadow-sm border">
-        <p className="text-sm text-slate-600 mb-4 text-center tracking-wide">
-          予約者情報を設定するためにLINEログインが必要です。
-          <br />
-          予約完了の通知はLINEで受け取れます。
-        </p>
-        <div className="flex justify-center">
-          <Button
-            className="bg-green-600 px-4 py-2  max-w-sm hover:bg-green-500"
-            onClick={handleLogin}
-          >
-            <span className="text-white font-bold tracking-wider">
-              LINEでログイン
-            </span>
-          </Button>
-        </div>
-      </div>
+
+      <motion.div
+        className="flex items-center justify-center px-4 pb-8"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <Card className="w-full max-w-md shadow-lg border-none">
+          <CardHeader className="pb-0">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <MessageSquare className="h-8 w-8 text-green-600" />
+            </div>
+            <CardTitle className="text-center text-xl text-slate-800 tracking-wider">
+              LINEで簡単ログイン
+            </CardTitle>
+            <CardDescription className="text-center pt-2 tracking-wide text-xs">
+              予約情報の設定と管理のために
+              <br />
+              LINEアカウントとの連携が必要です
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="pt-6">
+            <div className="space-y-4 mb-6">
+              {benefits.map((benefit, index) => (
+                <motion.div
+                  key={index}
+                  className="flex items-start space-x-3 bg-green-50 p-3 rounded-lg"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 + 0.3 }}
+                >
+                  {benefit.icon}
+                  <p className="text-sm text-slate-700">{benefit.text}</p>
+                </motion.div>
+              ))}
+            </div>
+
+            <div className="w-full h-px bg-gray-200 my-5" />
+
+            <p className="text-xs text-center text-gray-600 mb-4">
+              ログインすることで、当サービスの
+              <span className="underline text-blue-600 cursor-pointer mx-1">
+                利用規約
+              </span>
+              および
+              <span className="underline text-blue-600 cursor-pointer mx-1">
+                プライバシーポリシー
+              </span>
+              に同意したものとみなされます。
+            </p>
+          </CardContent>
+
+          <CardFooter className="flex justify-center pb-6">
+            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }}>
+              <Button
+                className="bg-green-600 hover:bg-green-500 px-8 py-6 w-full"
+                onClick={handleLogin}
+              >
+                <div className="flex items-center justify-center space-x-2">
+                  <span className="text-white font-bold text-lg">
+                    LINEでログイン
+                  </span>
+                  <ChevronRight className="h-5 w-5 text-white" />
+                </div>
+              </Button>
+            </motion.div>
+          </CardFooter>
+        </Card>
+      </motion.div>
     </div>
   );
 }
