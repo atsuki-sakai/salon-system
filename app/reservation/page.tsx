@@ -29,7 +29,7 @@ export default function ReserveRedirectPage() {
 
   useEffect(() => {
     async function initLiff() {
-      if (!liff?.isLoggedIn()) {
+      if (liff?.isLoggedIn()) {
         console.error("LIFF not logged in");
         router.push("/reservation/error");
         return;
