@@ -1,6 +1,6 @@
-
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { paginationOptsValidator } from "convex/server";
 
 export const add = mutation({
   args: {
@@ -18,7 +18,7 @@ export const add = mutation({
   },
   handler: async (ctx, args) => {
     const menuId = await ctx.db.insert("menu", {
-      ...args,
+      ...args
     });
     return menuId;
   },
@@ -86,10 +86,14 @@ export const getMenu = query({
 export const getMenusBySalonId = query({
   args: {
     salonId: v.string(),
+    paginationOpts: paginationOptsValidator,
+    sortDirection: v.optional(v.union(v.literal("asc"), v.literal("desc"))),
   },
   handler: async (ctx, args) => {
-    const menus = await ctx.db.query("menu").filter(q => q.eq(q.field("salonId"), args.salonId)).collect();
-    return menus;
+    const direction = args.sortDirection ?? "desc";
+    const q = ctx.db.query("menu").filter(q => q.eq(q.field("salonId"), args.salonId)).order(direction);
+    const result = await q.paginate(args.paginationOpts);
+    return result;
   },
 });
 

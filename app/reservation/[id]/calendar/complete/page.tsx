@@ -90,7 +90,7 @@ export default function CompletePage() {
 
     // Google カレンダー用のリンクを作成
     const text = `${reservation.menuName} / ${reservation.salonName ?? ""}`;
-    const details = `予約ID: ${reservation._id}\nメニュー: ${reservation.menuName}\n料金: ${reservation.price.toLocaleString()}円\nスタッフ: ${reservation.staffName}\n開始時間: ${reservation.startTime.split("T")[1]}\n終了時間: ${reservation.endTime.split("T")[1]}`;
+    const details = `予約ID: ${reservation._id}\nメニュー: ${reservation.menuName}\n料金: ${reservation.totalPrice.toLocaleString()}円\nスタッフ: ${reservation.staffName}\n開始時間: ${reservation.startTime.split("T")[1]}\n終了時間: ${reservation.endTime.split("T")[1]}`;
 
     const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
       text
@@ -106,7 +106,7 @@ export default function CompletePage() {
   const shareReservation = () => {
     if (!reservation) return;
 
-    const shareText = `${reservation.salonName}に${format(new Date(reservation.reservationDate), "M月d日", { locale: ja })}の${reservation.startTime.split("T")[1]}から予約しました！!\nメニューは${reservation.menuName}です。${reservation.staffName}が担当します。料金は${reservation.price.toLocaleString()}円です。`;
+    const shareText = `${reservation.salonName}に${format(new Date(reservation.reservationDate), "M月d日", { locale: ja })}の${reservation.startTime.split("T")[1]}から予約しました！!\nメニューは${reservation.menuName}です。${reservation.staffName}が担当します。料金は${reservation.totalPrice.toLocaleString()}円です。`;
 
     if (navigator.share) {
       navigator
@@ -143,7 +143,7 @@ export default function CompletePage() {
     メニュー: ${reservation.menuName}
     担当スタッフ: ${reservation.staffName}
     ===============================
-    料金: ${reservation.price.toLocaleString()}円
+    料金: ${reservation.totalPrice.toLocaleString()}円
     `;
 
     if (reservation.selectedOptions && reservation.selectedOptions.length > 0) {
@@ -231,7 +231,9 @@ export default function CompletePage() {
         0
       ) || 0;
     return (
-      reservation.price + optionsTotal + (reservation.staffExtraCharge ?? 0)
+      reservation.totalPrice +
+      optionsTotal +
+      (reservation.staffExtraCharge ?? 0)
     );
   };
 
@@ -392,7 +394,7 @@ export default function CompletePage() {
                           メニュー料金
                         </span>
                         <span className="font-medium text-slate-800">
-                          ¥{reservation.price.toLocaleString()}
+                          ¥{reservation.totalPrice.toLocaleString()}
                         </span>
                       </div>
 

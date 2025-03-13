@@ -9,22 +9,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 import { setCookie } from "@/lib/utils";
 import { useLiff } from "@/hooks/useLiff";
 import { LINE_LOGIN_SESSION_KEY } from "@/lib/constants";
-import {
-  MessageSquare,
-  Lock,
-  Bell,
-  CheckCircle,
-  ChevronRight,
-} from "lucide-react";
+import { Lock, Bell, CheckCircle, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function ReservePage() {
   const params = useParams();
   const { liff } = useLiff();
+
   const id = params.id as string;
 
   const handleLogin = () => {
@@ -39,24 +35,26 @@ export default function ReservePage() {
 
   const benefits = [
     {
-      icon: <Bell className="h-5 w-5 text-green-600" />,
+      icon: <Bell className="h-5 w-5 text-green-700" />,
       text: "予約の確認や変更の通知をLINEで受け取れます",
     },
     {
-      icon: <Lock className="h-5 w-5 text-green-600" />,
+      icon: <Lock className="h-5 w-5 text-green-700" />,
       text: "安全なログインで個人情報を保護します",
     },
     {
-      icon: <CheckCircle className="h-5 w-5 text-green-600" />,
+      icon: <CheckCircle className="h-5 w-5 text-green-700" />,
       text: "次回からの予約がスムーズになります",
     },
   ];
 
   return (
-    <div className="w-full max-w-3xl mx-auto bg-gradient-to-b from-gray-50 to-white min-h-screen">
+    <div className="w-full  mx-auto bg-gradient-to-b from-gray-50 to-white min-h-screen">
       <div className="flex flex-col items-start justify-center px-4 py-6">
         <div className="flex flex-col gap-3 w-full">
-          <h1 className="text-2xl font-bold text-blue-800">Booker</h1>
+          <h1 className="text-2xl font-bold text-blue-800 tracking-wide">
+            Booker
+          </h1>
         </div>
       </div>
 
@@ -68,8 +66,13 @@ export default function ReservePage() {
       >
         <Card className="w-full max-w-md shadow-lg border-none">
           <CardHeader className="pb-0">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <MessageSquare className="h-8 w-8 text-green-600" />
+            <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Image
+                src="/assets/images/line-logo.png"
+                alt="LINE"
+                width={40}
+                height={40}
+              />
             </div>
             <CardTitle className="text-center text-xl text-slate-800 tracking-wider">
               LINEで簡単ログイン
@@ -86,7 +89,7 @@ export default function ReservePage() {
               {benefits.map((benefit, index) => (
                 <motion.div
                   key={index}
-                  className="flex items-start space-x-3 bg-green-50 p-3 rounded-lg"
+                  className="flex items-start space-x-3 bg-gradient-to-r from-blue-50/50 to-white p-3 rounded-lg"
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.3, delay: index * 0.1 + 0.3 }}
@@ -108,7 +111,7 @@ export default function ReservePage() {
               <span className="underline text-blue-600 cursor-pointer mx-1">
                 プライバシーポリシー
               </span>
-              に同意したものとみなされます。
+              に同意したものとします。
             </p>
           </CardContent>
 

@@ -1,32 +1,34 @@
-"use client";
-
-
 import { ReservationInfoBanner } from "@/components/common";
 import { Separator } from "@/components/ui/separator";
 import TodayReservations from "@/components/common/TodayReservations";
-import { useParams } from "next/navigation";
-import { useSalonCore } from "@/hooks/useSalonCore";
-export default function DashboardPage() {
-  const { id } = useParams();
-  const { isSubscribed } = useSalonCore();
+import { fetchQuery } from "convex/nextjs";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
+import { RequiredSubscribe, CommonSection } from "@/components/common";
 
-  console.log("isSubscribed: ", isSubscribed);
+interface DashboardPageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function DashboardPage({ params }: DashboardPageProps) {
+  const { id } = await params;
+  const isSubscribed = await fetchQuery(api.subscription.checkSubscription, {
+    salonId: id as Id<"salon">,
+  });
+
+  if (id && !isSubscribed) {
+    return <RequiredSubscribe salonId={id as Id<"salon">} />;
+  }
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* 予約受付ページ */}
-
-      {isSubscribed ? (
-        <>
-          <ReservationInfoBanner />
-          <Separator className="my-4 w-[50%] mx-auto" />
-          <TodayReservations salonId={id as string} />
-        </>
-      ) : (
-        <div className="text-center text-sm text-gray-500 min-h-[500px] flex items-center justify-center">
-          サブスクリプション契約が必要です。
-        </div>
-      )}
-    </div>
+    <CommonSection
+      title="ダッシュボード"
+      backLink="/dashboard"
+      backLinkTitle="ダッシュボード"
+    >
+      <ReservationInfoBanner salonId={id as string} />
+      <Separator className="my-8 w-[50%] mx-auto" />
+      <TodayReservations salonId={id as string} />
+    </CommonSection>
   );
 }

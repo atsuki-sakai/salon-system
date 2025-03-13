@@ -6,17 +6,15 @@ import { CommonSection } from "@/components/common";
 
 // Next.jsのApp RouterにおけるPagePropsの型定義
 type CustomerDetailPageProps = {
-  params: {
+  params: Promise<{
     id: string;
-    customer_id: string;
-  };
-  searchParams?: Record<string, string | string[] | undefined>;
+  }>;
 };
 
 export default async function CustomerDetailPage({
   params,
 }: CustomerDetailPageProps) {
-  const { id } = params;
+  const { id } = await params;
   const isSubscribed = await fetchQuery(api.subscription.checkSubscription, {
     salonId: id,
   });

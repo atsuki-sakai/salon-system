@@ -21,6 +21,8 @@ export const add = mutation({
     }))),
     reservationRules: v.optional(v.string()),
     imgFileId: v.optional(v.string()),
+    lineAccessToken: v.optional(v.string()),
+    lineSecret: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const salonConfig = await ctx.db.insert("salon_config", {
@@ -60,6 +62,8 @@ export const update = mutation({
     }))),
     reservationRules: v.optional(v.string()),
     imgFileId: v.optional(v.string()),
+    lineAccessToken: v.optional(v.string()),
+    lineSecret: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const salonConfig = await ctx.db
@@ -73,6 +77,16 @@ export const update = mutation({
 
     const updatedSalonConfigData = await ctx.db.patch(salonConfig._id, {...args});
     return updatedSalonConfigData;
+  },
+});
+
+export const getSalonName = query({
+  args: {
+    salonId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const salonConfig = await ctx.db.query("salon_config").filter(q => q.eq(q.field("salonId"), args.salonId)).first();
+    return salonConfig?.salonName;
   },
 });
 

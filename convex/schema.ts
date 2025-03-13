@@ -71,6 +71,7 @@ export default defineSchema({
     salonId: v.string(),
     name: v.string(),
     price: v.number(),
+    stripePriceId: v.optional(v.string()),
     salePrice: v.optional(v.number()),
     timeToMin: v.number(),
     category: v.optional(v.string()),
@@ -85,14 +86,16 @@ export default defineSchema({
 
   reservation: defineTable({
     customerId: v.string(),
-    customerName: v.string(),
+    customerFullName: v.string(),
     customerPhone: v.string(),
+    lineId: v.optional(v.string()),
+    lineUserName: v.optional(v.string()),
     staffId: v.string(),
     staffName: v.string(),
     staffExtraCharge: v.optional(v.number()),
     menuId: v.string(),
     menuName: v.string(),
-    price: v.number(),
+    totalPrice: v.number(),
     salonId: v.string(),
     salonName: v.optional(v.string()),
     reservationDate: v.string(),
@@ -103,9 +106,9 @@ export default defineSchema({
     selectedOptions: v.optional(v.array(v.object({
       id: v.string(),
       name: v.string(),
-      price: v.number(),
       salePrice: v.optional(v.number()),
-      maxCount: v.optional(v.number()),
+      price: v.number(),
+      quantity: v.number(),
     }))),
   })
   .index("by_customer_id", ["customerId"])
@@ -134,6 +137,8 @@ export default defineSchema({
     }))),
     reservationRules: v.optional(v.string()),
     imgFileId: v.optional(v.string()),
+    lineAccessToken: v.optional(v.string()),
+    lineSecret: v.optional(v.string()),
   })
   .index("by_salon_id", ["salonId"])
   .searchIndex("search_by_salon_id", { searchField: "salonId" }),

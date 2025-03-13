@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Sidebar } from "@/components/common";
 
+
 export const metadata: Metadata = {
   title: "Dashboard",
   description: "Dashboard",

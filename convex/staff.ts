@@ -50,8 +50,17 @@ export const update = mutation({
 export const trash = mutation({
   args: {
     id: v.id("staff"),
+    salonId: v.string(),
   },
   handler: async (ctx, args) => {
+    const salonMenus = await ctx.db.query("menu").filter(q => q.eq(q.field("salonId"), args.salonId)).collect();
+    salonMenus.forEach(async (menu) => {
+      if(menu.availableStaffIds.includes(args.id)) {
+        await ctx.db.patch(menu._id, {
+          availableStaffIds: menu.availableStaffIds.filter(id => id !== args.id),
+        });
+      }
+    });
     await ctx.db.delete(args.id);
   },
 });

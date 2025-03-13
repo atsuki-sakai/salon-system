@@ -5,7 +5,7 @@ import { ChevronRightIcon } from "lucide-react";
 import { LINE_LOGIN_SESSION_KEY } from "@/lib/constants";
 import { useLiff } from "@/hooks/useLiff";
 import { useRouter } from "next/navigation";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, usePaginatedQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { OriginalBreadcrumb, FileImage } from "@/components/common";
@@ -126,7 +126,13 @@ export default function ReservationTimePicker() {
     : undefined;
 
   // データ取得
-  const menus = useQuery(api.menu.getMenusBySalonId, { salonId });
+  const { results: menus } = usePaginatedQuery(
+    api.menu.getMenusBySalonId,
+    { salonId },
+    {
+      initialNumItems: 100,
+    }
+  );
   const staffs = useQuery(api.staff.getAllStaffBySalonId, { salonId });
   const salonConfig = useQuery(api.salon_config.getSalonConfig, { salonId });
   const optimalTimeSlots = useQuery(
@@ -332,11 +338,11 @@ export default function ReservationTimePicker() {
 
   // ユーザーログイン情報の確認
   useEffect(() => {
-    const customerData = getCookie("__salonapp_session");
+    const lineLoginSession = getCookie(LINE_LOGIN_SESSION_KEY);
     if (!salonId) return;
 
-    if (customerData) {
-      setSessionCustomer(JSON.parse(customerData));
+    if (lineLoginSession) {
+      setSessionCustomer(JSON.parse(lineLoginSession));
     } else {
       router.push(`/reservation/${salonId}`);
     }
@@ -442,14 +448,19 @@ export default function ReservationTimePicker() {
         startTime: fullStartTime,
         endTime: fullEndTime,
         menuName: selectedMenu?.name ?? "",
-        price: selectedMenu?.price ?? 0,
+        totalPrice: selectedMenu?.price ?? 0,
         customerId: sessionCustomer?._id ?? "only-session",
-        customerName: sessionCustomer?.firstName ?? "未設定",
+        customerFullName: sessionCustomer?.firstName ?? "未設定",
         customerPhone: sessionCustomer?.phone ?? "未設定",
         status: "confirmed",
         notes: notes,
         staffName: selectedStaff?.name ?? "",
-        selectedOptions: optionsToSave,
+        selectedOptions: optionsToSave.map((option) => ({
+          id: option.id,
+          name: option.name,
+          price: option.price,
+          quantity: 1,
+        })),
       });
 
       setDialogOpen(false);

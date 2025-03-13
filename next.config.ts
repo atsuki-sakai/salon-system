@@ -4,6 +4,8 @@ import type { NextConfig } from "next";
 const config: NextConfig = {
   images: {
     domains: ["images.unsplash.com", "source.unsplash.com", "fortunate-gull-468.convex.cloud", "placehold.co"],
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;"
   },
 };
 

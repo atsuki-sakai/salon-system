@@ -43,6 +43,12 @@ export default function EditReservationForm({
       await updateReservation({
         reservationId: reservation._id,
         ...data,
+        selectedOptions: data.selectedOptions
+          ? data.selectedOptions.map((option) => ({
+              ...option,
+              quantity: Number(option.quantity || 1),
+            }))
+          : undefined,
       });
       toast.success("予約を更新しました");
       router.push(`/dashboard/${reservation.salonId}/reservation`);
@@ -72,7 +78,7 @@ export default function EditReservationForm({
   };
 
   useEffect(() => {
-    setValue("customerName", reservation.customerName);
+    setValue("customerFullName", reservation.customerFullName);
     setValue("customerPhone", reservation.customerPhone);
     setValue("staffName", reservation.staffName);
     setValue("menuName", reservation.menuName);
@@ -81,7 +87,7 @@ export default function EditReservationForm({
     setValue("startTime", reservation.startTime);
     setValue("endTime", reservation.endTime);
     setValue("notes", reservation.notes);
-    setValue("price", reservation.price);
+    setValue("totalPrice", reservation.totalPrice);
     setValue("selectedOptions", reservation.selectedOptions);
     setValue("notes", reservation.notes);
   }, [reservation, setValue]);
@@ -91,8 +97,11 @@ export default function EditReservationForm({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
         <Label>顧客名</Label>
-        <Input {...register("customerName")} {...register("customerName")} />
-        <p className="text-red-500">{errors.customerName?.message}</p>
+        <Input
+          {...register("customerFullName")}
+          {...register("customerFullName")}
+        />
+        <p className="text-red-500">{errors.customerFullName?.message}</p>
       </div>
       <div>
         <Label>顧客の電話番号</Label>
@@ -160,8 +169,8 @@ export default function EditReservationForm({
       </div>
       <div>
         <Label>料金</Label>
-        <Input {...register("price")} {...register("price")} />
-        <p className="text-red-500">{errors.price?.message}</p>
+        <Input {...register("totalPrice")} {...register("totalPrice")} />
+        <p className="text-red-500">{errors.totalPrice?.message}</p>
       </div>
       <div>
         <Label>メモ</Label>

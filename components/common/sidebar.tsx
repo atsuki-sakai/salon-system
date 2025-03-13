@@ -116,8 +116,13 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
               </TransitionChild>
               {/* Sidebar for mobile */}
               <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4">
-                <div className="flex h-16 shrink-0 items-center">
-                  <h1 className="text-2xl font-bold">予約管理</h1>
+                <div className="flex flex-col mt-2">
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-blue-800 bg-clip-text text-transparent">
+                    Booker
+                  </h1>
+                  <p className="text-xs text-slate-500">
+                    サロンの予約・管理をもっと簡単に。
+                  </p>
                 </div>
                 <nav className="flex flex-1 flex-col">
                   <ul role="list" className="flex flex-1 flex-col gap-y-7">
@@ -133,17 +138,17 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                                 href={item.href}
                                 className={classNames(
                                   isCurrent
-                                    ? "bg-gray-50 text-indigo-600"
-                                    : "text-gray-700 hover:bg-gray-50 hover:text-indigo-600",
-                                  "group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold"
+                                    ? "bg-gray-50 text-blue-600 font-bold"
+                                    : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 font-light",
+                                  "group flex gap-x-3 rounded-md p-2 text-sm/6"
                                 )}
                               >
                                 <item.icon
                                   aria-hidden="true"
                                   className={classNames(
                                     isCurrent
-                                      ? "text-indigo-600"
-                                      : "text-gray-400 group-hover:text-indigo-600",
+                                      ? "text-blue-600 font-bold"
+                                      : "text-gray-400 group-hover:text-blue-600 font-light",
                                     "size-6 shrink-0"
                                   )}
                                 />
@@ -158,22 +163,22 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                     <li className="mt-auto">
                       <a
                         onClick={handleSignOut}
-                        className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-50 hover:text-indigo-600"
+                        className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm/6  text-slate-600 hover:bg-gray-50 hover:text-slate-800"
                       >
                         <ArrowLeftOnRectangleIcon
                           aria-hidden="true"
-                          className="size-6 shrink-0 text-gray-400 group-hover:text-indigo-600"
+                          className="size-6 shrink-0 text-slate-600 group-hover:text-slate-800"
                         />
                         ログアウト
                       </a>
 
                       <a
                         href={`/dashboard/${salon?.id}/setting`}
-                        className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-50 hover:text-indigo-600"
+                        className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm/6  text-slate-600 hover:bg-gray-50 hover:text-slate-800"
                       >
                         <Cog6ToothIcon
                           aria-hidden="true"
-                          className="size-6 shrink-0 text-gray-400 group-hover:text-indigo-600"
+                          className="size-6 shrink-0 text-slate-600 group-hover:text-slate-800"
                         />
                         設定
                       </a>
@@ -188,8 +193,13 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
         {/* Static sidebar for desktop */}
         <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
           <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6 pb-4">
-            <div className="flex h-16 shrink-0 items-center">
-              <h1 className="text-2xl font-bold">予約管理</h1>
+            <div className="flex flex-col mt-2">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-blue-800 bg-clip-text text-transparent">
+                Booker
+              </h1>
+              <p className="text-xs text-slate-500">
+                サロンの予約・管理をもっと簡単に。
+              </p>
             </div>
             <nav className="flex flex-1 flex-col">
               <ul role="list" className="flex flex-1 flex-col gap-y-7">
@@ -203,17 +213,17 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                             href={item.href}
                             className={classNames(
                               isCurrent
-                                ? "bg-gray-50 text-indigo-600"
-                                : "text-gray-700 hover:bg-gray-50 hover:text-indigo-600",
-                              "group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold"
+                                ? "bg-gray-50 text-blue-600 font-bold"
+                                : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 font-light",
+                              "group flex gap-x-3 rounded-md p-2 text-sm/6"
                             )}
                           >
                             <item.icon
                               aria-hidden="true"
                               className={classNames(
                                 isCurrent
-                                  ? "text-indigo-600"
-                                  : "text-gray-400 group-hover:text-indigo-600",
+                                  ? "text-blue-600"
+                                  : "text-gray-400 group-hover:text-blue-600",
                                 "size-6 shrink-0"
                               )}
                             />
@@ -228,11 +238,11 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                 <li className="mt-auto">
                   <a
                     href={`/dashboard/${salon?.id}/setting`}
-                    className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-50 hover:text-indigo-600"
+                    className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-50 hover:text-blue-600"
                   >
                     <Cog6ToothIcon
                       aria-hidden="true"
-                      className="size-6 shrink-0 text-gray-400 group-hover:text-indigo-600"
+                      className="size-6 shrink-0 text-gray-400 group-hover:text-blue-600"
                     />
                     設定
                   </a>
@@ -260,14 +270,12 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
               />
 
               <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-                <div className="flex items-center justify-start w-full">
-                  <h3 className="text-xl font-bold tracking-wide">予約管理</h3>
-                </div>
+                <div className="flex items-center justify-start w-full"></div>
                 <div className="flex items-center gap-x-4 lg:gap-x-6">
                   {salonCore?.subscriptionStatus === "active" ? (
                     <div className="flex items-center gap-x-4 lg:gap-x-6">
                       <p className="text-xs w-32 text-center font-bold border border-green-700 rounded-full px-2 py-1 bg-green-100 text-green-700">
-                        プレミアムプラン
+                        プロプラン
                       </p>
                     </div>
                   ) : null}

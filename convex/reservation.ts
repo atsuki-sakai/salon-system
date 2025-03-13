@@ -65,14 +65,14 @@ export const getAllReservationsForCompact = query({
 export const add = mutation({
   args: {
     customerId: v.string(),
-    customerName: v.string(),
+    customerFullName: v.string(),
     customerPhone: v.string(),
     staffId: v.string(),
     staffName: v.string(),
     staffExtraCharge: v.optional(v.number()),
     menuId: v.string(),
     menuName: v.string(),
-    price: v.number(),
+    totalPrice: v.number(),
     salonId: v.string(),
     salonName: v.optional(v.string()),
     reservationDate: v.string(),
@@ -84,8 +84,8 @@ export const add = mutation({
       id: v.string(),
       name: v.string(),
       price: v.number(),
-      salePrice: v.optional(v.number()),
-      maxCount: v.optional(v.number()),
+      quantity: v.number(),
+      salePrice: v.optional(v.number())
     })),
   },
   handler: async (ctx, args) => {
@@ -156,7 +156,7 @@ export const add = mutation({
       throw new Error(JSON.stringify({
         type: "RESERVATION_CONFLICT",
         conflictingReservation: {
-          customerName: conflictingReservation?.customerName,
+          customerFullName: conflictingReservation?.customerFullName,
           startTime: conflictingReservation?.startTime,
           endTime: conflictingReservation?.endTime,
           staffName: conflictingReservation?.staffName,
@@ -185,14 +185,14 @@ export const update = mutation({
   args: {
     reservationId: v.id("reservation"),
     customerId: v.optional(v.string()),
-    customerName: v.optional(v.string()),
+    customerFullName: v.optional(v.string()),
     customerPhone: v.optional(v.string()),
     staffId: v.optional(v.string()),
     staffName: v.optional(v.string()),
     staffExtraCharge: v.optional(v.number()),
     menuId: v.optional(v.string()),
     menuName: v.optional(v.string()),
-    price: v.optional(v.number()),
+    totalPrice: v.optional(v.number()),
     salonId: v.optional(v.string()),
     salonName: v.optional(v.string()),
     reservationDate: v.optional(v.string()),
@@ -205,7 +205,7 @@ export const update = mutation({
       name: v.string(),
       price: v.number(),
       salePrice: v.optional(v.number()),
-      maxCount: v.optional(v.number()),
+      quantity: v.number(),
     })))
   },
   handler: async (ctx, args) => { 
@@ -215,14 +215,14 @@ export const update = mutation({
     }
     await ctx.db.patch(args.reservationId, {
       customerId: args.customerId,
-      customerName: args.customerName,
+      customerFullName: args.customerFullName,
       customerPhone: args.customerPhone,
       staffId: args.staffId,
       staffName: args.staffName,
       staffExtraCharge: args.staffExtraCharge,
       menuId: args.menuId,
       menuName: args.menuName,
-      price: args.price,
+      totalPrice: args.totalPrice,
       salonId: args.salonId,
       salonName: args.salonName,
       reservationDate: args.reservationDate,

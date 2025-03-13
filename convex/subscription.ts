@@ -1,4 +1,4 @@
-import { mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import Stripe from "stripe";
 import { action } from "./_generated/server";
@@ -83,7 +83,16 @@ export const createSubscriptionSession = action({
 
     return { checkoutUrl: session.url };
   },
-}); 
+});
+
+export const checkSubscription = query({
+  args: { salonId: v.string() },
+  handler: async (ctx, args) => {
+    const salon = await ctx.db.query("salon").filter(q => q.eq(q.field("_id"), args.salonId)).first();
+    const salonSubscription = await ctx.db.query("subscription").filter(q => q.eq(q.field("customerId"), salon?.stripeCustomerId)).first();
+    return salonSubscription?.status !== "active" ? true : false;
+  },
+});
 
 export const createBillingPortalSession = action({
   args: { 

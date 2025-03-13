@@ -1,4 +1,3 @@
-
 // lib/validations.ts
 import { z } from "zod";
 
@@ -148,7 +147,7 @@ export const menuSchema = z.object({
   availableStaffIds: z.array(z.string()).optional(),
   description: z.string().optional(),
   couponId: z.string().optional(),
-  targetGender: z.enum(["全て", "男性", "女性"]).default("全て"),
+  targetGender: z.enum(["全て", "男性", "女性"]).optional(),
 });
 
 // HH:mm形式（00:00～23:59）をチェックする正規表現
@@ -172,17 +171,19 @@ export const salonConfigSchema = z.object({
   })).optional(),
   reservationRules: z.string().optional(),
   imgFileId: z.string().optional(),
+  lineAccessToken: z.string().optional(),
+  lineSecret: z.string().optional(),
 });
 
 export const reservationSchema = z.object({
-  customerName: z.string().min(1, "お客様名を入力してください"),
+  customerFullName: z.string().min(1, "お客様名を入力してください"),
   customerPhone: z.string().min(1, "電話番号を入力してください"),
   staffId: z.string().min(1, "スタッフを選択してください"),
   staffName: z.string().min(1, "スタッフ名を入力してください"),
   staffExtraCharge: z.number().optional(),
   menuId: z.string().min(1, "メニューを選択してください"),
   menuName: z.string().min(1, "メニュー名を入力してください"),
-  price: z.number().min(1, "料金を入力してください"),
+  totalPrice: z.number().min(1, "料金を入力してください"),
   reservationDate: z.string().min(1, "予約日を選択してください"),
   status: z.string().min(1, "ステータスを選択してください"),
   startTime: z.string().min(1, "開始時間を選択してください"),
@@ -193,6 +194,7 @@ export const reservationSchema = z.object({
     name: z.string(),
     price: z.number(),
     salePrice: z.number().optional(),
+    quantity: z.number().optional(),
   })).optional(),
 });
 
@@ -204,4 +206,14 @@ export const resetPasswordSchema = z.object({
 }).refine((data) => data.newPassword === data.confirmPassword, {
   message: "パスワードと確認用パスワードが一致しません",
   path: ["confirmPassword"],
+});
+
+
+export const customerEditSchema = z.object({
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  phone: z.string().optional(),
+  email: z.string().optional().refine((email) => email === "" || z.string().email().safeParse(email).success, {
+    message: "有効なメールアドレスを入力してください",
+  }),
 });
