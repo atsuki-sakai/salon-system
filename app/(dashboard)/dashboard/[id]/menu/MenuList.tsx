@@ -86,7 +86,7 @@ export default function MenuList({ id }: { id: Id<"salon"> }) {
       {menus.map((menu) => (
         <Card
           key={menu._id}
-          className="overflow-hidden border border-slate-200 shadow-sm transition-all hover:shadow-md flex flex-col h-full"
+          className="bg-slate-50 overflow-hidden border border-slate-200 shadow-sm transition-all hover:shadow-md flex flex-col h-full"
         >
           <CardHeader className="pb-2 pt-4">
             <div className="flex justify-center mb-3">

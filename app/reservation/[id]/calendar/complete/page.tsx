@@ -295,7 +295,7 @@ export default function CompletePage() {
                 予約が完了しました
               </CardTitle>
               <CardDescription className="text-center text-slate-600">
-                メールアドレスにも予約完了のメールを送信していますので、ご確認ください。
+                Lineに予約完了のメッセージを送信していますのでご確認ください。
               </CardDescription>
               <div className="mt-4">
                 <Progress value={progress} className="h-2" />

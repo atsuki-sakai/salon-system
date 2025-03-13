@@ -733,10 +733,10 @@ export default function Calendar() {
                                 {selectedReservation && (
                                   <div className="space-y-0">
                                     <div className="border-b p-3  backdrop-blur-sm">
-                                      <Badge className="bg-slate-50 border-slate-500 text-slate-800 mb-1 text-xs flex items-center gap-1 font-normal">
+                                      <div className=" mb-1 text-xs flex items-center gap-1 font-normal">
                                         <FaSpa className="h-2.5 w-2.5" />
                                         メニュー
-                                      </Badge>
+                                      </div>
                                       <h5 className="text-lg font-bold">
                                         {selectedReservation.menuName}
                                       </h5>
@@ -744,20 +744,20 @@ export default function Calendar() {
 
                                     <div className="flex items-center justify-between border-b p-3 ">
                                       <div>
-                                        <Badge className="bg-slate-50 border-slate-500 text-slate-800 mb-1 text-xs flex items-center gap-1 font-normal">
+                                        <div className=" mb-1 text-xs flex items-center gap-1 font-normal">
                                           <FaUserClock className="h-2.5 w-2.5" />
                                           スタッフ
-                                        </Badge>
+                                        </div>
                                         <p className="font-semibold">
                                           {selectedReservation.staffName}
                                         </p>
                                       </div>
 
                                       <div className="text-right ">
-                                        <Badge className="bg-slate-50 border-slate-500 text-slate-800 mb-1 text-xs flex items-center gap-1 font-normal">
+                                        <div className=" mb-1 text-xs flex items-center gap-1 font-normal">
                                           <CalendarClock className="h-2.5 w-2.5" />
                                           時間
-                                        </Badge>
+                                        </div>
                                         <p className="font-semibold">
                                           {format(
                                             parseISO(
@@ -777,27 +777,30 @@ export default function Calendar() {
                                     </div>
 
                                     <div className="space-y-2 border-b p-3 ">
-                                      <Badge className="bg-slate-50 border-slate-500 text-slate-800 mb-1 text-xs flex items-center gap-1 font-normal">
+                                      <div className=" mb-1 text-xs flex items-center gap-1 font-normal">
                                         <User className="h-2.5 w-2.5" />
                                         顧客情報
-                                      </Badge>
+                                      </div>
                                       <p className="font-semibold text-lg">
                                         {selectedReservation.customerFullName}{" "}
                                         様
                                       </p>
                                       <p className="flex items-center gap-2">
                                         <FaPhone className="h-3 w-3" />
-                                        <span className="font-mono">
+                                        <a
+                                          href={`tel:${selectedReservation.customerPhone}`}
+                                          className="font-mono"
+                                        >
                                           {selectedReservation.customerPhone}
-                                        </span>
+                                        </a>
                                       </p>
                                     </div>
 
                                     <div className="p-3">
-                                      <Badge className="bg-slate-50 border-slate-500 text-slate-800 mb-1 text-xs flex items-center gap-1 font-normal">
+                                      <div className=" mb-1 text-xs flex items-center gap-1 font-normal">
                                         <FaRegStickyNote className="h-2.5 w-2.5" />
                                         備考
-                                      </Badge>
+                                      </div>
                                       <p className="text-sm min-h-12 p-2 rounded-md">
                                         {selectedReservation.notes ||
                                           "特になし"}

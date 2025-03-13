@@ -43,19 +43,19 @@ export default function ReserveRedirectPage() {
         return;
       }
 
-      const { storeId } = JSON.parse(sessionCookie ?? "");
-      if (!storeId) {
+      const { salonId } = JSON.parse(sessionCookie ?? "");
+      if (!salonId) {
         console.error("storeId is missing in session cookie");
         router.push("/reservation/error");
         return;
       }
 
-      const computedRedirectUrl = `/reservation/${storeId}/calendar`;
+      const computedRedirectUrl = `/reservation/${salonId}/calendar`;
       setRedirectUrl(computedRedirectUrl);
       deleteCookie(LINE_LOGIN_SESSION_KEY);
 
-      const newSession = JSON.stringify({
-        storeId,
+      let newSession = JSON.stringify({
+        salonId: salonId,
         lineId: profile?.userId,
         displayName: profile?.displayName,
       });
@@ -65,18 +65,18 @@ export default function ReserveRedirectPage() {
           api.customer.getCustomersByLineId,
           {
             lineId: profile?.userId ?? "",
+            salonId: salonId,
           }
         );
+
         const userEmail = liff?.getDecodedIDToken()?.email || "";
         if (!existingCustomer) {
           await createCustomer({
-            salonId: storeId,
+            salonId: salonId,
             lineId: profile?.userId,
             lineUserName: profile?.displayName || "",
             email: userEmail,
             phone: "",
-            firstName: "",
-            lastName: "",
           });
           console.log("新規顧客を作成しました");
         } else {
@@ -86,8 +86,14 @@ export default function ReserveRedirectPage() {
             lineUserName: profile?.displayName || "",
             email: existingCustomer.email || userEmail,
             phone: existingCustomer.phone || "",
-            firstName: existingCustomer.firstName || "",
-            lastName: existingCustomer.lastName || "",
+          });
+          newSession = JSON.stringify({
+            id: existingCustomer._id,
+            salonId: salonId,
+            lineId: profile?.userId,
+            email: existingCustomer.email || userEmail,
+            phone: existingCustomer.phone || "",
+            lineUserName: profile?.displayName || "",
           });
           console.log("既存顧客情報を更新しました");
         }

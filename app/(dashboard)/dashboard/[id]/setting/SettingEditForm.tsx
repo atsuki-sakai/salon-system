@@ -463,7 +463,11 @@ export default function SettingPage() {
             </div>
 
             <AnimatePresence mode="wait">
-              <TabsContent value="basic" className="space-y-6 mt-0">
+              <TabsContent
+                key="basic-tab"
+                value="basic"
+                className="space-y-6 mt-0"
+              >
                 <motion.div
                   key="basic-content"
                   initial="hidden"
@@ -702,7 +706,11 @@ export default function SettingPage() {
                 </motion.div>
               </TabsContent>
 
-              <TabsContent value="schedule" className="space-y-6 mt-0">
+              <TabsContent
+                key="schedule-tab"
+                value="schedule"
+                className="space-y-6 mt-0"
+              >
                 <motion.div
                   key="schedule-content"
                   initial="hidden"
@@ -748,8 +756,11 @@ export default function SettingPage() {
                                 <SelectValue placeholder="営業開始時間を選択" />
                               </SelectTrigger>
                               <SelectContent className="max-h-56">
-                                {TIME_TABLES.map((time) => (
-                                  <SelectItem key={time} value={time}>
+                                {TIME_TABLES.map((time, index) => (
+                                  <SelectItem
+                                    key={`open-time-${index}-${time}`}
+                                    value={time}
+                                  >
                                     {time}
                                   </SelectItem>
                                 ))}
@@ -797,8 +808,11 @@ export default function SettingPage() {
                                     return time > openTime;
                                   }
                                   return true;
-                                }).map((time) => (
-                                  <SelectItem key={time} value={time}>
+                                }).map((time, index) => (
+                                  <SelectItem
+                                    key={`close-time-${index}-${time}`}
+                                    value={time}
+                                  >
                                     {time}
                                   </SelectItem>
                                 ))}
@@ -928,9 +942,9 @@ export default function SettingPage() {
                                     variants={staggerContainer}
                                     className="flex flex-wrap gap-2"
                                   >
-                                    {holidayDates.map((date) => (
+                                    {holidayDates.map((date, index) => (
                                       <motion.div
-                                        key={date.toISOString()}
+                                        key={`holiday-date-${index}-${date ? date.toISOString() : `no-date-${index}`}`}
                                         initial={{ opacity: 0, scale: 0.8 }}
                                         animate={{ opacity: 1, scale: 1 }}
                                         exit={{
@@ -1000,7 +1014,11 @@ export default function SettingPage() {
                 </motion.div>
               </TabsContent>
 
-              <TabsContent value="options" className="space-y-6 mt-0">
+              <TabsContent
+                key="options-tab"
+                value="options"
+                className="space-y-6 mt-0"
+              >
                 <motion.div
                   key="options-content"
                   initial="hidden"
@@ -1188,7 +1206,7 @@ export default function SettingPage() {
                                   >
                                     {options.map((option, index) => (
                                       <motion.div
-                                        key={option.id}
+                                        key={`option-${index}-${option.id}`}
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0, y: -10 }}

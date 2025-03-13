@@ -117,8 +117,7 @@ export const customerSchema = z.object({
   phone: z
   .string()
   .regex(/^(\d{2,4}[-]?\d{2,4}[-]?\d{4})$/, { message: "電話番号の形式が正しくありません" }),
-  firstName: z.string().min(1, { message: "名前を入力してください" }),
-  lastName: z.string().min(1, { message: "苗字を入力してください" }),
+  fullName: z.string().optional(),
   tags: z.array(z.string()).optional(),
   lastReservationDate: z.string().optional(),
   notes: z.string().optional(),

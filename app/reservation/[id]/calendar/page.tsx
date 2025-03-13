@@ -147,6 +147,10 @@ export default function ReservationTimePicker() {
       : "skip"
   );
 
+  const salonAccessToken = useQuery(api.salon_config.getLineAccessToken, {
+    salonId,
+  });
+
   // フィルタリングされたメニュー一覧
   const filteredMenus = useMemo(() => {
     if (!menus) return [];
@@ -450,7 +454,7 @@ export default function ReservationTimePicker() {
         menuName: selectedMenu?.name ?? "",
         totalPrice: selectedMenu?.price ?? 0,
         customerId: sessionCustomer?._id ?? "only-session",
-        customerFullName: sessionCustomer?.firstName ?? "未設定",
+        customerFullName: sessionCustomer?.lineUserName ?? "未設定",
         customerPhone: sessionCustomer?.phone ?? "未設定",
         status: "confirmed",
         notes: notes,
@@ -463,11 +467,56 @@ export default function ReservationTimePicker() {
         })),
       });
 
-      setDialogOpen(false);
-      toast.success("予約が確定されました");
-      router.push(
-        `/reservation/${salonId}/calendar/complete?reservationId=${reservationId}`
-      );
+      const response = await fetch("/api/line/message", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          lineId: sessionCustomer?.lineId,
+          message: `
+        ✅ ご予約が確定いたしました
+        
+        ■ ご予約内容
+        メニュー: ${selectedMenu?.name}
+        スタッフ: ${selectedStaff?.name}
+        料金: ${calculateTotalPrice.toLocaleString()}円
+        日時: ${format(selectedDate, "yyyy年MM月dd日(E) HH:mm", { locale: ja })}
+        
+        ${
+          selectedOptions.length > 0
+            ? `■ オプション\n${selectedOptions
+                .map(
+                  (option) =>
+                    salonConfig?.options?.find((o) => o.id === option)?.name
+                )
+                .join("\n")}`
+            : ""
+        }
+        
+        ■ お客様情報
+        お名前: ${sessionCustomer?.lineUserName}
+        電話番号: ${sessionCustomer?.phone}
+        ${notes ? `メッセージ: ${notes}` : ""}
+        
+        当日のご来店を心よりお待ちしております。
+        ご予約の変更・キャンセルはお早めにご連絡ください。
+        `,
+          accessToken: salonAccessToken,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setDialogOpen(false);
+        toast.success("予約が確定されました");
+        router.push(
+          `/reservation/${salonId}/calendar/complete?reservationId=${reservationId}`
+        );
+      } else {
+        throw new Error(result.error || "メッセージ送信に失敗しました");
+      }
     } catch (error) {
       console.error("予約エラー:", error);
       toast.error("予約に失敗しました");

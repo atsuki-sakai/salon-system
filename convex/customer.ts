@@ -10,8 +10,8 @@ export const add = mutation({
     lineUserName: v.optional(v.string()),
     email: v.string(),
     phone: v.string(),
-    firstName: v.string(),
-    lastName: v.string(),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
     lastReservationDate: v.optional(v.string()),
     notes: v.optional(v.string()),
@@ -33,8 +33,8 @@ export const update = mutation({
     lineUserName: v.optional(v.string()),
     email: v.string(),
     phone: v.string(),
-    firstName: v.string(),
-    lastName: v.string(),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
     lastReservationDate: v.optional(v.string()),
     notes: v.optional(v.string()),
@@ -89,12 +89,15 @@ export const trash = mutation({
 export const exist = query({
   args: {
     salonId: v.string(),
+    lineId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const salonCustomers = await ctx.db
       .query("customer")
-      .collect();
-    return salonCustomers.filter(customer => customer.salonId === args.salonId);
+      .filter(q => q.eq(q.field("salonId"), args.salonId))
+      .filter(q => q.eq(q.field("lineId"), args.lineId))
+      .first();
+    return salonCustomers;
   },
 });
 
@@ -103,15 +106,26 @@ export const getCustomersBySalonId = query({
   args: {
     paginationOpts: paginationOptsValidator,
     salonId: v.string(),
+    lineId: v.optional(v.string()),
     sortDirection: v.optional(v.union(v.literal("asc"), v.literal("desc"))),
   },
   handler: async (ctx, args) => {
     const direction = args.sortDirection ?? "desc";
     // サロンIDでフィルタし、_creationTime で並び替え（Convex では order() はソート方向のみを指定）
-    const q = ctx.db
-      .query("customer")
-      .filter(q => q.eq(q.field("salonId"), args.salonId))
-      .order(direction);
+
+    let q;
+    if (args.lineId) {
+      q = ctx.db
+        .query("customer")
+        .filter(q => q.eq(q.field("salonId"), args.salonId))
+        .filter(q => q.eq(q.field("lineId"), args.lineId))
+        .order(direction);
+    } else {
+      q = ctx.db
+        .query("customer")
+        .filter(q => q.eq(q.field("salonId"), args.salonId))
+        .order(direction);
+    }
 
     const result = await q.paginate(args.paginationOpts);
     return result;
@@ -155,11 +169,13 @@ export const getCustomerById = query({
 export const getCustomersByLineId = query({
   args: {
     lineId: v.string(),
+    salonId: v.string(),
   },
   handler: async (ctx, args) => {
     const customer = await ctx.db
       .query("customer")
       .filter(q => q.eq(q.field("lineId"), args.lineId))
+      .filter(q => q.eq(q.field("salonId"), args.salonId))
       .first();
     
     return customer;

@@ -20,10 +20,9 @@ const imageLoadedCache = new Map<string, boolean>();
 type FileImageProps = {
   fileId?: string; // スタッフの imageFile（ファイルID）
   alt?: string;
-  size?: number; // 基本サイズ（デフォルト: 44px）
-  aspectRatio?: number; // 幅/高さの比率（デフォルト: 1.5）
+  size?: number; // 円の直径（デフォルト: 44px）
   fullSize?: boolean; // 画像を親要素に合わせるかどうか
-  minHeight?: number; // 最小高さ（デフォルト: 80px）
+  minHeight?: number; // 最小高さ（デフォルト: 80px）、fullSize=trueの時のみ使用
   className?: string; // 追加のクラス名
   onLoadComplete?: () => void; // 画像読み込み完了時のコールバック
   showErrorFeedback?: boolean; // エラー時にユーザーにフィードバックを表示するかどうか
@@ -33,9 +32,8 @@ function FileImageComponent({
   fileId,
   alt,
   size = 44, // デフォルトサイズを明示的に設定
-  aspectRatio = 1.5, // デフォルトのアスペクト比を設定
   fullSize = false,
-  minHeight = 80, // デフォルトの最小高さを設定
+  minHeight = 80, // デフォルトの最小高さを設定（fullSize=trueの時のみ使用）
   className = "",
   onLoadComplete,
   showErrorFeedback = false,
@@ -58,12 +56,11 @@ function FileImageComponent({
     };
   }, []);
 
-  // 画像の高さと幅の計算
-  const imageHeight = size;
-  const imageWidth = Math.round(size * aspectRatio);
+  // 円形表示の場合は幅と高さが同じ値になる（正方形）
+  const circleDimension = size;
 
-  // 最小の高さを設定
-  const calculatedMinHeight = Math.max(minHeight, imageHeight);
+  // 最小の高さを設定（fullSize=trueの場合のみ使用）
+  const calculatedMinHeight = Math.max(minHeight, circleDimension);
 
   // 画像をプリロード
   useEffect(() => {
@@ -94,7 +91,6 @@ function FileImageComponent({
     }
   }, [imageUrl, isImageCached, cacheKey, onLoadComplete]);
 
-  // setIsLoadingは冗長になるため削除
   const handleLoadStart = useCallback(() => {
     // すでにキャッシュされている場合はローディング状態にしない
     if (!isImageCached && !hasError) {
@@ -122,13 +118,25 @@ function FileImageComponent({
     ? FALLBACK_IMAGE_URL
     : imageUrl || DEFAULT_IMAGE_URL;
 
+  // fullSizeモードと円形モードで異なるスタイルを適用
   return (
     <div
       className={`relative ${isLoading ? "bg-slate-200 animate-pulse" : ""} ${className}`}
-      style={{
-        minHeight: `${calculatedMinHeight}px`,
-        width: fullSize ? "100%" : `${imageWidth}px`,
-      }}
+      style={
+        fullSize
+          ? {
+              // fullSizeモードの場合は親要素に合わせる
+              minHeight: `${calculatedMinHeight}px`,
+              width: "100%",
+            }
+          : {
+              // 円形モードの場合は正方形コンテナを作成
+              width: `${circleDimension}px`,
+              height: `${circleDimension}px`,
+              borderRadius: "50%", // コンテナ自体も円形に
+              overflow: "hidden", // はみ出した部分を隠す
+            }
+      }
     >
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center">
@@ -148,12 +156,16 @@ function FileImageComponent({
         <Image
           src={displayImageUrl}
           alt={alt || "alt image"}
-          width={imageWidth}
-          height={imageHeight}
+          width={fullSize ? undefined : circleDimension}
+          height={fullSize ? undefined : circleDimension}
           placeholder="blur"
           blurDataURL={DEFAULT_IMAGE_URL}
           className={`
-            ${fullSize ? "w-full h-auto object-center" : `rounded-full object-cover`}
+            ${
+              fullSize
+                ? "w-full h-auto object-center"
+                : "w-full h-full object-cover rounded-full"
+            }
             ${isLoading ? "opacity-0" : "opacity-100"}
             transition-opacity duration-300
           `}
@@ -162,7 +174,15 @@ function FileImageComponent({
           onError={handleError}
           priority={isImageCached}
           loading={isImageCached ? "eager" : "lazy"}
-          sizes={fullSize ? "100vw" : `${imageWidth}px`}
+          sizes={fullSize ? "100vw" : `${circleDimension}px`}
+          style={
+            !fullSize
+              ? {
+                  objectPosition: "center", // 画像の中心を表示
+                }
+              : undefined
+          }
+          fill={fullSize} // fullSizeモードの場合はfillを使用
         />
       )}
     </div>

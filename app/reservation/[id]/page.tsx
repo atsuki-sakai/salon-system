@@ -26,7 +26,7 @@ export default function ReservePage() {
   const handleLogin = () => {
     if (!liff?.isInClient()) {
       const session = JSON.stringify({
-        storeId: id,
+        salonId: id,
       });
       setCookie(LINE_LOGIN_SESSION_KEY, session, 60);
       liff?.login();
@@ -50,21 +50,13 @@ export default function ReservePage() {
 
   return (
     <div className="w-full  mx-auto bg-gradient-to-b from-gray-50 to-white min-h-screen">
-      <div className="flex flex-col items-start justify-center px-4 py-6">
-        <div className="flex flex-col gap-3 w-full">
-          <h1 className="text-2xl font-bold text-blue-800 tracking-wide">
-            Booker
-          </h1>
-        </div>
-      </div>
-
       <motion.div
         className="flex items-center justify-center px-4 pb-8"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <Card className="w-full max-w-md shadow-lg border-none">
+        <Card className="w-full max-w-md shadow-lg border-none mt-4">
           <CardHeader className="pb-0">
             <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <Image

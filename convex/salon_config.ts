@@ -99,3 +99,23 @@ export const exist = query({
     return salonConfig !== null;
   },
 });
+
+export const getLineAccessToken = query({
+  args: {
+    salonId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const salonConfig = await ctx.db.query("salon_config").filter(q => q.eq(q.field("salonId"), args.salonId)).first();
+    return salonConfig?.lineAccessToken;
+  },
+});
+
+export const getLineSecret = query({
+  args: {
+    salonId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const salonConfig = await ctx.db.query("salon_config").filter(q => q.eq(q.field("salonId"), args.salonId)).first();
+    return salonConfig?.lineSecret;
+  },
+});
