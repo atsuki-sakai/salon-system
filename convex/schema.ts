@@ -138,7 +138,7 @@ export default defineSchema({
     reservationRules: v.optional(v.string()),
     imgFileId: v.optional(v.string()),
     lineAccessToken: v.optional(v.string()),
-    lineSecret: v.optional(v.string()),
+    liffId: v.optional(v.string()),
   })
   .index("by_salon_id", ["salonId"])
   .searchIndex("search_by_salon_id", { searchField: "salonId" }),

@@ -171,7 +171,7 @@ export const salonConfigSchema = z.object({
   reservationRules: z.string().optional(),
   imgFileId: z.string().optional(),
   lineAccessToken: z.string().optional(),
-  lineSecret: z.string().optional(),
+  liffId: z.string().optional(),
 });
 
 export const reservationSchema = z.object({

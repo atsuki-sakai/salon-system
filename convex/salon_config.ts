@@ -22,7 +22,7 @@ export const add = mutation({
     reservationRules: v.optional(v.string()),
     imgFileId: v.optional(v.string()),
     lineAccessToken: v.optional(v.string()),
-    lineSecret: v.optional(v.string()),
+    liffId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const salonConfig = await ctx.db.insert("salon_config", {
@@ -63,7 +63,7 @@ export const update = mutation({
     reservationRules: v.optional(v.string()),
     imgFileId: v.optional(v.string()),
     lineAccessToken: v.optional(v.string()),
-    lineSecret: v.optional(v.string()),
+    liffId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const salonConfig = await ctx.db
@@ -110,12 +110,72 @@ export const getLineAccessToken = query({
   },
 });
 
-export const getLineSecret = query({
+export const getLiffId = query({
   args: {
     salonId: v.string(),
   },
   handler: async (ctx, args) => {
     const salonConfig = await ctx.db.query("salon_config").filter(q => q.eq(q.field("salonId"), args.salonId)).first();
-    return salonConfig?.lineSecret;
+    return salonConfig?.liffId;
+  },
+});
+
+export const getSalonConfigDetails = query({
+  args: {
+    salonId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const salonConfig = await ctx.db.query("salon_config").filter(q => q.eq(q.field("salonId"), args.salonId)).first();
+    
+    if (!salonConfig) {
+      return {
+        exists: false,
+        message: "サロン設定が見つかりません",
+        salonId: args.salonId
+      };
+    }
+    
+    return {
+      exists: true,
+      data: {
+        ...salonConfig,
+        _id: salonConfig._id.toString(),
+      }
+    };
+  },
+});
+
+
+export const checkLineConnection = query({
+  args: {
+    salonId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const salonConfig = await ctx.db.query("salon_config").filter(q => q.eq(q.field("salonId"), args.salonId)).first();
+    if (!salonConfig) {
+      return {
+        success: false,
+        message: "サロン設定が見つかりません",
+      };
+    }
+
+    const liffId = salonConfig.liffId;
+    if (!liffId) {
+      return {
+        success: false,
+        message: "LIFF IDが設定されていません。",
+      };
+    }
+    const accessToken = salonConfig.lineAccessToken;
+    if (!accessToken) {
+      return {
+        success: false,
+        message: "LINEアクセストークンが設定されていません。",
+      };
+    }
+    return {
+      success: true,
+      message: "LINE連携が正常に確認されました。",
+    };
   },
 });

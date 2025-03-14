@@ -382,7 +382,7 @@ export default function SettingPage() {
         reservationRules: mySettings.reservationRules,
         salonId: id as string,
         lineAccessToken: mySettings.lineAccessToken,
-        lineSecret: mySettings.lineSecret,
+        liffId: mySettings.liffId,
       });
     }
   }, [mySettings, reset, id]);
@@ -1382,15 +1382,15 @@ export default function SettingPage() {
                         </div>
 
                         <div className="space-y-2 mt-4">
-                          <Label htmlFor="lineSecret" className="text-gray-700">
-                            LINEチャネルシークレット
+                          <Label htmlFor="liffId" className="text-gray-700">
+                            LIFF ID
                           </Label>
                           <div className="relative">
                             <Input
-                              id="lineSecret"
+                              id="liffId"
                               type={showLineSecret ? "text" : "password"}
-                              {...register("lineSecret")}
-                              placeholder="LINE Channel Secret"
+                              {...register("liffId")}
+                              placeholder="LIFF ID"
                               className="border-gray-200 focus-visible:ring-indigo-500 transition-all duration-200"
                             />
                             <Button

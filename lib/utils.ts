@@ -116,3 +116,24 @@ export function decrypt(encryptedText: string): string {
   decrypted += decipher.final('utf8');
   return decrypted;
 }
+
+// URLパスからサロンIDを取得する関数
+export function getSalonIdFromPath(): string {
+  if (typeof window === 'undefined') {
+    return process.env.NEXT_PUBLIC_DEFAULT_SALON_ID || '';
+  }
+  
+  // URLからパスを取得
+  const path = window.location.pathname;
+  
+  // パスからサロンIDを抽出する正規表現パターン
+  // 例: /reservation/abc123/calendar のような形式を想定
+  const match = path.match(/\/reservation\/([^\/]+)/);
+  
+  if (match && match[1]) {
+    return match[1];
+  }
+  
+  // パスからサロンIDが取得できない場合はデフォルト値を返す
+  return process.env.NEXT_PUBLIC_DEFAULT_SALON_ID || '';
+}
