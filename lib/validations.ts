@@ -171,7 +171,51 @@ export const salonConfigSchema = z.object({
   reservationRules: z.string().optional(),
   imgFileId: z.string().optional(),
   lineAccessToken: z.string().optional(),
+  lineChannelSecret: z.string().optional(),
   liffId: z.string().optional(),
+  bussinessInfo: z.object({
+    businessDays: z.array(z.string()),
+    hoursSettings: z.object({
+      monday: z.object({
+        isOpen: z.boolean(),
+        openTime: z.string(),
+        closeTime: z.string()
+      }),
+      tuesday: z.object({
+        isOpen: z.boolean(),
+        openTime: z.string(),
+        closeTime: z.string()
+      }),
+      wednesday: z.object({
+        isOpen: z.boolean(),
+        openTime: z.string(),
+        closeTime: z.string()
+      }),
+      thursday: z.object({
+        isOpen: z.boolean(),
+        openTime: z.string(),
+        closeTime: z.string()
+      }),
+      friday: z.object({
+        isOpen: z.boolean(),
+        openTime: z.string(),
+        closeTime: z.string()
+      }),
+      saturday: z.object({
+        isOpen: z.boolean(),
+        openTime: z.string(),
+        closeTime: z.string()
+      }),
+      sunday: z.optional(z.object({
+        isOpen: z.boolean(),
+        openTime: z.string(),
+        closeTime: z.string()
+      })),
+    }),
+    useCommonHours: z.boolean(),
+    commonOpenTime: z.string(),
+    commonCloseTime: z.string(),
+  }).optional(),
 });
 
 export const reservationSchema = z.object({
