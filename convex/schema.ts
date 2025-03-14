@@ -138,7 +138,51 @@ export default defineSchema({
     reservationRules: v.optional(v.string()),
     imgFileId: v.optional(v.string()),
     lineAccessToken: v.optional(v.string()),
+    lineChannelSecret: v.optional(v.string()),
     liffId: v.optional(v.string()),
+    bussinessInfo: v.optional(v.object({
+      businessDays: v.array(v.string()),
+      hoursSettings: v.object({
+        monday: v.object({
+          isOpen: v.boolean(),
+          openTime: v.string(),
+          closeTime: v.string()
+        }),
+        tuesday: v.object({
+          isOpen: v.boolean(),
+          openTime: v.string(),
+          closeTime: v.string()
+        }),
+        wednesday: v.object({
+          isOpen: v.boolean(),
+          openTime: v.string(),
+          closeTime: v.string()
+        }),
+        thursday: v.object({
+          isOpen: v.boolean(),
+          openTime: v.string(),
+          closeTime: v.string()
+        }),
+        friday: v.object({
+          isOpen: v.boolean(),
+          openTime: v.string(),
+          closeTime: v.string()
+        }),
+        saturday: v.object({
+          isOpen: v.boolean(),
+          openTime: v.string(),
+          closeTime: v.string()
+        }),
+        sunday: v.optional(v.object({
+          isOpen: v.boolean(),
+          openTime: v.string(),
+          closeTime: v.string()
+        })),
+      }),
+      useCommonHours: v.boolean(),
+      commonOpenTime: v.string(),
+      commonCloseTime: v.string(),
+    }))
   })
   .index("by_salon_id", ["salonId"])
   .searchIndex("search_by_salon_id", { searchField: "salonId" }),
