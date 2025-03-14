@@ -221,22 +221,6 @@ export default function CompletePage() {
     );
   };
 
-  // 計算関数
-  const calculateTotalPrice = () => {
-    if (!reservation) return 0;
-
-    const optionsTotal =
-      reservation.selectedOptions?.reduce(
-        (total, opt) => total + (opt.salePrice || opt.price),
-        0
-      ) || 0;
-    return (
-      reservation.totalPrice +
-      optionsTotal +
-      (reservation.staffExtraCharge ?? 0)
-    );
-  };
-
   // 日付フォーマット関数
   const formatDateJP = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -262,7 +246,7 @@ export default function CompletePage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 px-4 py-10">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 p-4">
       {/* 紙吹雪アニメーション */}
       <AnimatePresence>{showConfetti && <Confetti />}</AnimatePresence>
 
@@ -394,10 +378,32 @@ export default function CompletePage() {
                           メニュー料金
                         </span>
                         <span className="font-medium text-slate-800">
-                          ¥{reservation.totalPrice.toLocaleString()}
+                          ¥
+                          {(
+                            reservation.totalPrice -
+                            (reservation.staffExtraCharge ?? 0) -
+                            (reservation.selectedOptions?.reduce(
+                              (total, option) =>
+                                total + (option.salePrice ?? option.price),
+                              0
+                            ) ?? 0)
+                          ).toLocaleString()}
                         </span>
                       </div>
 
+                      {reservation.staffExtraCharge ? (
+                        <div>
+                          <Separator />
+                          <div className="flex justify-between items-center mt-3">
+                            <span className="text-sm text-slate-600">
+                              指名料金
+                            </span>
+                            <span className="font-medium text-slate-800">
+                              ¥{reservation.staffExtraCharge.toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+                      ) : null}
                       {reservation.selectedOptions &&
                         reservation.selectedOptions.length > 0 && (
                           <>
@@ -423,19 +429,6 @@ export default function CompletePage() {
                           </>
                         )}
 
-                      {reservation.staffExtraCharge ? (
-                        <div>
-                          <Separator />
-                          <div className="flex justify-between items-center mt-3">
-                            <span className="text-sm text-slate-600">
-                              指名料金
-                            </span>
-                            <span className="font-medium text-slate-800">
-                              ¥{reservation.staffExtraCharge.toLocaleString()}
-                            </span>
-                          </div>
-                        </div>
-                      ) : null}
                       <div>
                         <Separator />
                         <div className="flex justify-between items-center">
@@ -443,7 +436,7 @@ export default function CompletePage() {
                             合計
                           </span>
                           <span className="font-bold text-xl text-green-600">
-                            ¥{calculateTotalPrice().toLocaleString()}
+                            ¥{reservation.totalPrice}
                           </span>
                         </div>
                       </div>

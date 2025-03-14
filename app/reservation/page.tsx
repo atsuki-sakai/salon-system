@@ -114,8 +114,8 @@ export default function ReserveRedirectPage() {
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-blue-50 to-white p-4">
       <Card className="w-full max-w-md shadow-lg border-none">
         <CardHeader className="pb-2">
-          <CardTitle className="text-2xl font-bold text-center text-blue-800">
-            Booker
+          <CardTitle className="text-2xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">
+            Bcker
           </CardTitle>
           <CardDescription className="text-center text-gray-600">
             ログイン中のユーザー情報を処理しています。

@@ -58,6 +58,14 @@ export default function ReservePage() {
       >
         <Card className="w-full max-w-md shadow-lg border-none mt-4">
           <CardHeader className="pb-0">
+            <div className="flex flex-col items-start">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">
+                Bcker
+              </h1>
+              <span className="text-xs scale-75 -ml-5 -mt-1.5 text-gray-600">
+                ブッカーで予約を簡単・便利に
+              </span>
+            </div>
             <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <Image
                 src="/assets/images/line-logo.png"

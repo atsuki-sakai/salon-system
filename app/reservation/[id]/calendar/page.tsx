@@ -75,6 +75,7 @@ import { CarouselApi } from "@/components/ui/carousel";
 import { CommonDetailDialog } from "./CommonDetailDialog";
 
 import type { TimeSlot, MenuOption } from "@/lib/types";
+import type { Message } from "@line/bot-sdk";
 
 export default function ReservationTimePicker() {
   const { id } = useParams();
@@ -452,7 +453,7 @@ export default function ReservationTimePicker() {
         startTime: fullStartTime,
         endTime: fullEndTime,
         menuName: selectedMenu?.name ?? "",
-        totalPrice: selectedMenu?.price ?? 0,
+        totalPrice: calculateTotalPrice,
         customerId: sessionCustomer?._id ?? "only-session",
         customerFullName: sessionCustomer?.lineUserName ?? "未設定",
         customerPhone: sessionCustomer?.phone ?? "未設定",
@@ -463,57 +464,480 @@ export default function ReservationTimePicker() {
           id: option.id,
           name: option.name,
           price: option.price,
+          salePrice: option.salePrice,
           quantity: 1,
         })),
       });
 
-      const response = await fetch("/api/line/message", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const flexMessages: Message[] = [
+        {
+          type: "flex",
+          altText: "予約確認",
+          contents: {
+            type: "bubble",
+            size: "giga",
+            header: {
+              type: "box",
+              layout: "vertical",
+              contents: [
+                {
+                  type: "box",
+                  layout: "horizontal",
+                  contents: [
+                    {
+                      type: "text",
+                      text: salonConfig?.salonName ?? "",
+                      weight: "bold",
+                      size: "xl",
+                      color: "#ffffff",
+                      align: "center",
+                      gravity: "center",
+                      margin: "md",
+                    },
+                  ],
+                  spacing: "md",
+                },
+                {
+                  type: "text",
+                  text: "ご予約の確認",
+                  color: "#ffffff",
+                  align: "center",
+                  size: "sm",
+                  margin: "xs",
+                },
+              ],
+              paddingAll: "20px",
+              backgroundColor: "#5dade2",
+              spacing: "md",
+              paddingTop: "22px",
+            },
+            body: {
+              type: "box",
+              layout: "vertical",
+              contents: [
+                {
+                  type: "text",
+                  text: "予約内容",
+                  weight: "bold",
+                  size: "lg",
+                  color: "#5dade2",
+                },
+                {
+                  type: "separator",
+                  margin: "md",
+                },
+                {
+                  type: "box",
+                  layout: "vertical",
+                  margin: "lg",
+                  spacing: "sm",
+                  contents: [
+                    {
+                      type: "box",
+                      layout: "horizontal",
+                      contents: [
+                        {
+                          type: "box",
+                          layout: "vertical",
+                          contents: [
+                            {
+                              type: "text",
+                              text: "お名前",
+                              size: "sm",
+                              color: "#8C8C8C",
+                              weight: "bold",
+                            },
+                          ],
+                          width: "80px",
+                        },
+                        {
+                          type: "box",
+                          layout: "vertical",
+                          contents: [
+                            {
+                              type: "text",
+                              text: sessionCustomer
+                                ? sessionCustomer.lineUserName + "様"
+                                : "",
+                              size: "sm",
+                              color: "#000000",
+                              wrap: true,
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      type: "box",
+                      layout: "horizontal",
+                      contents: [
+                        {
+                          type: "box",
+                          layout: "vertical",
+                          contents: [
+                            {
+                              type: "text",
+                              text: "日時",
+                              size: "sm",
+                              color: "#8C8C8C",
+                              weight: "bold",
+                            },
+                          ],
+                          width: "80px",
+                        },
+                        {
+                          type: "box",
+                          layout: "vertical",
+                          contents: [
+                            {
+                              type: "text",
+                              text: selectedDate
+                                ? format(selectedDate, "yyyy年MM月dd日", {
+                                    locale: ja,
+                                  })
+                                : "",
+                              size: "sm",
+                              color: "#000000",
+                            },
+                            {
+                              type: "text",
+                              text: selectedTimeSlot
+                                ? `${selectedTimeSlot.startTime.split("T")[1]} 〜 ${selectedTimeSlot.endTime.split("T")[1]}`
+                                : "",
+                              size: "sm",
+                              color: "#000000",
+                            },
+                          ],
+                        },
+                      ],
+                      margin: "md",
+                    },
+                    {
+                      type: "box",
+                      layout: "horizontal",
+                      contents: [
+                        {
+                          type: "box",
+                          layout: "vertical",
+                          contents: [
+                            {
+                              type: "text",
+                              text: "メニュー",
+                              size: "sm",
+                              color: "#8C8C8C",
+                              weight: "bold",
+                            },
+                          ],
+                          width: "80px",
+                        },
+                        {
+                          type: "box",
+                          layout: "vertical",
+                          contents: [
+                            {
+                              type: "text",
+                              text: selectedMenu?.name ?? "",
+                              size: "sm",
+                              color: "#000000",
+                              wrap: true,
+                            },
+                          ],
+                        },
+                      ],
+                      margin: "md",
+                    },
+                    {
+                      type: "box",
+                      layout: "horizontal",
+                      contents: [
+                        {
+                          type: "box",
+                          layout: "vertical",
+                          contents: [
+                            {
+                              type: "text",
+                              text: "合計料金",
+                              size: "sm",
+                              color: "#8C8C8C",
+                              weight: "bold",
+                            },
+                          ],
+                          width: "80px",
+                        },
+                        {
+                          type: "box",
+                          layout: "vertical",
+                          contents: [
+                            {
+                              type: "text",
+                              text: calculateTotalPrice.toLocaleString() + "円",
+                              size: "sm",
+                              color: "#000000",
+                              wrap: true,
+                            },
+                          ],
+                        },
+                      ],
+                      margin: "md",
+                    },
+                    {
+                      type: "box",
+                      layout: "horizontal",
+                      contents: [
+                        {
+                          type: "box",
+                          layout: "vertical",
+                          contents: [
+                            {
+                              type: "text",
+                              text: "担当",
+                              size: "sm",
+                              color: "#8C8C8C",
+                              weight: "bold",
+                            },
+                          ],
+                          width: "80px",
+                        },
+                        {
+                          type: "box",
+                          layout: "vertical",
+                          contents: [
+                            {
+                              type: "text",
+                              text: selectedStaff?.name ?? "",
+                              size: "sm",
+                              color: "#000000",
+                              wrap: true,
+                            },
+                          ],
+                        },
+                      ],
+                      margin: "md",
+                    },
+                    {
+                      type: "box",
+                      layout: "horizontal",
+                      contents: [
+                        {
+                          type: "box",
+                          layout: "vertical",
+                          contents: [
+                            {
+                              type: "text",
+                              text: "予約番号",
+                              size: "sm",
+                              color: "#8C8C8C",
+                              weight: "bold",
+                            },
+                          ],
+                          width: "80px",
+                        },
+                        {
+                          type: "box",
+                          layout: "vertical",
+                          contents: [
+                            {
+                              type: "text",
+                              text: reservationId,
+                              size: "sm",
+                              color: "#000000",
+                            },
+                          ],
+                        },
+                      ],
+                      margin: "md",
+                    },
+                  ],
+                },
+                {
+                  type: "separator",
+                  margin: "xxl",
+                },
+                {
+                  type: "box",
+                  layout: "vertical",
+                  margin: "md",
+                  contents: [
+                    {
+                      type: "text",
+                      text: "店舗情報",
+                      weight: "bold",
+                      size: "md",
+                      color: "#5dade2",
+                    },
+                    {
+                      type: "box",
+                      layout: "horizontal",
+                      contents: [
+                        {
+                          type: "box",
+                          layout: "vertical",
+                          contents: [
+                            {
+                              type: "text",
+                              text: "住所",
+                              size: "sm",
+                              color: "#8C8C8C",
+                              weight: "bold",
+                            },
+                          ],
+                          width: "80px",
+                        },
+                        {
+                          type: "box",
+                          layout: "vertical",
+                          contents: [
+                            {
+                              type: "text",
+                              text: salonConfig?.address ?? "",
+                              size: "sm",
+                              color: "#000000",
+                              wrap: true,
+                            },
+                          ],
+                        },
+                      ],
+                      margin: "md",
+                    },
+                    {
+                      type: "box",
+                      layout: "horizontal",
+                      contents: [
+                        {
+                          type: "box",
+                          layout: "vertical",
+                          contents: [
+                            {
+                              type: "text",
+                              text: "電話番号",
+                              size: "sm",
+                              color: "#8C8C8C",
+                              weight: "bold",
+                            },
+                          ],
+                          width: "80px",
+                        },
+                        {
+                          type: "box",
+                          layout: "vertical",
+                          contents: [
+                            {
+                              type: "text",
+                              text: salonConfig?.phone ?? "",
+                              size: "sm",
+                              color: "#000000",
+                            },
+                          ],
+                        },
+                      ],
+                      margin: "md",
+                    },
+                  ],
+                },
+                {
+                  type: "box",
+                  layout: "vertical",
+                  margin: "xxl",
+                  contents: [
+                    {
+                      type: "text",
+                      text: "ご予約に関する注意事項",
+                      size: "sm",
+                      color: "#FF5551",
+                      weight: "bold",
+                    },
+                    {
+                      type: "text",
+                      text: "・予約時間の10分前にはご来店ください。",
+                      size: "xs",
+                      color: "#8C8C8C",
+                      margin: "md",
+                      wrap: true,
+                    },
+                    {
+                      type: "text",
+                      text: "・キャンセルは予約日の2日前までにご連絡ください。",
+                      size: "xs",
+                      color: "#8C8C8C",
+                      wrap: true,
+                    },
+                  ],
+                },
+              ],
+              paddingAll: "20px",
+            },
+            footer: {
+              type: "box",
+              layout: "vertical",
+              spacing: "sm",
+              contents: [
+                {
+                  type: "button",
+                  style: "primary",
+                  action: {
+                    type: "uri",
+                    label: "予約を確認する",
+                    uri: "https://example.com/change-reservation",
+                  },
+                  color: "#5dade2",
+                },
+                // {
+                //   type: "button",
+                //   style: "secondary",
+                //   action: {
+                //     type: "uri",
+                //     label: "予約をキャンセルする",
+                //     uri: "https://example.com/cancel-reservation",
+                //   },
+                // },
+                {
+                  type: "box",
+                  layout: "vertical",
+                  contents: [
+                    {
+                      type: "text",
+                      text: "ご不明な点がございましたら、お電話にてお問い合わせください。",
+                      color: "#8C8C8C",
+                      size: "xxs",
+                      align: "center",
+                      wrap: true,
+                      margin: "md",
+                    },
+                  ],
+                  margin: "sm",
+                },
+              ],
+              paddingAll: "20px",
+            },
+            styles: {
+              header: {
+                backgroundColor: "#5dade2",
+              },
+              footer: {
+                separator: true,
+              },
+            },
+          },
         },
+      ];
+      const response = await fetch("/api/line/flex-message", {
+        method: "POST",
         body: JSON.stringify({
           lineId: sessionCustomer?.lineId,
-          message: `
-        ✅ ご予約が確定いたしました
-        
-        ■ ご予約内容
-        メニュー: ${selectedMenu?.name}
-        スタッフ: ${selectedStaff?.name}
-        料金: ${calculateTotalPrice.toLocaleString()}円
-        日時: ${format(selectedDate, "yyyy年MM月dd日(E) HH:mm", { locale: ja })}
-        
-        ${
-          selectedOptions.length > 0
-            ? `■ オプション\n${selectedOptions
-                .map(
-                  (option) =>
-                    salonConfig?.options?.find((o) => o.id === option)?.name
-                )
-                .join("\n")}`
-            : ""
-        }
-        
-        ■ お客様情報
-        お名前: ${sessionCustomer?.lineUserName}
-        電話番号: ${sessionCustomer?.phone}
-        ${notes ? `メッセージ: ${notes}` : ""}
-        
-        当日のご来店を心よりお待ちしております。
-        ご予約の変更・キャンセルはお早めにご連絡ください。
-        `,
+          messages: flexMessages,
           accessToken: salonAccessToken,
         }),
       });
-
       const result = await response.json();
 
       if (result.success) {
-        setDialogOpen(false);
         toast.success("予約が確定されました");
         router.push(
           `/reservation/${salonId}/calendar/complete?reservationId=${reservationId}`
         );
+        setTimeout(() => {
+          setDialogOpen(false);
+        }, 2000);
       } else {
         throw new Error(result.error || "メッセージ送信に失敗しました");
       }
@@ -805,7 +1229,7 @@ export default function ReservationTimePicker() {
                                   <div className="flex items-baseline gap-1 sm:gap-2">
                                     <span
                                       className={
-                                        "text-sm font-semibold text-gray-800"
+                                        "text-xs font-semibold text-gray-500 line-through"
                                       }
                                     >
                                       ¥{menu.price.toLocaleString()}
@@ -821,7 +1245,7 @@ export default function ReservationTimePicker() {
                                 ) : (
                                   <span
                                     className={
-                                      "text-xs font-semibold text-gray-400 line-through"
+                                      "text-sm font-semibold text-slate-700"
                                     }
                                   >
                                     ¥{menu.price.toLocaleString()}
@@ -1269,7 +1693,7 @@ export default function ReservationTimePicker() {
                       >
                         <CalendarIcon className="mr-2 h-4 w-4 text-slate-600" />
                         {selectedDate
-                          ? format(selectedDate, "yyyy年MM月dd日（E）", {
+                          ? format(selectedDate, "yyyy年MM月dd日", {
                               locale: ja,
                             })
                           : "日付を選択してください"}

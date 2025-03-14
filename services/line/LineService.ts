@@ -1,7 +1,7 @@
 import { LineMessage, LineMessageOptions } from './types/LineMessage';
 import { MessageRepository } from './Repositories/MessageRepository';
 import { LineMessageRepository } from './Repositories/LineMessageRepository';
-
+import type { Message } from '@line/bot-sdk';
 /**
  * LINE関連のサービスクラス
  * アプリケーションのユースケースを実装する
@@ -63,6 +63,31 @@ export class LineService {
           message: 'メッセージ送信に失敗しました: 不明なエラー',
         };
       }
+    }
+  }
+
+  async sendFlexMessage(
+    lineId: string,
+    messages: Message[],
+    accessToken: string
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      const options: LineMessageOptions = {
+        accessToken,
+      };
+
+      await this.messageRepository.sendFlexMessage(lineId, messages, options);
+
+      return {
+        success: true,
+        message: 'フレックスメッセージが送信されました。',
+      };
+    } catch (error) {
+      console.error('Error in LineService.sendFlexMessage:', error);
+      return {
+        success: false,
+        message: 'フレックスメッセージ送信に失敗しました: 不明なエラー',
+      };
     }
   }
 }

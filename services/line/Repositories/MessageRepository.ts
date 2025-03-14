@@ -1,5 +1,5 @@
 import { LineMessage, LineMessageOptions } from '../types/LineMessage';
-
+import type { Message } from '@line/bot-sdk';
 /**
  * LINEメッセージリポジトリのインターフェース
  * 外部のLINE APIとのやり取りを抽象化する
@@ -12,4 +12,5 @@ export interface MessageRepository {
    * @returns 送信結果
    */
   sendMessage(message: LineMessage, options: LineMessageOptions): Promise<boolean>;
+  sendFlexMessage(lineId: string, messages: Message[], options: LineMessageOptions): Promise<boolean>;
 }
