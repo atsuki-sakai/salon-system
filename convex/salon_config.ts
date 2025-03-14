@@ -22,7 +22,51 @@ export const add = mutation({
     reservationRules: v.optional(v.string()),
     imgFileId: v.optional(v.string()),
     lineAccessToken: v.optional(v.string()),
+    lineChannelSecret: v.optional(v.string()),
     liffId: v.optional(v.string()),
+    bussinessInfo: v.optional(v.object({
+      businessDays: v.array(v.string()),
+      hoursSettings: v.object({
+        monday: v.object({
+          isOpen: v.boolean(),
+          openTime: v.string(),
+          closeTime: v.string()
+        }),
+        tuesday: v.object({
+          isOpen: v.boolean(),
+          openTime: v.string(),
+          closeTime: v.string()
+        }),
+        wednesday: v.object({
+          isOpen: v.boolean(),
+          openTime: v.string(),
+          closeTime: v.string()
+        }),
+        thursday: v.object({
+          isOpen: v.boolean(),
+          openTime: v.string(),
+          closeTime: v.string()
+        }),
+        friday: v.object({
+          isOpen: v.boolean(),
+          openTime: v.string(),
+          closeTime: v.string()
+        }),
+        saturday: v.object({
+          isOpen: v.boolean(),
+          openTime: v.string(),
+          closeTime: v.string()
+        }),
+        sunday: v.optional(v.object({
+          isOpen: v.boolean(),
+          openTime: v.string(),
+          closeTime: v.string()
+        })),
+      }),
+      useCommonHours: v.boolean(),
+      commonOpenTime: v.string(),
+      commonCloseTime: v.string(),
+    })),
   },
   handler: async (ctx, args) => {
     const salonConfig = await ctx.db.insert("salon_config", {
@@ -63,7 +107,51 @@ export const update = mutation({
     reservationRules: v.optional(v.string()),
     imgFileId: v.optional(v.string()),
     lineAccessToken: v.optional(v.string()),
+    lineChannelSecret: v.optional(v.string()),
     liffId: v.optional(v.string()),
+    bussinessInfo: v.optional(v.object({
+      businessDays: v.array(v.union(v.literal("monday"), v.literal("tuesday"), v.literal("wednesday"), v.literal("thursday"), v.literal("friday"), v.literal("saturday"), v.literal("sunday"))),
+      hoursSettings: v.object({
+        monday: v.object({
+          isOpen: v.boolean(),
+          openTime: v.string(),
+          closeTime: v.string()
+        }),
+        tuesday: v.object({
+          isOpen: v.boolean(),
+          openTime: v.string(),
+          closeTime: v.string()
+        }),
+        wednesday: v.object({
+          isOpen: v.boolean(),
+          openTime: v.string(),
+          closeTime: v.string()
+        }),
+        thursday: v.object({
+          isOpen: v.boolean(),
+          openTime: v.string(),
+          closeTime: v.string()
+        }),
+        friday: v.object({
+          isOpen: v.boolean(),
+          openTime: v.string(),
+          closeTime: v.string()
+        }),
+        saturday: v.object({
+          isOpen: v.boolean(),
+          openTime: v.string(),
+          closeTime: v.string()
+        }),
+        sunday: v.optional(v.object({
+          isOpen: v.boolean(),
+          openTime: v.string(),
+          closeTime: v.string()
+        })),
+      }),
+      useCommonHours: v.boolean(),
+      commonOpenTime: v.string(),
+      commonCloseTime: v.string(),
+    }))
   },
   handler: async (ctx, args) => {
     const salonConfig = await ctx.db
@@ -171,6 +259,13 @@ export const checkLineConnection = query({
       return {
         success: false,
         message: "LINEアクセストークンが設定されていません。",
+      };
+    }
+    const channelSecret = salonConfig.lineChannelSecret;
+    if (!channelSecret) {
+      return {
+        success: false,
+        message: "LINEチャンネルシークレットが設定されていません。",
       };
     }
     return {

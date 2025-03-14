@@ -3,8 +3,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { timeStringToMinutes, minutesToTimeString, computeAvailableTimeSlots, createFullDateTime } from "../lib/scheduling";
 
-
-import type { TimeSlot } from "../lib/types";
+// import type { TimeSlot } from "../lib/types";
 
 export const getReservationsByDate = query({
   args: {
@@ -243,7 +242,8 @@ export const trash = mutation({
     await ctx.db.delete(args.reservationId);
   },
 });
-// findOptimalTimeSlots関数も同様に修正
+
+
 export const findOptimalTimeSlots = query({
   args: {
     menuId: v.id("menu"),
@@ -258,28 +258,63 @@ export const findOptimalTimeSlots = query({
       return { success: false, message: "指定されたメニューが見つかりません" };
     }
     
-    // 2. サロン設定から営業時間と休日の取得（設定がなければデフォルト: 09:00〜20:00）
+    // 2. サロン設定から営業時間と休日の取得
     const salonConfig = await ctx.db.query("salon_config")
       .filter(q => q.eq(q.field("salonId"), args.salonId))
       .first();
-    const openTime = salonConfig?.regularOpenTime 
-      ? timeStringToMinutes(salonConfig.regularOpenTime) 
-      : timeStringToMinutes("09:00");
-    const closeTime = salonConfig?.regularCloseTime 
-      ? timeStringToMinutes(salonConfig.regularCloseTime) 
-      : timeStringToMinutes("20:00");
-    
-    // 3. 対象の日付（日付部分のみを取得）
-    const targetDate = args.date 
-      ? args.date.split('T')[0]!  // ISO形式の場合はT以前を取得
-      : new Date().toISOString().split("T")[0]!; // 今日の日付
 
-    // 追加: サロンの休日に含まれる場合はエラーを返す
-    if (salonConfig?.regularHolidays && salonConfig.regularHolidays.includes(targetDate)) {
+    // 3. 対象の日付（日付部分のみを取得）
+    // 明示的に型を指定して、常に文字列を返すことを保証
+    const targetDate: string | undefined = args.date
+      ? args.date.split('T')[0]!  // 非nullアサーションを追加
+      : new Date().toISOString().split("T")[0]; // 今日の日付
+    
+    // 日付から曜日を取得（0: 日曜日, 1: 月曜日, ..., 6: 土曜日）
+    // ここで型エラーが発生していましたが、targetDateの型を明示したので解決
+    const targetDay = new Date(targetDate!).getDay();
+    const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+    const dayName = dayNames[targetDay];
+    
+    // 4. bussinessInfoから営業時間を取得
+    const bussinessInfo = salonConfig?.bussinessInfo;
+    let openTime = timeStringToMinutes("09:00"); // デフォルト値
+    let closeTime = timeStringToMinutes("20:00"); // デフォルト値
+   
+
+    if (bussinessInfo) {
+      // 4.1 営業日チェック
+      if (bussinessInfo.businessDays && !bussinessInfo.businessDays.includes(dayName!)) {
+        return { success: false, message: "選択された日は営業日ではありません" };
+      }
+
+      // 4.2 営業時間の取得
+      if (bussinessInfo.useCommonHours) {
+        // 共通時間を使用
+        if (bussinessInfo.commonOpenTime && bussinessInfo.commonCloseTime) {
+          openTime = timeStringToMinutes(bussinessInfo.commonOpenTime);
+          closeTime = timeStringToMinutes(bussinessInfo.commonCloseTime);
+        }
+      } else {
+        // 曜日ごとの設定を使用
+        const daySettings = bussinessInfo.hoursSettings?.[dayName as keyof typeof bussinessInfo.hoursSettings];
+        if (daySettings) {
+          if (!daySettings.isOpen) {
+            return { success: false, message: `${dayName}曜日は営業していません` };
+          }
+          if (daySettings.openTime && daySettings.closeTime) {
+            openTime = timeStringToMinutes(daySettings.openTime);
+            closeTime = timeStringToMinutes(daySettings.closeTime);
+          }
+        }
+      }
+    }
+    
+    // サロンの休日に含まれる場合はエラーを返す
+    if (salonConfig?.regularHolidays && salonConfig.regularHolidays.includes(targetDate!)) {
       return { success: false, message: "選択された日はサロンの休業日です" };
     }
     
-    // 4. 対応可能なスタッフの取得
+    // 5. 対応可能なスタッフの取得
     let staffs = [];
     if (args.staffId) {
       const staff = await ctx.db.get(args.staffId);
@@ -297,8 +332,8 @@ export const findOptimalTimeSlots = query({
       }
     }
     
-    // 5. 全スタッフに対して、予約情報から利用可能な時間枠を計算
-    const availableSlots: TimeSlot[] = [];
+    // 6. 全スタッフに対して、予約情報から利用可能な時間枠を計算
+    const availableSlots = [];
     for (const staff of staffs) {
       // 指定日のスタッフの予約を取得
       const reservations = await ctx.db.query("reservation")
@@ -310,15 +345,15 @@ export const findOptimalTimeSlots = query({
       const bookedTimes = reservations.map(res => {
         // 予約時間からHH:MM部分を抽出
         const startTime = res.startTime.includes('T') 
-          ? res.startTime.split('T')[1] 
+          ? res.startTime.split('T')[1]! // 非nullアサーションを追加
           : res.startTime;
         const endTime = res.endTime.includes('T') 
-          ? res.endTime.split('T')[1] 
+          ? res.endTime.split('T')[1]! // 非nullアサーションを追加
           : res.endTime;
           
         return {
-          start: timeStringToMinutes(startTime!),
-          end: timeStringToMinutes(endTime!)
+          start: timeStringToMinutes(startTime),
+          end: timeStringToMinutes(endTime)
         };
       }).sort((a, b) => a.start - b.start);
       
@@ -337,8 +372,8 @@ export const findOptimalTimeSlots = query({
         const endTimeStr = minutesToTimeString(slot + menu.timeToMin);
         
         // ISO形式の完全な日時文字列を作成
-        const fullStartTime = createFullDateTime(targetDate!, startTimeStr!);
-        const fullEndTime = createFullDateTime(targetDate!, endTimeStr!);
+        const fullStartTime = createFullDateTime(targetDate!, startTimeStr);
+        const fullEndTime = createFullDateTime(targetDate!, endTimeStr);
         
         availableSlots.push({
           date: targetDate,
