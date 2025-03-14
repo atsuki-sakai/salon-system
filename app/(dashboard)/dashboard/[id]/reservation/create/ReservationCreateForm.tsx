@@ -316,21 +316,133 @@ export default function ReservationCreateForm() {
     setTotalPrice(basePrice + designationFee + optionsPrice);
   }, [selectedMenu, selectedStaff, selectedOptions]);
 
-  // 時間枠を計算
+  // 日付選択ハンドラの下あたりに以下の関数を追加
+  // 特定の日付が選択可能かどうかを判断する関数
+  const isDateDisabled = useCallback(
+    (date: Date) => {
+      // 今日より前の日付は選択不可
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (date < today) {
+        return true;
+      }
+
+      // bussinessInfoの取得
+      const bussinessInfo = salonConfig?.bussinessInfo;
+      if (!bussinessInfo) return false;
+
+      // 1. 曜日に基づく営業日チェック
+      const dayIndex = date.getDay(); // 0=日曜日, 1=月曜日, ...
+      const dayNames = [
+        "sunday",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+      ];
+      const dayName = dayNames[dayIndex]!;
+
+      // businessDaysが設定されている場合、営業日でなければ選択不可
+      if (
+        bussinessInfo.businessDays &&
+        !bussinessInfo.businessDays.includes(dayName)
+      ) {
+        return true;
+      }
+
+      // 2. 曜日ごとの個別設定をチェック（useCommonHoursがfalseの場合）
+      if (!bussinessInfo.useCommonHours) {
+        const daySettings =
+          bussinessInfo.hoursSettings?.[
+            dayName as keyof typeof bussinessInfo.hoursSettings
+          ];
+        // 該当曜日の設定がないか、営業していない場合は選択不可
+        if (!daySettings || !daySettings.isOpen) {
+          return true;
+        }
+      }
+
+      // 3. 臨時休業日のチェック
+      const regularHolidays = salonConfig?.regularHolidays || [];
+      const dateString = format(date, "yyyy-MM-dd");
+      if (regularHolidays.includes(dateString)) {
+        return true;
+      }
+
+      // すべての条件をクリアした場合は選択可能
+      return false;
+    },
+    [salonConfig]
+  );
+
+  // 時間枠を計算するuseEffectを修正
   useEffect(() => {
     if (
       watchedReservationDate &&
       watchedStaffId &&
       selectedMenu &&
-      reservationsForDate
+      reservationsForDate &&
+      salonConfig
     ) {
-      // 営業時間を取得
-      const open = timeStringToMinutes(salonConfig?.regularOpenTime ?? "09:00");
-      const close = timeStringToMinutes(
-        salonConfig?.regularCloseTime ?? "19:00"
-      );
+      // 1. 選択された日付から曜日を取得
+      const reservationDate = new Date(watchedReservationDate);
+      const dayIndex = reservationDate.getDay(); // 0=日曜日, 1=月曜日, ...
+      const dayNames = [
+        "sunday",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+      ];
+      const dayName = dayNames[dayIndex]!;
 
-      // 空き時間候補を計算（10分刻みで算出）
+      let open = 0;
+      let close = 0;
+      const bussinessInfo = salonConfig?.bussinessInfo;
+
+      // 2. 営業日チェック - もしbusinessDaysが設定されていて、選択された曜日が含まれていない場合
+      if (
+        bussinessInfo?.businessDays &&
+        !bussinessInfo.businessDays.includes(dayName!)
+      ) {
+        // 営業日でない場合は空の配列を設定して終了
+        toast.error(`${getDayNameInJapanese(dayIndex)}は営業日ではありません`, {
+          icon: <AlertCircle className="h-5 w-5 text-red-500" />,
+        });
+        setAvailableTimeSlots([]);
+        return;
+      }
+
+      // 3. useCommonHoursに応じた営業時間の取得
+      if (bussinessInfo?.useCommonHours) {
+        // 共通時間を使用する場合
+        open = timeStringToMinutes(bussinessInfo.commonOpenTime || "09:00");
+        close = timeStringToMinutes(bussinessInfo.commonCloseTime || "19:00");
+      } else {
+        // 曜日ごとの設定を使用する場合
+        const daySettings =
+          bussinessInfo?.hoursSettings?.[
+            dayName as keyof typeof bussinessInfo.hoursSettings
+          ];
+
+        if (!daySettings || !daySettings.isOpen) {
+          // 該当曜日の設定がないか、営業していない場合
+          toast.error(`${getDayNameInJapanese(dayIndex)}は営業しておりません`, {
+            icon: <AlertCircle className="h-5 w-5 text-red-500" />,
+          });
+          setAvailableTimeSlots([]);
+          return;
+        }
+
+        open = timeStringToMinutes(daySettings.openTime || "09:00");
+        close = timeStringToMinutes(daySettings.closeTime || "19:00");
+      }
+
+      // 4. 空き時間候補を計算（10分刻みで算出）
       const slotsInMinutes = computeAvailableTimeSlots(
         open,
         close,
@@ -350,6 +462,20 @@ export default function ReservationCreateForm() {
     staffReservations,
     salonConfig,
   ]);
+
+  // 日本語の曜日名を取得する補助関数
+  function getDayNameInJapanese(dayIndex: number) {
+    const dayNamesJa = [
+      "日曜日",
+      "月曜日",
+      "火曜日",
+      "水曜日",
+      "木曜日",
+      "金曜日",
+      "土曜日",
+    ];
+    return dayNamesJa[dayIndex] || "不明な曜日";
+  }
 
   // オプション選択/更新ハンドラ
   const handleOptionChange = useCallback(
@@ -467,6 +593,8 @@ export default function ReservationCreateForm() {
         .padStart(2, "0")}`
     );
   };
+
+  // ReservationCreateFormコンポーネント内で、カレンダー関連の処理を強化
 
   // 予約作成処理
   const onSubmit = async (data: z.infer<typeof reservationSchema>) => {
@@ -909,7 +1037,7 @@ export default function ReservationCreateForm() {
                           }
                           onSelect={handleDateSelect}
                           initialFocus
-                          disabled={{ before: new Date() }}
+                          disabled={isDateDisabled}
                           locale={ja}
                         />
                       </PopoverContent>

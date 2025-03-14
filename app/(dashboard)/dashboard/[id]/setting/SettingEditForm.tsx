@@ -12,7 +12,10 @@ import { Loading } from "@/components/common";
 import { z } from "zod";
 import { useMutation, useQuery } from "convex/react";
 import { generateUid } from "@/lib/utils";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Network } from "lucide-react";
+import { Doc } from "@/convex/_generated/dataModel";
+import { Switch } from "@/components/ui/switch";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Building2,
   Mail,
@@ -43,7 +46,6 @@ import { ja } from "date-fns/locale";
 import { api } from "@/convex/_generated/api";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
-import { TIME_TABLES } from "@/lib/constants";
 import {
   Select,
   SelectTrigger,
@@ -115,7 +117,8 @@ export default function SettingPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [showLineAccessToken, setShowLineAccessToken] = useState(false);
-  const [showLineSecret, setShowLineSecret] = useState(false);
+  const [showLineChannelSecret, setShowLineChannelSecret] = useState(false);
+  const [showLiffId, setShowLiffId] = useState(false);
 
   const {
     register,
@@ -123,15 +126,11 @@ export default function SettingPage() {
     formState: { errors, isSubmitting },
     setValue,
     reset,
-    watch,
   } = useZodForm(salonConfigSchema, {
     defaultValues: {
       salonId: id as string,
     },
   });
-
-  // 営業開始時間を監視
-  const openTime = watch("regularOpenTime");
 
   // カレンダー表示の制御用状態
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -164,6 +163,21 @@ export default function SettingPage() {
   const mySettings = useQuery(api.salon_config.getSalonConfig, {
     salonId: id as string,
   });
+
+  // 営業時間データの状態管理
+  const [businessHoursData, setBusinessHoursData] = useState<BusinessHoursData>(
+    {
+      businessDays: [],
+      hoursSettings: {},
+      useCommonHours: true,
+      commonOpenTime: mySettings?.bussinessInfo?.commonOpenTime || "09:00",
+      commonCloseTime: mySettings?.bussinessInfo?.commonCloseTime || "18:00",
+    }
+  );
+
+  console.log(mySettings?.bussinessInfo?.commonCloseTime);
+
+  console.log(businessHoursData);
 
   // ファイル関連のミューテーション
   const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
@@ -307,10 +321,69 @@ export default function SettingPage() {
         }
       }
 
+      // 営業時間データを適切な形式に変換
+      const formattedHoursSettings = {
+        monday: businessHoursData.hoursSettings["monday"] || {
+          isOpen: false,
+          openTime: businessHoursData.commonOpenTime,
+          closeTime: businessHoursData.commonCloseTime,
+        },
+        tuesday: businessHoursData.hoursSettings["tuesday"] || {
+          isOpen: false,
+          openTime: businessHoursData.commonOpenTime,
+          closeTime: businessHoursData.commonCloseTime,
+        },
+        wednesday: businessHoursData.hoursSettings["wednesday"] || {
+          isOpen: false,
+          openTime: businessHoursData.commonOpenTime,
+          closeTime: businessHoursData.commonCloseTime,
+        },
+        thursday: businessHoursData.hoursSettings["thursday"] || {
+          isOpen: false,
+          openTime: businessHoursData.commonOpenTime,
+          closeTime: businessHoursData.commonCloseTime,
+        },
+        friday: businessHoursData.hoursSettings["friday"] || {
+          isOpen: false,
+          openTime: businessHoursData.commonOpenTime,
+          closeTime: businessHoursData.commonCloseTime,
+        },
+        saturday: businessHoursData.hoursSettings["saturday"] || {
+          isOpen: false,
+          openTime: businessHoursData.commonOpenTime,
+          closeTime: businessHoursData.commonCloseTime,
+        },
+        sunday: businessHoursData.hoursSettings["sunday"] || {
+          isOpen: false,
+          openTime: businessHoursData.commonOpenTime,
+          closeTime: businessHoursData.commonCloseTime,
+        },
+      };
+
+      // 型を正しく合わせる
+      const typedBusinessDays = businessHoursData.businessDays as unknown as (
+        | "monday"
+        | "tuesday"
+        | "wednesday"
+        | "thursday"
+        | "friday"
+        | "saturday"
+        | "sunday"
+      )[];
+
+      const formattedBusinessInfo = {
+        businessDays: typedBusinessDays,
+        hoursSettings: formattedHoursSettings,
+        useCommonHours: businessHoursData.useCommonHours,
+        commonOpenTime: businessHoursData.commonOpenTime,
+        commonCloseTime: businessHoursData.commonCloseTime,
+      };
+
       const settingData = {
         ...data,
         salonId: id as string,
         imgFileId: imageFileId,
+        bussinessInfo: formattedBusinessInfo,
       };
 
       if (existSetting) {
@@ -369,6 +442,18 @@ export default function SettingPage() {
         setOptions(optionsWithIds);
       }
 
+      // buisinessInfoの設定を初期化
+      if (mySettings.bussinessInfo) {
+        // 営業時間情報を初期化
+        setBusinessHoursData({
+          businessDays: mySettings.bussinessInfo.businessDays || [],
+          hoursSettings: mySettings.bussinessInfo.hoursSettings || {},
+          useCommonHours: mySettings.bussinessInfo.useCommonHours ?? true,
+          commonOpenTime: mySettings.bussinessInfo.commonOpenTime || "09:00",
+          commonCloseTime: mySettings.bussinessInfo.commonCloseTime || "18:00",
+        });
+      }
+
       reset({
         salonName: mySettings.salonName,
         email: mySettings.email,
@@ -382,10 +467,11 @@ export default function SettingPage() {
         reservationRules: mySettings.reservationRules,
         salonId: id as string,
         lineAccessToken: mySettings.lineAccessToken,
+        lineChannelSecret: mySettings.lineChannelSecret,
         liffId: mySettings.liffId,
       });
     }
-  }, [mySettings, reset, id]);
+  }, [mySettings, reset, id, setBusinessHoursData]);
 
   if (!mySettings) {
     return <Loading />;
@@ -458,6 +544,16 @@ export default function SettingPage() {
                 >
                   <Settings className="h-4 w-4" />
                   <span>サービスオプション</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="api"
+                  className={cn(
+                    "flex-1 data-[state=active]:shadow-sm data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:font-bold",
+                    "transition-all duration-200 rounded-md flex items-center justify-center gap-2"
+                  )}
+                >
+                  <Network className="h-4 w-4" />
+                  <span>API連携</span>
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -718,119 +814,24 @@ export default function SettingPage() {
                   exit="exit"
                   variants={staggerContainer}
                 >
-                  <motion.div variants={slideUp}>
+                  {/* FIX 営業日毎に営業時間を設定できるように実装予定 */}
+                  <motion.div variants={slideUp} className="mt-6">
                     <Card className="overflow-hidden border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300">
                       <CardHeader className="bg-gradient-to-r from-indigo-50 to-white border-b">
                         <CardTitle className="flex items-center gap-2 text-indigo-700">
-                          <Clock className="h-5 w-5" />
-                          <span>営業時間</span>
+                          <Calendar className="h-5 w-5" />
+                          <span>営業日・営業時間設定</span>
                         </CardTitle>
                         <CardDescription>
-                          通常の営業時間を設定してください
+                          営業日と営業時間を設定してください。曜日毎に設定可能です。
                         </CardDescription>
                       </CardHeader>
-                      <CardContent className="p-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="space-y-2">
-                            <Label
-                              htmlFor="regularOpenTime"
-                              className="flex items-center gap-2 text-gray-700"
-                            >
-                              <Clock className="h-4 w-4 text-indigo-500" />
-                              営業開始時間
-                            </Label>
-                            <Select
-                              onValueChange={(value) =>
-                                setValue("regularOpenTime", value)
-                              }
-                              defaultValue={mySettings?.regularOpenTime}
-                            >
-                              <SelectTrigger
-                                className={cn(
-                                  "transition-all duration-200 focus:ring-indigo-500",
-                                  errors.regularOpenTime
-                                    ? "border-red-300"
-                                    : "border-gray-200"
-                                )}
-                              >
-                                <SelectValue placeholder="営業開始時間を選択" />
-                              </SelectTrigger>
-                              <SelectContent className="max-h-56">
-                                {TIME_TABLES.map((time, index) => (
-                                  <SelectItem
-                                    key={`open-time-${index}-${time}`}
-                                    value={time}
-                                  >
-                                    {time}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            {errors.regularOpenTime && (
-                              <motion.p
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: "auto" }}
-                                className="text-red-500 text-sm flex items-center gap-1"
-                              >
-                                <AlertCircle className="h-3 w-3" />
-                                {errors.regularOpenTime.message}
-                              </motion.p>
-                            )}
-                          </div>
 
-                          <div className="space-y-2">
-                            <Label
-                              htmlFor="regularCloseTime"
-                              className="flex items-center gap-2 text-gray-700"
-                            >
-                              <Clock className="h-4 w-4 text-indigo-500" />
-                              閉店時間
-                            </Label>
-                            <Select
-                              onValueChange={(value) =>
-                                setValue("regularCloseTime", value)
-                              }
-                              defaultValue={mySettings?.regularCloseTime}
-                            >
-                              <SelectTrigger
-                                className={cn(
-                                  "transition-all duration-200 focus:ring-indigo-500",
-                                  errors.regularCloseTime
-                                    ? "border-red-300"
-                                    : "border-gray-200"
-                                )}
-                              >
-                                <SelectValue placeholder="閉店時間を選択" />
-                              </SelectTrigger>
-                              <SelectContent className="max-h-56">
-                                {TIME_TABLES.filter((time) => {
-                                  if (openTime) {
-                                    return time > openTime;
-                                  }
-                                  return true;
-                                }).map((time, index) => (
-                                  <SelectItem
-                                    key={`close-time-${index}-${time}`}
-                                    value={time}
-                                  >
-                                    {time}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            {errors.regularCloseTime && (
-                              <motion.p
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: "auto" }}
-                                className="text-red-500 text-sm flex items-center gap-1"
-                              >
-                                <AlertCircle className="h-3 w-3" />
-                                {errors.regularCloseTime.message}
-                              </motion.p>
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
+                      <BusinessHoursSettings
+                        settings={mySettings}
+                        businessHoursData={businessHoursData}
+                        onBusinessHoursChange={setBusinessHoursData}
+                      />
                     </Card>
                   </motion.div>
 
@@ -839,10 +840,10 @@ export default function SettingPage() {
                       <CardHeader className="bg-gradient-to-r from-indigo-50 to-white border-b">
                         <CardTitle className="flex items-center gap-2 text-indigo-700">
                           <Calendar className="h-5 w-5" />
-                          <span>定休日設定</span>
+                          <span>臨時休業日設定</span>
                         </CardTitle>
                         <CardDescription>
-                          カレンダーから定休日を選択してください
+                          カレンダーから臨時休業日を選択してください
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="p-6">
@@ -865,7 +866,7 @@ export default function SettingPage() {
                                             <Calendar className="mr-2 h-4 w-4 text-indigo-500" />
                                             {holidayDates.length > 0
                                               ? `${holidayDates.length}日選択済み`
-                                              : "定休日を選択"}
+                                              : "臨時休業日を選択"}
                                           </Button>
                                         </PopoverTrigger>
                                         <PopoverContent
@@ -879,7 +880,7 @@ export default function SettingPage() {
                                           >
                                             <div className="border-b p-3 flex justify-between items-center bg-gray-50">
                                               <h4 className="font-medium text-sm text-gray-700">
-                                                定休日選択
+                                                臨時休業日選択
                                               </h4>
                                               <Button
                                                 size="sm"
@@ -914,7 +915,7 @@ export default function SettingPage() {
                                     </div>
                                   </TooltipTrigger>
                                   <TooltipContent>
-                                    <p>クリックして定休日を選択</p>
+                                    <p>クリックして臨時休業日を選択</p>
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
@@ -924,7 +925,7 @@ export default function SettingPage() {
                           <div className="space-y-3">
                             <div className="flex items-center justify-between">
                               <h4 className="text-sm font-medium text-gray-700">
-                                選択中の定休日
+                                選択中の臨時休業日
                               </h4>
                               <Badge
                                 variant="outline"
@@ -970,11 +971,11 @@ export default function SettingPage() {
                                           <AlertDialogContent className="border-gray-200">
                                             <AlertDialogHeader>
                                               <AlertDialogTitle>
-                                                定休日の削除
+                                                臨時休業日の削除
                                               </AlertDialogTitle>
                                               <AlertDialogDescription>
                                                 {formatDateForDisplay(date)}
-                                                を定休日から削除しますか？
+                                                を臨時休業日から削除しますか？
                                               </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
@@ -1001,7 +1002,7 @@ export default function SettingPage() {
                                     animate={{ opacity: 1 }}
                                     className="flex items-center justify-center h-full text-gray-500"
                                   >
-                                    定休日は選択されていません
+                                    臨時休業日は選択されていません
                                   </motion.div>
                                 )}
                               </AnimatePresence>
@@ -1338,6 +1339,50 @@ export default function SettingPage() {
                       <CardHeader className="bg-gradient-to-r from-indigo-50 to-white border-b">
                         <CardTitle className="flex items-center gap-2 text-indigo-700">
                           <BookOpen className="h-5 w-5" />
+                          <span>予約ルール</span>
+                        </CardTitle>
+                        <CardDescription>
+                          予約に関するルールや注意事項を設定します
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="p-6">
+                        <div className="space-y-2">
+                          <Label
+                            htmlFor="reservationRules"
+                            className="text-gray-700"
+                          >
+                            予約ルール
+                          </Label>
+                          <Textarea
+                            id="reservationRules"
+                            {...register("reservationRules")}
+                            placeholder="例: 予約は3日前までにお願いします。当日キャンセルは50%のキャンセル料が発生します。"
+                            className="min-h-32 border-gray-200 focus-visible:ring-indigo-500 transition-all duration-200"
+                          />
+                          <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                            <Info className="h-3 w-3" />
+                            お客様に表示される予約に関するルールや注意事項を入力してください。
+                            HTMLタグは使用できません。
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                </motion.div>
+              </TabsContent>
+              <TabsContent key="api-tab" value="api" className="space-y-6 mt-0">
+                <motion.div
+                  key="basic-content"
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  variants={staggerContainer}
+                >
+                  <motion.div variants={slideUp} className="mt-6">
+                    <Card className="overflow-hidden border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300">
+                      <CardHeader className="bg-gradient-to-r from-indigo-50 to-white border-b">
+                        <CardTitle className="flex items-center gap-2 text-indigo-700">
+                          <BookOpen className="h-5 w-5" />
                           <span>LINE連携設定</span>
                         </CardTitle>
                         <CardDescription>
@@ -1380,7 +1425,38 @@ export default function SettingPage() {
                             </Button>
                           </div>
                         </div>
-
+                        <div className="space-y-2 mt-2">
+                          <Label
+                            htmlFor="lineAccessToken"
+                            className="text-gray-700"
+                          >
+                            LINEチャネルシークレット
+                          </Label>
+                          <div className="relative">
+                            <Input
+                              id="lineChannelSecret"
+                              type={showLineChannelSecret ? "text" : "password"}
+                              {...register("lineChannelSecret")}
+                              placeholder="LINE Channel Secret"
+                              className="border-gray-200 focus-visible:ring-indigo-500 transition-all duration-200"
+                            />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              type="button"
+                              onClick={() =>
+                                setShowLineChannelSecret(!showLineChannelSecret)
+                              }
+                              className="absolute right-0 top-0 h-full px-3 text-muted-foreground hover:text-primary"
+                            >
+                              {showLineChannelSecret ? (
+                                <Eye className="h-4 w-4" />
+                              ) : (
+                                <EyeOff className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
+                        </div>
                         <div className="space-y-2 mt-4">
                           <Label htmlFor="liffId" className="text-gray-700">
                             LIFF ID
@@ -1388,7 +1464,7 @@ export default function SettingPage() {
                           <div className="relative">
                             <Input
                               id="liffId"
-                              type={showLineSecret ? "text" : "password"}
+                              type={showLiffId ? "text" : "password"}
                               {...register("liffId")}
                               placeholder="LIFF ID"
                               className="border-gray-200 focus-visible:ring-indigo-500 transition-all duration-200"
@@ -1397,10 +1473,10 @@ export default function SettingPage() {
                               variant="ghost"
                               size="sm"
                               type="button"
-                              onClick={() => setShowLineSecret(!showLineSecret)}
+                              onClick={() => setShowLiffId(!showLiffId)}
                               className="absolute right-0 top-0 h-full px-3 text-muted-foreground hover:text-primary"
                             >
-                              {showLineSecret ? (
+                              {showLiffId ? (
                                 <Eye className="h-4 w-4" />
                               ) : (
                                 <EyeOff className="h-4 w-4" />
@@ -1429,41 +1505,6 @@ export default function SettingPage() {
                           LINEの設定が難しい場合はお気軽にお問い合わせください
                           <Mail className="h-3 w-3" />
                         </a>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-
-                  <motion.div variants={slideUp} className="mt-6">
-                    <Card className="overflow-hidden border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300">
-                      <CardHeader className="bg-gradient-to-r from-indigo-50 to-white border-b">
-                        <CardTitle className="flex items-center gap-2 text-indigo-700">
-                          <BookOpen className="h-5 w-5" />
-                          <span>予約ルール</span>
-                        </CardTitle>
-                        <CardDescription>
-                          予約に関するルールや注意事項を設定します
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="p-6">
-                        <div className="space-y-2">
-                          <Label
-                            htmlFor="reservationRules"
-                            className="text-gray-700"
-                          >
-                            予約ルール
-                          </Label>
-                          <Textarea
-                            id="reservationRules"
-                            {...register("reservationRules")}
-                            placeholder="例: 予約は3日前までにお願いします。当日キャンセルは50%のキャンセル料が発生します。"
-                            className="min-h-32 border-gray-200 focus-visible:ring-indigo-500 transition-all duration-200"
-                          />
-                          <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                            <Info className="h-3 w-3" />
-                            お客様に表示される予約に関するルールや注意事項を入力してください。
-                            HTMLタグは使用できません。
-                          </p>
-                        </div>
                       </CardContent>
                     </Card>
                   </motion.div>
@@ -1530,3 +1571,471 @@ export default function SettingPage() {
     </motion.div>
   );
 }
+
+// データ型の定義
+export interface BusinessHoursSetting {
+  isOpen: boolean;
+  openTime: string;
+  closeTime: string;
+}
+
+export interface BusinessHoursData {
+  // 営業日の曜日ID配列
+  businessDays: string[];
+
+  // 各曜日ごとの設定
+  hoursSettings: Record<string, BusinessHoursSetting>;
+
+  // 共通設定関連
+  useCommonHours: boolean;
+  commonOpenTime: string;
+  commonCloseTime: string;
+}
+
+interface BusinessHoursSettingsProps {
+  // 初期設定値
+  settings: Doc<"salon_config">;
+
+  // 現在の営業時間データ
+  businessHoursData: BusinessHoursData;
+
+  // 更新関数
+  onBusinessHoursChange: (data: BusinessHoursData) => void;
+}
+
+const BusinessHoursSettings: React.FC<BusinessHoursSettingsProps> = ({
+  settings,
+  businessHoursData,
+  onBusinessHoursChange,
+}) => {
+  // 曜日の定義（日本語と英語の対応）- 月曜から日曜の順
+  const daysOfWeek = [
+    { id: "monday", ja: "月曜日", en: "Monday" },
+    { id: "tuesday", ja: "火曜日", en: "Tuesday" },
+    { id: "wednesday", ja: "水曜日", en: "Wednesday" },
+    { id: "thursday", ja: "木曜日", en: "Thursday" },
+    { id: "friday", ja: "金曜日", en: "Friday" },
+    { id: "saturday", ja: "土曜日", en: "Saturday" },
+    { id: "sunday", ja: "日曜日", en: "Sunday" },
+  ];
+
+  // 時間の選択肢を生成（30分間隔）
+  const timeOptions: string[] = [];
+  for (let hour = 0; hour < 24; hour++) {
+    for (let minute = 0; minute < 60; minute += 30) {
+      const h = hour.toString().padStart(2, "0");
+      const m = minute.toString().padStart(2, "0");
+      timeOptions.push(`${h}:${m}`);
+    }
+  }
+  // 最後に24:00を追加
+  timeOptions.push("24:00");
+
+  // 初期設定を読み込む（コンポーネントがマウントされたときのみ実行）
+  useEffect(() => {
+    // すでにbusinessHoursDataが初期化済みの場合は処理をスキップ
+    // ただし、空の配列ではなく、明示的に初期化されたビジネスデータの場合のみスキップ
+    if (
+      businessHoursData.businessDays.length > 0 &&
+      Object.keys(businessHoursData.hoursSettings).length > 0
+    ) {
+      return;
+    }
+
+    // settings.bussinessInfo から情報を取得する場合
+    if (settings.bussinessInfo) {
+      const bussinessInfo = settings.bussinessInfo;
+
+      // 親コンポーネントに初期値を通知
+      onBusinessHoursChange({
+        businessDays: bussinessInfo.businessDays || [],
+        hoursSettings: bussinessInfo.hoursSettings || {},
+        useCommonHours: bussinessInfo.useCommonHours ?? true,
+        commonOpenTime:
+          bussinessInfo.commonOpenTime || settings.regularOpenTime || "09:00",
+        commonCloseTime:
+          bussinessInfo.commonCloseTime || settings.regularCloseTime || "18:00",
+      });
+
+      return;
+    }
+
+    // bussinessInfoが存在しない場合は従来のロジックを使用（旧データとの互換性のため）
+    // 既存の定休日から曜日パターンを抽出
+    const holidayDates = settings.regularHolidays || [];
+    const dayPattern: Record<string, boolean> = {
+      monday: false,
+      tuesday: false,
+      wednesday: false,
+      thursday: false,
+      friday: false,
+      saturday: false,
+      sunday: false,
+    };
+
+    // 日付から曜日を特定
+    holidayDates.forEach((dateStr) => {
+      const date = new Date(dateStr);
+      const dayIndex = date.getDay(); // 0=日曜日, 1=月曜日, ...
+      const dayIds = [
+        "sunday",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+      ];
+      if (dayIndex >= 0 && dayIndex < dayIds.length) {
+        dayPattern[dayIds[dayIndex] as keyof typeof dayPattern] = true;
+      }
+    });
+
+    // 営業日を設定（定休日でない曜日）
+    const activeDays = Object.entries(dayPattern)
+      .filter(([, isHoliday]) => !isHoliday)
+      .map(([dayId]) => dayId);
+
+    // 営業時間の初期設定
+    const initialHoursSettings: Record<string, BusinessHoursSetting> = {};
+    daysOfWeek.forEach((day) => {
+      initialHoursSettings[day.id] = {
+        isOpen: activeDays.includes(day.id),
+        openTime: settings.regularOpenTime || "09:00",
+        closeTime: settings.regularCloseTime || "18:00",
+      };
+    });
+
+    // 親コンポーネントに初期値を通知
+    onBusinessHoursChange({
+      businessDays: activeDays as (
+        | "monday"
+        | "tuesday"
+        | "wednesday"
+        | "thursday"
+        | "friday"
+        | "saturday"
+        | "sunday"
+      )[],
+      hoursSettings: initialHoursSettings,
+      useCommonHours: true, // 旧ロジックの場合はデフォルトでtrue
+      commonOpenTime: settings.regularOpenTime || "09:00",
+      commonCloseTime: settings.regularCloseTime || "18:00",
+    });
+  }, [settings, onBusinessHoursChange, businessHoursData]);
+
+  // 営業日の切り替え処理
+  const handleDayToggle = (values: string[]) => {
+    // すべての曜日の開閉状態を更新
+    const newHoursSettings = { ...businessHoursData.hoursSettings };
+    daysOfWeek.forEach((day) => {
+      // 既存の設定がある場合は保持、ない場合は新規作成
+      newHoursSettings[day.id] = {
+        ...(newHoursSettings[day.id] || {
+          openTime: businessHoursData.commonOpenTime,
+          closeTime: businessHoursData.commonCloseTime,
+        }),
+        isOpen: values.includes(day.id),
+      };
+    });
+
+    // 親コンポーネントに更新を通知
+    onBusinessHoursChange({
+      ...businessHoursData,
+      businessDays: values,
+      hoursSettings: newHoursSettings,
+    });
+  };
+
+  // 共通営業時間の切り替え処理
+  const handleUseCommonHoursChange = (checked: boolean) => {
+    // 共通設定が有効になった場合は、すべての営業日の営業時間を共通設定に更新
+    const newHoursSettings = { ...businessHoursData.hoursSettings };
+
+    if (checked) {
+      businessHoursData.businessDays.forEach((dayId) => {
+        if (newHoursSettings[dayId]) {
+          newHoursSettings[dayId].openTime = businessHoursData.commonOpenTime;
+          newHoursSettings[dayId].closeTime = businessHoursData.commonCloseTime;
+        }
+      });
+    }
+
+    // 親コンポーネントに更新を通知
+    onBusinessHoursChange({
+      ...businessHoursData,
+      useCommonHours: checked,
+      hoursSettings: newHoursSettings,
+    });
+  };
+
+  // 共通開店時間の変更処理
+  const handleCommonOpenTimeChange = (value: string) => {
+    // 共通設定が有効な場合は、すべての営業日の開店時間も更新
+    const newHoursSettings = { ...businessHoursData.hoursSettings };
+
+    if (businessHoursData.useCommonHours) {
+      businessHoursData.businessDays.forEach((dayId) => {
+        if (newHoursSettings[dayId]) {
+          newHoursSettings[dayId].openTime = value;
+        }
+      });
+    }
+
+    // 親コンポーネントに更新を通知
+    onBusinessHoursChange({
+      ...businessHoursData,
+      commonOpenTime: value,
+      hoursSettings: newHoursSettings,
+    });
+  };
+
+  // 共通閉店時間の変更処理
+  const handleCommonCloseTimeChange = (value: string) => {
+    // 共通設定が有効な場合は、すべての営業日の閉店時間も更新
+    const newHoursSettings = { ...businessHoursData.hoursSettings };
+
+    if (businessHoursData.useCommonHours) {
+      businessHoursData.businessDays.forEach((dayId) => {
+        if (newHoursSettings[dayId]) {
+          newHoursSettings[dayId].closeTime = value;
+        }
+      });
+    }
+
+    // 親コンポーネントに更新を通知
+    onBusinessHoursChange({
+      ...businessHoursData,
+      commonCloseTime: value,
+      hoursSettings: newHoursSettings,
+    });
+  };
+
+  // 個別の営業時間の更新処理
+  const updateHoursSettings = (
+    day: string,
+    field: string,
+    value: string | boolean
+  ) => {
+    const newHoursSettings = { ...businessHoursData.hoursSettings };
+
+    if (newHoursSettings[day]) {
+      newHoursSettings[day] = {
+        ...newHoursSettings[day],
+        [field]: value,
+      };
+    }
+
+    // 親コンポーネントに更新を通知
+    onBusinessHoursChange({
+      ...businessHoursData,
+      hoursSettings: newHoursSettings,
+    });
+  };
+
+  return (
+    <div className="w-full">
+      <Card className="border-none rounded-none">
+        <CardContent className="pt-6">
+          <div className="space-y-6">
+            {/* 営業日設定 */}
+            <div>
+              <p className="text-sm text-gray-500 mb-2">
+                営業する曜日を選択してください。営業しない曜日は定休日として設定されます。
+              </p>
+
+              <ToggleGroup
+                type="multiple"
+                className="flex flex-wrap gap-2 justify-start items-center"
+                value={businessHoursData.businessDays}
+                onValueChange={handleDayToggle}
+              >
+                {daysOfWeek.map((day) => (
+                  <ToggleGroupItem
+                    key={day.id}
+                    value={day.id}
+                    aria-label={day.ja}
+                    className="px-4 py-2 data-[state=on]:font-bold border border-gray-200 rounded-md data-[state=on]:border-blue-700 data-[state=on]:bg-blue-50 data-[state=on]:text-blue-700"
+                  >
+                    {day.ja}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            </div>
+
+            {/* 統合された営業時間設定 */}
+            <div>
+              <Label className="text-sm font-semibold mb-4 block">
+                営業時間の設定
+              </Label>
+
+              <Tabs defaultValue="individual" className="w-full">
+                <TabsList className="mb-4">
+                  <TabsTrigger
+                    value="individual"
+                    className="text-sm border-2 border-transparent data-[active]:font-semibold data-[state=active]:border-blue-500 data-[state=active]:text-blue-500"
+                  >
+                    曜日ごとの設定
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="common"
+                    className="text-sm border-2 border-transparent data-[active]:font-semibold data-[state=active]:border-blue-500 data-[state=active]:text-blue-500"
+                  >
+                    共通設定
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* 曜日ごとの営業時間設定 - 曜日順にソート */}
+                <TabsContent value="individual">
+                  {businessHoursData.businessDays.length > 0 ? (
+                    <div className="space-y-4">
+                      {/* daysOfWeekの順序（月〜日）でフィルタリングして表示 */}
+                      {daysOfWeek
+                        .filter((day) =>
+                          businessHoursData.businessDays.includes(day.id)
+                        )
+                        .map((day) => {
+                          const dayId = day.id;
+                          const daySetting = businessHoursData.hoursSettings[
+                            dayId
+                          ] || {
+                            isOpen: true,
+                            openTime: businessHoursData.commonOpenTime,
+                            closeTime: businessHoursData.commonCloseTime,
+                          };
+
+                          return (
+                            <div
+                              key={dayId}
+                              className="flex items-center gap-4 p-3 border rounded-md"
+                            >
+                              <div className="min-w-24 text-sm">{day.ja}</div>
+
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Select
+                                  value={daySetting.openTime}
+                                  onValueChange={(value) =>
+                                    updateHoursSettings(
+                                      dayId,
+                                      "openTime",
+                                      value
+                                    )
+                                  }
+                                >
+                                  <SelectTrigger className="w-24">
+                                    <SelectValue placeholder="開店時間" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {timeOptions.map((time) => (
+                                      <SelectItem
+                                        key={`open-${dayId}-${time}`}
+                                        value={time}
+                                      >
+                                        {time}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+
+                                <span>〜</span>
+
+                                <Select
+                                  value={daySetting.closeTime}
+                                  onValueChange={(value) =>
+                                    updateHoursSettings(
+                                      dayId,
+                                      "closeTime",
+                                      value
+                                    )
+                                  }
+                                >
+                                  <SelectTrigger className="w-24">
+                                    <SelectValue placeholder="閉店時間" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {timeOptions.map((time) => (
+                                      <SelectItem
+                                        key={`close-${dayId}-${time}`}
+                                        value={time}
+                                      >
+                                        {time}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  ) : (
+                    <div className="text-center p-4 text-gray-500 border rounded-md">
+                      営業日を選択すると、時間設定が表示されます
+                    </div>
+                  )}
+                </TabsContent>
+                {/* 共通営業時間設定 */}
+                <TabsContent value="common">
+                  <div className="p-4 border rounded-md">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Switch
+                        checked={businessHoursData.useCommonHours ?? false}
+                        onCheckedChange={handleUseCommonHoursChange}
+                        className="data-[state=checked]:bg-blue-500"
+                      />
+                      <Label>すべての営業日に共通の営業時間を設定する</Label>
+                    </div>
+
+                    {businessHoursData.useCommonHours && (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Select
+                          value={businessHoursData.commonOpenTime}
+                          onValueChange={handleCommonOpenTimeChange}
+                        >
+                          <SelectTrigger className="w-24">
+                            <SelectValue placeholder="開店時間" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {timeOptions.map((time) => (
+                              <SelectItem
+                                key={`common-open-${time}`}
+                                value={time}
+                              >
+                                {time}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        <span>〜</span>
+
+                        <Select
+                          value={businessHoursData.commonCloseTime}
+                          onValueChange={handleCommonCloseTimeChange}
+                        >
+                          <SelectTrigger className="w-24">
+                            <SelectValue placeholder="閉店時間" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {timeOptions.map((time) => (
+                              <SelectItem
+                                key={`common-close-${time}`}
+                                value={time}
+                              >
+                                {time}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};

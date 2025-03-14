@@ -148,6 +148,8 @@ export default function ReservationTimePicker() {
       : "skip"
   );
 
+  console.log("optimalTimeSlots", optimalTimeSlots);
+
   const salonAccessToken = useQuery(api.salon_config.getLineAccessToken, {
     salonId,
   });
