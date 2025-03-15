@@ -7,13 +7,14 @@ import { useZodForm } from "@/hooks/useZodForm";
 import * as Sentry from "@sentry/nextjs";
 import { AppError, ErrorType, handleError } from "@/lib/errors";
 import { signInSchema } from "@/lib/validations";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { z } from "zod";
 import { toast } from "sonner";
+import Cookies from "js-cookie";
 
 export default function SignInPage() {
   const { isLoaded, signIn, setActive } = useSignIn();
@@ -26,10 +27,29 @@ export default function SignInPage() {
     formState: { errors, isSubmitting },
   } = useZodForm(signInSchema);
 
+  // スタッフセッションのクリア関数
+  const clearStaffSession = () => {
+    try {
+      // スタッフトークンをCookieから削除
+      Cookies.remove('staff_token', { path: '/' });
+      
+      // ローカルストレージからも削除
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('staff_auth_token');
+        console.log("Staff session was cleared for owner login");
+      }
+    } catch (e) {
+      console.error("Error clearing staff session:", e);
+    }
+  };
+
   const onSubmit = async (data: z.infer<typeof signInSchema>) => {
     if (!isLoaded) return;
 
     try {
+      // サインイン前にスタッフセッションをクリア
+      clearStaffSession();
+      
       // まず既存のサインインセッションを作成
       const signInAttempt = await signIn.create({
         identifier: data.email,
