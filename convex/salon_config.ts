@@ -178,6 +178,16 @@ export const getSalonName = query({
   },
 });
 
+export const getSalonConfigBySalonId = query({
+  args: {
+    salonId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const salonConfig = await ctx.db.query("salon_config").filter(q => q.eq(q.field("salonId"), args.salonId)).first();
+    return salonConfig;
+  },
+});
+
 export const exist = query({
   args: {
     salonId: v.string(),

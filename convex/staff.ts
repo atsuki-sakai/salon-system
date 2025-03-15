@@ -11,6 +11,9 @@ export const add = mutation({
     regularHolidays: v.optional(v.array(v.string())),
     extraCharge: v.optional(v.number()),
     age: v.optional(v.number()),
+    email: v.optional(v.string()),
+    role: v.optional(v.union(v.literal("admin"), v.literal("manager"), v.literal("staff"))),
+    isActive: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const staffId = await ctx.db.insert("staff", {
@@ -31,6 +34,9 @@ export const update = mutation({
     regularHolidays: v.optional(v.array(v.string())),
     extraCharge: v.optional(v.number()),
     age: v.optional(v.number()),
+    email: v.optional(v.string()),
+    role: v.optional(v.union(v.literal("admin"), v.literal("manager"), v.literal("staff"))),
+    isActive: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const staffId = await ctx.db.patch(args.id, {

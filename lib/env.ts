@@ -14,6 +14,7 @@ export const envSchema = z.object({
   CLERK_SECRET_KEY: z.string().min(1).optional(),
   CLERK_WEBHOOK_SECRET: z.string().min(1).optional(),
   STRIPE_SECRET_KEY: z.string().min(1).optional(),
+  JWT_SECRET: z.string().min(32).optional(),
 });
 
 // プロセス環境変数の解析と検証
@@ -28,6 +29,7 @@ export const processEnv = {
   CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
   CLERK_WEBHOOK_SECRET: process.env.CLERK_WEBHOOK_SECRET,
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+  JWT_SECRET: process.env.JWT_SECRET,
 };
 
 
