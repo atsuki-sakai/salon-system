@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useParams, useRouter } from "next/navigation";
+import { handleErrorToMessage } from "@/lib/errors";
 import {
   ArrowLeft,
   Calendar as CalendarIcon,
@@ -653,50 +654,8 @@ export default function ReservationCreateForm() {
       toast.success("予約を作成しました");
       router.push(`/dashboard/${salonId}/reservation`);
     } catch (error: unknown) {
-      console.error("Error details:", error);
-
-      if (error instanceof Error && error.message.includes("{")) {
-        try {
-          const jsonStr = error.message.substring(
-            error.message.indexOf("{"),
-            error.message.lastIndexOf("}") + 1
-          );
-          const errorData = JSON.parse(jsonStr);
-
-          if (errorData.type === "RESERVATION_CONFLICT") {
-            const { customerName, startTime, endTime, staffName, menuName } =
-              errorData.conflictingReservation;
-            const formattedDate = format(new Date(startTime), "M月d日");
-            const formattedStart = format(new Date(startTime), "HH:mm");
-            const formattedEnd = format(new Date(endTime), "HH:mm");
-
-            toast.error(
-              <div className="flex flex-col gap-1">
-                <p className="font-bold">予約が重複しています</p>
-                <p className="text-sm text-gray-100">
-                  {formattedDate} {formattedStart}～{formattedEnd}
-                </p>
-                <p className="text-sm text-gray-100">
-                  予約者: {customerName}様
-                </p>
-                <p className="text-sm text-gray-100">
-                  担当スタッフ: {staffName}
-                </p>
-                <p className="text-sm text-gray-100">メニュー: {menuName}</p>
-              </div>,
-              {
-                duration: 20000,
-              }
-            );
-            setIsSubmittingForm(false);
-            return;
-          }
-        } catch (parseError) {
-          console.error("Error parsing error message:", parseError);
-        }
-      }
-
-      toast.error("予約の作成に失敗しました");
+      const errorMessage = handleErrorToMessage(error);
+      toast.error(errorMessage);
       setIsSubmittingForm(false);
     }
   };

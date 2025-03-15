@@ -168,7 +168,26 @@ export const updateStaffLoginInfo = mutation({
     
     const updates: Record<string, unknown> = {};
     
-    if (args.email !== undefined) {
+    // メールアドレスが変更される場合は重複チェック
+    if (args.email !== undefined && args.email !== staff.email) {
+      // 同じサロン内で同じメールアドレスを持つ他のスタッフがいないか確認
+      const duplicateStaff = await ctx.db
+        .query("staff")
+        .filter(q => 
+          q.and(
+            q.eq(q.field("email"), args.email),
+            q.eq(q.field("salonId"), staff.salonId),
+            q.neq(q.field("_id"), args.staffId)
+          )
+        )
+        .first();
+      
+      if (duplicateStaff) {
+        throw new ConvexError({message: "このメールアドレスは既に他のスタッフによって使用されています"});
+      }
+      
+      updates.email = args.email;
+    } else if (args.email !== undefined) {
       updates.email = args.email;
     }
     

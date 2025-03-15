@@ -3,7 +3,6 @@ import { v } from "convex/values";
 import Stripe from "stripe";
 import { action } from "./_generated/server";
 
-
 export const syncSubscription = mutation({
   args: {
     subscription: v.object({

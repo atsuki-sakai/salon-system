@@ -1,5 +1,6 @@
 // lib/errors.ts
 import { z } from "zod";
+import { ConvexError } from "convex/values";
 // エラータイプの定義
 export enum ErrorType {
   VALIDATION = "VALIDATION",
@@ -93,5 +94,21 @@ export function convertErrorMessage(error: AppError): string {
       
     default:
       return error.message || '予期しないエラーが発生しました。';
+  }
+}
+
+
+
+export function handleErrorToMessage(error: unknown): string {
+  if (error instanceof ConvexError) {
+    // error.dataからメッセージを取得
+    const errorData = error.data as { message?: string };
+    return errorData.message || "予期せぬエラーが発生しました";
+  } else if (error instanceof Error) {
+    // 一般的なエラー
+    return error.message || "予期せぬエラーが発生しました";
+  } else {
+    // その他のエラー
+    return "予期せぬエラーが発生しました";
   }
 }

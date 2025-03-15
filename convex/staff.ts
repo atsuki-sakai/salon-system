@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values"
+import { ConvexError } from "convex/values";
 
 export const add = mutation({
   args: {
@@ -16,10 +17,28 @@ export const add = mutation({
     isActive: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const staffId = await ctx.db.insert("staff", {
+    // メールアドレスが指定されている場合は重複チェック
+    if (args.email) {
+      // 同じサロン内で同じメールアドレスを持つスタッフが存在するか確認
+      const duplicateStaff = await ctx.db
+        .query("staff")
+        .filter(q => 
+          q.and(
+            q.eq(q.field("email"), args.email),
+            q.eq(q.field("salonId"), args.salonId)
+          )
+        )
+        .first();
+      
+      if (duplicateStaff) {
+        throw new ConvexError("このメールアドレスは既に使用されています");
+      }
+    }
+
+    // 新しいスタッフを作成
+    return await ctx.db.insert("staff", {
       ...args,
     });
-    return staffId;
   },
 });
 
@@ -39,7 +58,33 @@ export const update = mutation({
     isActive: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const staffId = await ctx.db.patch(args.id, {
+    // 更新対象のスタッフが存在するか確認
+    const existingStaff = await ctx.db.get(args.id);
+    if (!existingStaff) {
+      throw new ConvexError({message: "更新対象のスタッフが見つかりません"});
+    }
+
+    // メールアドレスが指定されていて、かつ変更されている場合のみ重複チェック
+    if (args.email && args.email !== existingStaff.email) {
+      // サロン内の他のスタッフで同じメールアドレスを使用していないか確認
+      const duplicateStaff = await ctx.db
+        .query("staff")
+        .filter(q => 
+          q.and(
+            q.eq(q.field("email"), args.email),
+            q.eq(q.field("salonId"), args.salonId),
+            q.neq(q.field("_id"), args.id)
+          )
+        )
+        .first();
+      
+      if (duplicateStaff) {
+        throw new ConvexError({message: "このメールアドレスは既に他のスタッフによって使用されています"});
+      }
+    }
+
+    // スタッフ情報を更新
+    return await ctx.db.patch(args.id, {
       name: args.name,
       salonId: args.salonId,
       description: args.description,
@@ -48,8 +93,10 @@ export const update = mutation({
       regularHolidays: args.regularHolidays,
       extraCharge: args.extraCharge,
       age: args.age,
+      email: args.email,
+      role: args.role,
+      isActive: args.isActive,
     });
-    return staffId;
   },
 });
 

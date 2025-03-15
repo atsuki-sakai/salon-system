@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
+import { ConvexError } from "convex/values";
 
 
 export const add = mutation({
@@ -48,7 +49,7 @@ export const update = mutation({
       .first();
 
     if (!existingCustomer) {
-      throw new Error("Customer not found");
+      throw new ConvexError({message: "この顧客は存在しません"});
     }
 
     const customerId = await ctx.db.patch(existingCustomer._id, {
@@ -79,7 +80,7 @@ export const trash = mutation({
       .first();
 
     if (!existingCustomer) {
-      throw new Error("Customer not found");
+      throw new ConvexError({message: "この顧客は存在しません"});
     }
 
     return await ctx.db.delete(existingCustomer._id);

@@ -8,6 +8,7 @@ import { api } from "@/convex/_generated/api";
 import { useZodForm } from "@/hooks/useZodForm";
 import { staffSchema } from "@/lib/validations";
 import { z } from "zod";
+import { handleErrorToMessage } from "@/lib/errors";
 import {
   ArrowLeft,
   Calendar as CalendarIcon,
@@ -194,8 +195,8 @@ export default function StaffCreateForm() {
       toast.success("スタッフを追加しました");
       router.push(`/dashboard/${id}/staff`);
     } catch (error) {
-      console.error(error);
-      toast.error("スタッフの追加に失敗しました");
+      const errorMessage = handleErrorToMessage(error);
+      toast.error(errorMessage);
     } finally {
       setIsSubmittingForm(false);
     }

@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
+import { ConvexError } from "convex/values";
 
 export const add = mutation({
   args: {
@@ -66,7 +67,7 @@ export const trash = mutation({
       .first();
 
     if (!existingMenu) {
-      throw new Error("Menu not found");
+      throw new ConvexError({message: "このメニューは存在しません"});
     }
 
     return await ctx.db.delete(existingMenu._id);

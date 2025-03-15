@@ -20,6 +20,7 @@ import { useParams } from "next/navigation";
 //   SelectTrigger,
 //   SelectValue,
 // } from "@/components/ui/select";
+import { handleErrorToMessage } from "@/lib/errors";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -124,8 +125,8 @@ export default function EditReservationForm() {
       toast.success("予約を更新しました");
       router.push(`/dashboard/${reservation?.salonId}/reservation`);
     } catch (error) {
-      console.error(error);
-      toast.error("予約の更新に失敗しました");
+      const errorMessage = handleErrorToMessage(error);
+      toast.error(errorMessage);
       setIsSubmittingForm(false);
     }
   };
@@ -144,8 +145,8 @@ export default function EditReservationForm() {
       toast.success("予約を削除しました");
       router.push(`/dashboard/${reservation?.salonId}/reservation`);
     } catch (error) {
-      console.error(error);
-      toast.error("予約の削除に失敗しました");
+      const errorMessage = handleErrorToMessage(error);
+      toast.error(errorMessage);
       setIsSubmittingForm(false);
     }
   };

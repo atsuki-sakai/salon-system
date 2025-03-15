@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { fetchQuery } from "convex/nextjs";
+import { handleErrorToMessage } from "@/lib/errors";
 import {
   Card,
   CardContent,
@@ -98,7 +99,8 @@ export default function ReserveRedirectPage() {
           console.log("既存顧客情報を更新しました");
         }
       } catch (error) {
-        console.error("顧客情報の処理中にエラーが発生しました:", error);
+        const errorMessage = handleErrorToMessage(error);
+        console.error(errorMessage);
       }
 
       setCookie(LINE_LOGIN_SESSION_KEY, newSession, 60);

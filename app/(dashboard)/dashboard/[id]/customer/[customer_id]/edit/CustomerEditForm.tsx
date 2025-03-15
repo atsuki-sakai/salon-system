@@ -42,7 +42,7 @@ import { customerEditSchema } from "@/lib/validations";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
-
+import { handleErrorToMessage } from "@/lib/errors";
 export default function CustomerEditForm() {
   const { customer_id, id } = useParams();
   const router = useRouter();
@@ -99,10 +99,8 @@ export default function CustomerEditForm() {
       });
       router.push(`/dashboard/${id}/customer/${customer_id}/detail`);
     } catch (error) {
-      console.error("更新エラー:", error);
-      toast.error("顧客情報の更新中にエラーが発生しました", {
-        description: "後でもう一度お試しください",
-      });
+      const errorMessage = handleErrorToMessage(error);
+      toast.error(errorMessage);
     }
   };
 

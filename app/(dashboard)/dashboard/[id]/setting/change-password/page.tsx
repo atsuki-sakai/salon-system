@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useState, memo, useCallback, useEffect } from "react";
 import { useParams } from "next/navigation";
+import { handleErrorToMessage } from "@/lib/errors";
 import {
   EyeOffIcon,
   EyeIcon,
@@ -260,8 +261,8 @@ export default function ChangePasswordPage() {
 
       router.push(`/dashboard/${id}`);
     } catch (error) {
-      console.error(error);
-      toast.error("パスワードの更新に失敗しました", {
+      const errorMessage = handleErrorToMessage(error);
+      toast.error(errorMessage, {
         description: "もう一度お試しください",
         icon: <AlertCircleIcon className="h-4 w-4 text-destructive" />,
       });

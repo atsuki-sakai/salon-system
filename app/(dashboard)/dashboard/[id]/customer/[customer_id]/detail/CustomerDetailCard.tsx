@@ -4,6 +4,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { Loading } from "@/components/common";
+import { handleErrorToMessage } from "@/lib/errors";
 // 顧客プロフィールコンポーネント
 import { motion } from "framer-motion";
 import {
@@ -125,12 +126,8 @@ function CustomerProfile({ customer }: { customer: Doc<"customer"> }) {
         throw new Error(result.error || "メッセージ送信に失敗しました");
       }
     } catch (error) {
-      console.error("LINE message sending error:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "メッセージ送信中にエラーが発生しました"
-      );
+      const errorMessage = handleErrorToMessage(error);
+      toast.error(errorMessage);
     } finally {
       setIsSending(false);
     }

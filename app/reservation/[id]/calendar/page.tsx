@@ -10,6 +10,7 @@ import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { OriginalBreadcrumb, FileImage } from "@/components/common";
 import { Input } from "@/components/ui/input";
+import { handleErrorToMessage } from "@/lib/errors";
 import {
   Carousel,
   CarouselContent,
@@ -944,8 +945,8 @@ export default function ReservationTimePicker() {
         throw new Error(result.error || "メッセージ送信に失敗しました");
       }
     } catch (error) {
-      console.error("予約エラー:", error);
-      toast.error("予約に失敗しました");
+      const errorMessage = handleErrorToMessage(error);
+      toast.error(errorMessage);
     }
   };
 

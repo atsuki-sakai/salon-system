@@ -25,7 +25,7 @@ import { FaUsers, FaPercentage } from "react-icons/fa";
 import { MdAdd, MdRestaurantMenu } from "react-icons/md";
 import { useMutation, useQuery, usePaginatedQuery } from "convex/react";
 import { motion, AnimatePresence } from "framer-motion";
-
+import { handleErrorToMessage } from "@/lib/errors";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Input } from "@/components/ui/input";
@@ -152,8 +152,8 @@ export default function MenuCreateForm({ id }: MenuCreateFormProps) {
       const redirectUrl = `/dashboard/${encodeURIComponent(id)}/menu`;
       router.push(redirectUrl);
     } catch (error) {
-      console.error(error);
-      toast.error("メニューの追加に失敗しました");
+      const errorMessage = handleErrorToMessage(error);
+      toast.error(errorMessage);
     }
   };
 

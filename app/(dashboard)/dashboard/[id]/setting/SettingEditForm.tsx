@@ -84,6 +84,8 @@ import {
 } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { handleErrorToMessage } from "@/lib/errors";
+
 // optionの型定義
 type OptionType = {
   id: string;
@@ -400,8 +402,8 @@ export default function SettingPage() {
         icon: <CheckCircle2 className="h-5 w-5 text-green-500" />,
       });
     } catch (error) {
-      console.error("Submit error:", error);
-      toast.error("設定の保存に失敗しました", {
+      const errorMessage = handleErrorToMessage(error);
+      toast.error(errorMessage, {
         description: "もう一度お試しいただくか、管理者にお問い合わせください",
         icon: <AlertCircle className="h-5 w-5 text-red-500" />,
       });

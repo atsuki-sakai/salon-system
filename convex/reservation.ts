@@ -2,7 +2,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { timeStringToMinutes, minutesToTimeString, computeAvailableTimeSlots, createFullDateTime } from "../lib/scheduling";
-
+import { ConvexError } from "convex/values";
 // import type { TimeSlot } from "../lib/types";
 
 export const getReservationsByDate = query({
@@ -134,34 +134,7 @@ export const add = mutation({
 
     if (hasConflict) {
       // 重複している予約を特定
-      const conflictingReservation = existingReservations.find(reservation => {
-        const existingStartStr = reservation.startTime.includes('T') 
-          ? reservation.startTime.split('T')[1] 
-          : reservation.startTime;
-        const existingEndStr = reservation.endTime.includes('T') 
-          ? reservation.endTime.split('T')[1] 
-          : reservation.endTime;
-
-        const existingStartMinutes = timeStringToMinutes(existingStartStr!);
-        const existingEndMinutes = timeStringToMinutes(existingEndStr!);
-
-        return (
-          (newStartMinutes >= existingStartMinutes && newStartMinutes < existingEndMinutes) ||
-          (newEndMinutes > existingStartMinutes && newEndMinutes <= existingEndMinutes) ||
-          (newStartMinutes <= existingStartMinutes && newEndMinutes >= existingEndMinutes)
-        );
-      });
-
-      throw new Error(JSON.stringify({
-        type: "RESERVATION_CONFLICT",
-        conflictingReservation: {
-          customerFullName: conflictingReservation?.customerFullName,
-          startTime: conflictingReservation?.startTime,
-          endTime: conflictingReservation?.endTime,
-          staffName: conflictingReservation?.staffName,
-          menuName: conflictingReservation?.menuName,
-        }
-      }));
+      throw new ConvexError({message: "予約が重複しています"});
     }
 
     // ISO形式の完全な日時文字列を作成
@@ -210,7 +183,7 @@ export const update = mutation({
   handler: async (ctx, args) => { 
     const reservation = await ctx.db.get(args.reservationId);
     if (!reservation) {
-      throw new Error("予約が見つかりません");
+      throw new ConvexError({message: "予約が見つかりません"});
     }
     await ctx.db.patch(args.reservationId, {
       customerId: args.customerId,

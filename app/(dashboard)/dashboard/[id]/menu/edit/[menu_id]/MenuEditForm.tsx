@@ -6,6 +6,7 @@ import { useSalonCore } from "@/hooks/useSalonCore";
 import { RequiredSubscribe, Loading, ImageDrop } from "@/components/common";
 import { useZodForm } from "@/hooks/useZodForm";
 import { z } from "zod";
+import { handleErrorToMessage } from "@/lib/errors";
 import { menuSchema } from "@/lib/validations";
 import {
   ArrowLeft,
@@ -200,8 +201,8 @@ export default function MenuEditForm({ id, menu_id }: MenuEditFormProps) {
       toast.success("メニューを更新しました");
       router.push(`/dashboard/${id}/menu`);
     } catch (error) {
-      console.error(error);
-      toast.error("メニューの更新に失敗しました");
+      const errorMessage = handleErrorToMessage(error);
+      toast.error(errorMessage);
     }
   };
 

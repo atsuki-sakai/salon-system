@@ -268,11 +268,8 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
               </div>
             </DialogPanel>
           </div>
-        </Dialog>;
-
-        {
-          /* Static sidebar for desktop */
-        }
+        </Dialog>
+        {/* Static sidebar for desktop */}
         <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
           <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6 pb-4">
             <div className="flex flex-col mt-2">
@@ -383,8 +380,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
               </ul>
             </nav>
           </div>
-        </div>;
-
+        </div>
         <div className="lg:pl-72">
           <div className="sticky top-0 z-40 lg:mx-auto lg:px-8">
             <div className="flex h-16 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-xs sm:gap-x-6 sm:px-6 lg:px-0 lg:shadow-none">
@@ -413,16 +409,20 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                       </p>
                     </div>
                   ) : null}
-                  
+
                   {/* スタッフバッジを表示 */}
                   {!isOwner && staffRole ? (
                     <div className="flex items-center gap-x-4 lg:gap-x-6">
                       <p className="text-xs w-32 text-center font-bold border border-blue-700 rounded-full px-2 py-1 bg-blue-100 text-blue-700">
-                        {staffRole === "admin" ? "管理者" : staffRole === "manager" ? "マネージャー" : "スタッフ"}
+                        {staffRole === "admin"
+                          ? "管理者"
+                          : staffRole === "manager"
+                            ? "マネージャー"
+                            : "スタッフ"}
                       </p>
                     </div>
                   ) : null}
-                  
+
                   <div
                     aria-hidden="true"
                     className="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-200"
@@ -432,7 +432,11 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                       <span className="sr-only">ユーザーメニューを開く</span>
                       <span className="hidden lg:flex lg:items-center">
                         <h5 className="text-sm text-gray-700">
-                          {isOwner ? (isLoading ? "" : salonCore?.email) : staffName}
+                          {isOwner
+                            ? isLoading
+                              ? ""
+                              : salonCore?.email
+                            : staffName}
                         </h5>
                         <ChevronDownIcon
                           aria-hidden="true"
@@ -456,7 +460,9 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                       )}
                       <MenuItem key="signOut">
                         <a
-                          onClick={isOwner ? handleOwnerSignOut : handleStaffSignOut}
+                          onClick={
+                            isOwner ? handleOwnerSignOut : handleStaffSignOut
+                          }
                           className="block px-3 py-1 text-sm/6 text-gray-900 data-focus:bg-gray-50 data-focus:outline-hidden cursor-pointer"
                         >
                           ログアウト

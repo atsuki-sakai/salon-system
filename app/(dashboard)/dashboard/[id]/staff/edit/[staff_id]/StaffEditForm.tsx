@@ -9,6 +9,8 @@ import { Id } from "@/convex/_generated/dataModel";
 import { useZodForm } from "@/hooks/useZodForm";
 import { staffEditSchema } from "@/lib/validations";
 import { z } from "zod";
+import { handleErrorToMessage } from "@/lib/errors";
+
 import {
   ArrowLeft,
   Calendar as CalendarIcon,
@@ -274,8 +276,8 @@ export default function StaffEditForm() {
       toast.success("スタッフ情報を更新しました");
       router.push(`/dashboard/${staff?.salonId}/staff`);
     } catch (error) {
-      console.error("更新エラー:", error);
-      toast.error("スタッフ情報の更新に失敗しました");
+      const errorMessage = handleErrorToMessage(error);
+      toast.error(errorMessage);
     }
   };
   // ローディング表示
