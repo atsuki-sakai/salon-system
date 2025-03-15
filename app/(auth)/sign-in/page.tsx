@@ -7,7 +7,7 @@ import { useZodForm } from "@/hooks/useZodForm";
 import * as Sentry from "@sentry/nextjs";
 import { AppError, ErrorType, handleError } from "@/lib/errors";
 import { signInSchema } from "@/lib/validations";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

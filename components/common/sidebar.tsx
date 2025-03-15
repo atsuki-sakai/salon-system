@@ -159,7 +159,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                         {navigation.map((item) => {
                           // 現在のページかどうかを pathname と比較して判定
                           const isCurrent = pathname === item.href;
-                          
+
                           const linkContent = (
                             <a
                               href={item.href}
@@ -189,50 +189,60 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                           } else if (item.requiredRole) {
                             return (
                               <li key={item.name}>
-                                <RoleBasedView requiredRole={item.requiredRole}>
+                                <RoleBasedView
+                                  requiredRole={
+                                    item.requiredRole as
+                                      | "staff"
+                                      | "admin"
+                                      | "manager"
+                                  }
+                                >
                                   {linkContent}
                                 </RoleBasedView>
                               </li>
                             );
                           }
-                          
+
                           return null;
                         })}
-                        
+
                         {/* オーナーにのみ表示する項目 */}
-                        {isOwner && ownerOnlyNavigation.map((item) => {
-                          const isCurrent = pathname === item.href;
-                          return (
-                            <li key={item.name}>
-                              <a
-                                href={item.href}
-                                className={classNames(
-                                  isCurrent
-                                    ? "bg-gray-50 text-blue-600 font-bold"
-                                    : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 font-light",
-                                  "group flex gap-x-3 rounded-md p-2 text-sm/6"
-                                )}
-                              >
-                                <item.icon
-                                  aria-hidden="true"
+                        {isOwner &&
+                          ownerOnlyNavigation.map((item) => {
+                            const isCurrent = pathname === item.href;
+                            return (
+                              <li key={item.name}>
+                                <a
+                                  href={item.href}
                                   className={classNames(
                                     isCurrent
-                                      ? "text-blue-600 font-bold"
-                                      : "text-gray-400 group-hover:text-blue-600 font-light",
-                                    "size-6 shrink-0"
+                                      ? "bg-gray-50 text-blue-600 font-bold"
+                                      : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 font-light",
+                                    "group flex gap-x-3 rounded-md p-2 text-sm/6"
                                   )}
-                                />
-                                {item.name}
-                              </a>
-                            </li>
-                          );
-                        })}
+                                >
+                                  <item.icon
+                                    aria-hidden="true"
+                                    className={classNames(
+                                      isCurrent
+                                        ? "text-blue-600 font-bold"
+                                        : "text-gray-400 group-hover:text-blue-600 font-light",
+                                      "size-6 shrink-0"
+                                    )}
+                                  />
+                                  {item.name}
+                                </a>
+                              </li>
+                            );
+                          })}
                       </ul>
                     </li>
 
                     <li className="mt-auto">
                       <a
-                        onClick={isOwner ? handleOwnerSignOut : handleStaffSignOut}
+                        onClick={
+                          isOwner ? handleOwnerSignOut : handleStaffSignOut
+                        }
                         className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm/6 text-slate-600 hover:bg-gray-50 hover:text-slate-800 cursor-pointer"
                       >
                         <ArrowLeftOnRectangleIcon
@@ -258,9 +268,11 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
               </div>
             </DialogPanel>
           </div>
-        </Dialog>
+        </Dialog>;
 
-        {/* Static sidebar for desktop */}
+        {
+          /* Static sidebar for desktop */
+        }
         <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
           <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6 pb-4">
             <div className="flex flex-col mt-2">
@@ -277,7 +289,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                   <ul role="list" className="-mx-2 space-y-1">
                     {navigation.map((item) => {
                       const isCurrent = pathname === item.href;
-                      
+
                       const linkContent = (
                         <a
                           href={item.href}
@@ -307,44 +319,52 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                       } else if (item.requiredRole) {
                         return (
                           <li key={item.name}>
-                            <RoleBasedView requiredRole={item.requiredRole}>
+                            <RoleBasedView
+                              requiredRole={
+                                item.requiredRole as
+                                  | "staff"
+                                  | "admin"
+                                  | "manager"
+                              }
+                            >
                               {linkContent}
                             </RoleBasedView>
                           </li>
                         );
                       }
-                      
+
                       return null;
                     })}
-                    
+
                     {/* オーナーにのみ表示する項目 */}
-                    {isOwner && ownerOnlyNavigation.map((item) => {
-                      const isCurrent = pathname === item.href;
-                      return (
-                        <li key={item.name}>
-                          <a
-                            href={item.href}
-                            className={classNames(
-                              isCurrent
-                                ? "bg-gray-50 text-blue-600 font-bold"
-                                : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 font-light",
-                              "group flex gap-x-3 rounded-md p-2 text-sm/6"
-                            )}
-                          >
-                            <item.icon
-                              aria-hidden="true"
+                    {isOwner &&
+                      ownerOnlyNavigation.map((item) => {
+                        const isCurrent = pathname === item.href;
+                        return (
+                          <li key={item.name}>
+                            <a
+                              href={item.href}
                               className={classNames(
                                 isCurrent
-                                  ? "text-blue-600"
-                                  : "text-gray-400 group-hover:text-blue-600",
-                                "size-6 shrink-0"
+                                  ? "bg-gray-50 text-blue-600 font-bold"
+                                  : "text-gray-700 hover:bg-gray-50 hover:text-blue-600 font-light",
+                                "group flex gap-x-3 rounded-md p-2 text-sm/6"
                               )}
-                            />
-                            {item.name}
-                          </a>
-                        </li>
-                      );
-                    })}
+                            >
+                              <item.icon
+                                aria-hidden="true"
+                                className={classNames(
+                                  isCurrent
+                                    ? "text-blue-600"
+                                    : "text-gray-400 group-hover:text-blue-600",
+                                  "size-6 shrink-0"
+                                )}
+                              />
+                              {item.name}
+                            </a>
+                          </li>
+                        );
+                      })}
                   </ul>
                 </li>
 
@@ -363,7 +383,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
               </ul>
             </nav>
           </div>
-        </div>
+        </div>;
 
         <div className="lg:pl-72">
           <div className="sticky top-0 z-40 lg:mx-auto lg:px-8">
