@@ -1,12 +1,13 @@
+// StaffEditForm.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useZodForm } from "@/hooks/useZodForm";
-import { staffSchema } from "@/lib/validations";
+import { staffEditSchema } from "@/lib/validations";
 import { z } from "zod";
 import {
   ArrowLeft,
@@ -22,6 +23,7 @@ import {
   Tag,
   AlertCircle,
   Settings,
+  KeyRound,
 } from "lucide-react";
 import Link from "next/link";
 import { FileImage, ImageDrop, RequiredSubscribe } from "@/components/common";
@@ -108,6 +110,8 @@ export default function StaffEditForm() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("basic");
   const [currentImage, setCurrentImage] = useState<File | null>(null);
+  const [showPin, setShowPin] = useState(false);
+  const [pinInput, setPinInput] = useState("");
 
   // フォームの初期化
   const {
@@ -117,11 +121,11 @@ export default function StaffEditForm() {
     watch,
     setValue,
     reset,
-  } = useZodForm(staffSchema);
+  } = useZodForm(staffEditSchema);
 
   const selectedGender = watch("gender") as "男性" | "女性" | undefined;
   const watchedHolidays = watch("regularHolidays");
-
+  const selectedRole = watch("role");
   // watchedHolidays が falsy の場合は EMPTY_ARRAY を返す (メモ化により再レンダリング回数を削減)
   const holidays = useMemo(
     () => (watchedHolidays ? watchedHolidays : EMPTY_ARRAY),
@@ -154,6 +158,9 @@ export default function StaffEditForm() {
         extraCharge: staff.extraCharge || undefined,
         imgFileId: staff.imgFileId || "",
         regularHolidays: staff.regularHolidays || [],
+        role: staff.role || "staff",
+        email: staff.email || "",
+        pin: undefined, // セキュリティのため既存のPINは表示せず、変更時のみ新しいPINを設定
       });
 
       setValue("gender", staff.gender as "男性" | "女性" | undefined);
@@ -185,6 +192,8 @@ export default function StaffEditForm() {
   const updateStaff = useMutation(api.staff.update);
   const deleteFile = useMutation(api.storage.deleteFile);
   const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
+  const updateStaffPin = useAction(api.staff_auth.updateStaffPin);
+  const updateStaffLoginInfo = useMutation(api.staff_auth.updateStaffLoginInfo);
 
   const handleDeleteStaff = async () => {
     try {
@@ -208,7 +217,7 @@ export default function StaffEditForm() {
   };
 
   // フォーム送信ハンドラ
-  const onSubmit = async (data: z.infer<typeof staffSchema>) => {
+  const onSubmit = async (data: z.infer<typeof staffEditSchema>) => {
     try {
       let imageFileId: string | undefined = undefined;
 
@@ -224,6 +233,7 @@ export default function StaffEditForm() {
         imageFileId = storageId;
       }
 
+      // スタッフ基本情報の更新
       await updateStaff({
         id: staff_id as Id<"staff">,
         name: data.name,
@@ -235,6 +245,24 @@ export default function StaffEditForm() {
         salonId: staff?.salonId || "",
         regularHolidays: data.regularHolidays || [],
       });
+
+      // ログイン情報の更新（メール、権限、有効状態）
+      if (data.email || data.role) {
+        await updateStaffLoginInfo({
+          staffId: staff_id as Id<"staff">,
+          email: data.email,
+          role: data.role,
+          isActive: true,
+        });
+      }
+
+      // PINコードが入力されていれば更新（4桁のPINコードの場合のみ）
+      if (data.pin && data.pin.length === 4) {
+        await updateStaffPin({
+          staffId: staff_id as Id<"staff">,
+          pin: data.pin,
+        });
+      }
 
       // 新しい画像がアップロードされた場合にのみ、既存の画像を削除する
       if (imageFileId && staff && staff.imgFileId) {
@@ -294,7 +322,7 @@ export default function StaffEditForm() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="px-6 pt-6">
-            <TabsList className="grid grid-cols-2 w-full mb-2 bg-slate-100 dark:bg-gray-800 p-1 rounded-lg">
+            <TabsList className="grid grid-cols-3 w-full mb-2 bg-slate-100 dark:bg-gray-800 p-1 rounded-lg">
               <TabsTrigger
                 value="basic"
                 className="text-sm tracking-wide font-bold rounded-md data-[state=active]:bg-indigo-500 data-[state=active]:text-white transition-all duration-300"
@@ -319,6 +347,19 @@ export default function StaffEditForm() {
                 >
                   <Settings className="h-4 w-4" />
                   休暇日設定
+                </motion.div>
+              </TabsTrigger>
+              <TabsTrigger
+                value="login"
+                className="text-sm tracking-wide font-bold rounded-md data-[state=active]:bg-indigo-500 data-[state=active]:text-white transition-all duration-300"
+              >
+                <motion.div
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="flex items-center gap-2 py-1"
+                >
+                  <Settings className="h-4 w-4" />
+                  ログイン設定
                 </motion.div>
               </TabsTrigger>
             </TabsList>
@@ -740,6 +781,223 @@ export default function StaffEditForm() {
                         </motion.div>
                       )}
                     </AnimatePresence>
+                  </motion.div>
+                )}
+                {activeTab === "login" && (
+                  <motion.div
+                    key="login-tab"
+                    {...tabContentAnimation}
+                    className="space-y-6"
+                  >
+                    <div className="space-y-2">
+                      <Label className="font-bold flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="h-4 w-4 text-indigo-600"
+                        >
+                          <rect
+                            x="2"
+                            y="4"
+                            width="20"
+                            height="16"
+                            rx="2"
+                          ></rect>
+                          <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                        </svg>
+                        メールアドレス
+                        <span className="text-red-500 ml-1">*</span>
+                      </Label>
+                      <Input
+                        {...register("email")}
+                        placeholder="例：staff@example.com"
+                        className="border-indigo-100 focus-visible:ring-indigo-500 transition-all duration-300"
+                        aria-invalid={!!errors.email}
+                      />
+                      <AnimatePresence>
+                        {errors.email && (
+                          <motion.p
+                            {...errorAnimation}
+                            className="text-sm mt-1 text-red-500 flex items-center gap-1"
+                          >
+                            <AlertCircle className="h-3 w-3" />
+                            {errors.email.message}
+                          </motion.p>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="font-bold flex items-center gap-2">
+                        <KeyRound className="h-4 w-4 text-indigo-600" />
+                        PINコード<span className="text-red-500 ml-1">*</span>
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          {...register("pin")}
+                          placeholder="4桁の数字（例：1234）"
+                          type={showPin ? "text" : "password"}
+                          value={pinInput}
+                          onChange={(e) => {
+                            // 4桁の数字のみ許可
+                            const value = e.target.value
+                              .replace(/[^0-9]/g, "")
+                              .slice(0, 4);
+                            setPinInput(value);
+                            setValue("pin", value);
+                          }}
+                          className="border-indigo-100 focus-visible:ring-indigo-500 transition-all duration-300 pr-10"
+                          aria-invalid={!!errors.pin}
+                          maxLength={4}
+                        />
+                        <button
+                          type="button"
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-indigo-600"
+                          onClick={() => setShowPin(!showPin)}
+                        >
+                          {showPin ? (
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                              <circle cx="12" cy="12" r="3" />
+                            </svg>
+                          ) : (
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+                              <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+                              <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+                              <line x1="2" x2="22" y1="2" y2="22" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                      <AnimatePresence>
+                        {errors.pin && (
+                          <motion.p
+                            {...errorAnimation}
+                            className="text-sm mt-1 text-red-500 flex items-center gap-1"
+                          >
+                            <AlertCircle className="h-3 w-3" />
+                            {errors.pin.message}
+                          </motion.p>
+                        )}
+                      </AnimatePresence>
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="text-xs text-gray-500 italic">
+                            PINコードは4桁の数字で入力してください
+                          </p>
+                          <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="h-3 w-3"
+                            >
+                              <circle cx="12" cy="12" r="10"></circle>
+                              <path d="M12 16v-4"></path>
+                              <path d="M12 8h.01"></path>
+                            </svg>
+                            {staff.pinCode
+                              ? "セキュリティー上表示されていませんが現在PINが設定されています。変更する場合のみ新しいPINを入力してください。"
+                              : "PINが設定されていません。新しいPINを登録してください。"}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="text-xs text-blue-500 border-blue-200 hover:bg-blue-50"
+                          onClick={() => {
+                            // 4桁のランダムなPINを生成
+                            const randomPin = Math.floor(
+                              1000 + Math.random() * 9000
+                            ).toString();
+                            setPinInput(randomPin);
+                            setValue("pin", randomPin);
+                            setShowPin(true); // 新しいPINを表示
+                          }}
+                        >
+                          ランダムPINを生成
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="font-bold flex items-center gap-2">
+                        権限<span className="text-red-500 ml-1">*</span>
+                      </Label>
+                      <Select
+                        value={selectedRole}
+                        onValueChange={(value) => {
+                          setValue(
+                            "role",
+                            value as "admin" | "manager" | "staff",
+                            { shouldValidate: true }
+                          );
+                        }}
+                      >
+                        <SelectTrigger
+                          id="role"
+                          className={cn(
+                            "border-indigo-100 focus:ring-indigo-500 transition-all duration-300",
+                            errors.role && "border-red-500"
+                          )}
+                        >
+                          <SelectValue placeholder="スタッフの権限を選択してください" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="staff">スタッフ</SelectItem>
+                          <SelectItem value="manager">マネージャー</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <AnimatePresence>
+                        {errors.role && (
+                          <motion.p
+                            {...errorAnimation}
+                            className="text-sm mt-1 text-red-500 flex items-center gap-1"
+                          >
+                            <AlertCircle className="h-3 w-3" />
+                            {errors.role.message}
+                          </motion.p>
+                        )}
+                      </AnimatePresence>
+                      <div className="mt-2 p-2 bg-blue-50 border border-blue-100 rounded-md">
+                        <p className="text-xs text-blue-700 flex items-center gap-2">
+                          <Info className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                          <span>
+                            <span className="font-medium">権限の種類: </span>
+                            スタッフ（通常の操作）、マネージャー（スタッフ管理）ごとに利用可能な機能が異なります。
+                          </span>
+                        </p>
+                      </div>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>

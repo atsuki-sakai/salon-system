@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useMutation } from "convex/react";
+import { useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useZodForm } from "@/hooks/useZodForm";
 import { staffSchema } from "@/lib/validations";
@@ -21,12 +21,12 @@ import {
   AlertCircle,
   Settings,
   Plus,
+  KeyRound,
 } from "lucide-react";
 import Link from "next/link";
-import { ImageDrop, RequiredSubscribe } from "@/components/common";
+import { ImageDrop } from "@/components/common";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { useSalonCore } from "@/hooks/useSalonCore";
 import {
   Select,
   SelectContent,
@@ -80,13 +80,12 @@ const errorAnimation = {
 export default function StaffCreateForm() {
   const router = useRouter();
   const { id } = useParams();
-  const { isSubscribed } = useSalonCore();
-
   // 休暇日の状態を管理
   const [vacationDates, setVacationDates] = useState<Date[]>([]);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [currentImage, setCurrentImage] = useState<File | null>(null);
   const [activeTab, setActiveTab] = useState("basic");
+  // const [showPin, setShowPin] = useState(false);
   const [isSubmittingForm, setIsSubmittingForm] = useState(false);
 
   const imageFileRef = useRef<HTMLInputElement>(null);
@@ -100,8 +99,10 @@ export default function StaffCreateForm() {
   } = useZodForm(staffSchema);
 
   const selectedGender = watch("gender");
+  // const selectedRole = watch("role");
   const watchedHolidays = watch("regularHolidays");
 
+  const selectedRole = watch("role");
   // watchedHolidays が falsy の場合は EMPTY_ARRAY を返す
   const holidays = useMemo(
     () => watchedHolidays || EMPTY_ARRAY,
@@ -134,6 +135,7 @@ export default function StaffCreateForm() {
 
   const addStaff = useMutation(api.staff.add);
   const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
+  const updateStaffPin = useAction(api.staff_auth.updateStaffPin);
 
   const onSubmit = async (data: z.infer<typeof staffSchema>) => {
     try {
@@ -166,7 +168,8 @@ export default function StaffCreateForm() {
         imageFileId = storageId;
       }
 
-      await addStaff({
+      // スタッフを追加
+      const staffId = await addStaff({
         salonId: id as string,
         name: data.name,
         age: data.age,
@@ -175,7 +178,18 @@ export default function StaffCreateForm() {
         imgFileId: imageFileId,
         extraCharge: data.extraCharge,
         regularHolidays: data.regularHolidays || [],
+        email: data.email || "",
+        role: data.role || "staff",
+        isActive: data.isActive === undefined ? true : data.isActive,
       });
+
+      // PINコードが設定されていれば、別途ハッシュ化して保存
+      if (data.pin) {
+        await updateStaffPin({
+          staffId,
+          pin: data.pin,
+        });
+      }
 
       toast.success("スタッフを追加しました");
       router.push(`/dashboard/${id}/staff`);
@@ -190,10 +204,6 @@ export default function StaffCreateForm() {
   const handleGoBack = () => {
     router.push(`/dashboard/${id}/staff`);
   };
-
-  if (!isSubscribed) {
-    return <RequiredSubscribe salonId={id as string} />;
-  }
 
   return (
     <motion.div
@@ -226,7 +236,7 @@ export default function StaffCreateForm() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="px-6 pt-6">
-            <TabsList className="grid grid-cols-2 w-full mb-2 bg-slate-100 dark:bg-gray-800 p-1 rounded-lg">
+            <TabsList className="grid grid-cols-3 w-full mb-2 bg-slate-100 dark:bg-gray-800 p-1 rounded-lg">
               <TabsTrigger
                 value="basic"
                 className="text-sm tracking-wide font-bold rounded-md data-[state=active]:bg-indigo-500 data-[state=active]:text-white transition-all duration-300"
@@ -251,6 +261,19 @@ export default function StaffCreateForm() {
                 >
                   <Settings className="h-4 w-4" />
                   休暇日設定
+                </motion.div>
+              </TabsTrigger>
+              <TabsTrigger
+                value="login"
+                className="text-sm tracking-wide font-bold rounded-md data-[state=active]:bg-indigo-500 data-[state=active]:text-white transition-all duration-300"
+              >
+                <motion.div
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="flex items-center gap-2 py-1"
+                >
+                  <KeyRound className="h-4 w-4" />
+                  ログイン設定
                 </motion.div>
               </TabsTrigger>
             </TabsList>
@@ -318,7 +341,10 @@ export default function StaffCreateForm() {
                           <Select
                             value={selectedGender}
                             onValueChange={(value) =>
-                              setValue("gender", value as "男性" | "女性")
+                              setValue(
+                                "gender",
+                                value as "全て" | "男性" | "女性"
+                              )
                             }
                           >
                             <SelectTrigger
@@ -457,6 +483,8 @@ export default function StaffCreateForm() {
                                   src={URL.createObjectURL(currentImage)}
                                   alt="プレビュー"
                                   className="w-full h-full object-cover"
+                                  width={128}
+                                  height={128}
                                   onLoad={() => {
                                     // 表示後にURLオブジェクトを解放
                                     URL.revokeObjectURL(
@@ -693,7 +721,184 @@ export default function StaffCreateForm() {
                     </AnimatePresence>
                   </motion.div>
                 )}
+                {activeTab === "login" && (
+                  <motion.div
+                    key="login-tab"
+                    {...tabContentAnimation}
+                    className="space-y-6"
+                  >
+                    <div className="space-y-2">
+                      <Label className="font-bold flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="h-4 w-4 text-indigo-600"
+                        >
+                          <rect
+                            x="2"
+                            y="4"
+                            width="20"
+                            height="16"
+                            rx="2"
+                          ></rect>
+                          <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                        </svg>
+                        メールアドレス
+                        <span className="text-red-500 ml-1">*</span>
+                      </Label>
+                      <Input
+                        {...register("email")}
+                        placeholder="例：staff@example.com"
+                        className="border-indigo-100 focus-visible:ring-indigo-500 transition-all duration-300"
+                        aria-invalid={!!errors.email}
+                      />
+                      <AnimatePresence>
+                        {errors.email && (
+                          <motion.p
+                            {...errorAnimation}
+                            className="text-sm mt-1 text-red-500 flex items-center gap-1"
+                          >
+                            <AlertCircle className="h-3 w-3" />
+                            {errors.email.message}
+                          </motion.p>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="font-bold flex items-center gap-2">
+                        <KeyRound className="h-4 w-4 text-indigo-600" />
+                        PINコード<span className="text-red-500 ml-1">*</span>
+                      </Label>
+                      <Input
+                        {...register("pin")}
+                        placeholder="4桁の数字（例：1234）"
+                        type="password"
+                        className="border-indigo-100 focus-visible:ring-indigo-500 transition-all duration-300"
+                        aria-invalid={!!errors.pin}
+                      />
+                      <AnimatePresence>
+                        {errors.pin && (
+                          <motion.p
+                            {...errorAnimation}
+                            className="text-sm mt-1 text-red-500 flex items-center gap-1"
+                          >
+                            <AlertCircle className="h-3 w-3" />
+                            {errors.pin.message}
+                          </motion.p>
+                        )}
+                      </AnimatePresence>
+                      <p className="text-xs text-gray-500 italic">
+                        PINコードは4桁の数字で入力してください
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="font-bold flex items-center gap-2">
+                        権限<span className="text-red-500 ml-1">*</span>
+                      </Label>
+                      <Select
+                        value={selectedRole}
+                        onValueChange={(value) => {
+                          setValue(
+                            "role",
+                            value as "admin" | "manager" | "staff",
+                            { shouldValidate: true }
+                          );
+                        }}
+                      >
+                        <SelectTrigger
+                          id="role"
+                          className={cn(
+                            "border-indigo-100 focus:ring-indigo-500 transition-all duration-300",
+                            errors.role && "border-red-500"
+                          )}
+                        >
+                          <SelectValue placeholder="スタッフの権限を選択してください" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="staff">スタッフ</SelectItem>
+                          <SelectItem value="manager">マネージャー</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <AnimatePresence>
+                        {errors.role && (
+                          <motion.p
+                            {...errorAnimation}
+                            className="text-sm mt-1 text-red-500 flex items-center gap-1"
+                          >
+                            <AlertCircle className="h-3 w-3" />
+                            {errors.role.message}
+                          </motion.p>
+                        )}
+                      </AnimatePresence>
+                      <div className="mt-2 p-2 bg-blue-50 border border-blue-100 rounded-md">
+                        <p className="text-xs text-blue-700 flex items-center gap-2">
+                          <Info className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                          <span>
+                            <span className="font-medium">権限の種類: </span>
+                            スタッフ（通常の操作）、マネージャー（スタッフ管理）ごとに利用可能な機能が異なります。
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
               </AnimatePresence>
+
+              {/* エラーサマリー表示（タブ切り替えのヒントとして表示） */}
+              {Object.keys(errors).length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-6 p-3 bg-amber-50 border border-amber-200 rounded-md shadow-sm"
+                >
+                  <div className="flex items-start">
+                    <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <div>
+                      <h4 className="text-sm font-medium text-amber-800">
+                        入力内容に問題があります
+                      </h4>
+                      <p className="text-xs text-amber-700 mt-1">
+                        以下のタブで必須項目を入力してください:
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {(errors.name ||
+                          errors.age ||
+                          errors.gender ||
+                          errors.extraCharge ||
+                          errors.description) && (
+                          <Badge
+                            variant="outline"
+                            className="bg-white border-amber-300 text-amber-800 hover:bg-amber-100 transition-colors"
+                          >
+                            基本情報
+                          </Badge>
+                        )}
+                        {errors.regularHolidays && (
+                          <Badge
+                            variant="outline"
+                            className="bg-white border-amber-300 text-amber-800 hover:bg-amber-100 transition-colors"
+                          >
+                            休暇日設定
+                          </Badge>
+                        )}
+                        {(errors.email || errors.pin || errors.role) && (
+                          <Badge
+                            variant="outline"
+                            className="bg-white border-amber-300 text-amber-800 hover:bg-amber-100 transition-colors"
+                          >
+                            ログイン設定
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
 
               <motion.div
                 className="flex justify-between gap-4 pt-8 mt-4 border-t"

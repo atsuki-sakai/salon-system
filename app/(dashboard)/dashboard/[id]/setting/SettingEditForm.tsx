@@ -1603,21 +1603,24 @@ interface BusinessHoursSettingsProps {
   onBusinessHoursChange: (data: BusinessHoursData) => void;
 }
 
+// 曜日の定義（日本語と英語の対応）- 月曜から日曜の順（コンポーネント外で定義）
+const DAYS_OF_WEEK = [
+  { id: "monday", ja: "月曜日", en: "Monday" },
+  { id: "tuesday", ja: "火曜日", en: "Tuesday" },
+  { id: "wednesday", ja: "水曜日", en: "Wednesday" },
+  { id: "thursday", ja: "木曜日", en: "Thursday" },
+  { id: "friday", ja: "金曜日", en: "Friday" },
+  { id: "saturday", ja: "土曜日", en: "Saturday" },
+  { id: "sunday", ja: "日曜日", en: "Sunday" },
+];
+
 const BusinessHoursSettings: React.FC<BusinessHoursSettingsProps> = ({
   settings,
   businessHoursData,
   onBusinessHoursChange,
 }) => {
-  // 曜日の定義（日本語と英語の対応）- 月曜から日曜の順
-  const daysOfWeek = [
-    { id: "monday", ja: "月曜日", en: "Monday" },
-    { id: "tuesday", ja: "火曜日", en: "Tuesday" },
-    { id: "wednesday", ja: "水曜日", en: "Wednesday" },
-    { id: "thursday", ja: "木曜日", en: "Thursday" },
-    { id: "friday", ja: "金曜日", en: "Friday" },
-    { id: "saturday", ja: "土曜日", en: "Saturday" },
-    { id: "sunday", ja: "日曜日", en: "Sunday" },
-  ];
+  // コンポーネント外で定義した配列を使用
+  const daysOfWeek = DAYS_OF_WEEK;
 
   // 時間の選択肢を生成（30分間隔）
   const timeOptions: string[] = [];
@@ -1722,6 +1725,7 @@ const BusinessHoursSettings: React.FC<BusinessHoursSettingsProps> = ({
       commonOpenTime: settings.regularOpenTime || "09:00",
       commonCloseTime: settings.regularCloseTime || "18:00",
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings, onBusinessHoursChange, businessHoursData]);
 
   // 営業日の切り替え処理
