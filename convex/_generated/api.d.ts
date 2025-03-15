@@ -19,6 +19,7 @@ import type * as reservation from "../reservation.js";
 import type * as salon from "../salon.js";
 import type * as salon_config from "../salon_config.js";
 import type * as staff from "../staff.js";
+import type * as staff_auth from "../staff_auth.js";
 import type * as storage from "../storage.js";
 import type * as subscription from "../subscription.js";
 
@@ -37,6 +38,7 @@ declare const fullApi: ApiFromModules<{
   salon: typeof salon;
   salon_config: typeof salon_config;
   staff: typeof staff;
+  staff_auth: typeof staff_auth;
   storage: typeof storage;
   subscription: typeof subscription;
 }>;

@@ -128,13 +128,50 @@ export const customerSchema = z.object({
 export const staffSchema = z.object({
   salonId: z.string({ message: "サロンIDが空です" }).optional(),
   name: z.string().min(1, { message: "お名前を入力してください" }),
-  age: z.number().optional(),
+  age: z.preprocess(val => 
+    val === undefined || val === "" || Number.isNaN(val) ? undefined : Number(val), 
+    z.number().optional()
+  ),
   gender: z.enum(["全て", "男性", "女性"]).optional(),
-  extraCharge: z.number().optional(),
+  extraCharge: z.preprocess(val => 
+    val === undefined || val === "" || Number.isNaN(val) ? undefined : Number(val),
+    z.number().optional()
+  ),
   description: z.string().optional(),
   imgFileId: z.string().optional(),
   regularHolidays: z.array(z.string()).optional(),
+  email: z.string({ message: "メールアドレスを入力してください" })
+          .email({ message: "有効なメールアドレスを入力してください" }),
+  pin: z.string({ message: "PINコードを入力してください" })
+        .length(4, { message: "PINコードは4桁で入力してください" })
+        .regex(/^\d+$/, { message: "PINコードは数字のみで入力してください" })
+        ,
+  role: z.enum(["admin", "manager", "staff"], { message: "権限を選択してください" }),
+  isActive: z.boolean().optional(),
 });
+
+export const staffEditSchema = z.object({
+  salonId: z.string({ message: "サロンIDが空です" }).optional(),
+  name: z.string().min(1, { message: "お名前を入力してください" }),
+  age: z.preprocess(val => 
+    val === undefined || val === "" || Number.isNaN(val) ? undefined : Number(val), 
+    z.number().optional()
+  ),
+  gender: z.enum(["全て", "男性", "女性"]).optional(),
+  extraCharge: z.preprocess(val => 
+    val === undefined || val === "" || Number.isNaN(val) ? undefined : Number(val),
+    z.number().optional()
+  ),
+  description: z.string().optional(),
+  imgFileId: z.string().optional(),
+  regularHolidays: z.array(z.string()).optional(),
+  email: z.string({ message: "メールアドレスを入力してください" })
+          .email({ message: "有効なメールアドレスを入力してください" }),
+  pin: z.string().optional(),
+  role: z.enum(["admin", "manager", "staff"], { message: "権限を選択してください" }),
+  isActive: z.boolean().optional(),
+});
+
 
 export const menuSchema = z.object({
   name: z.string().min(1, { message: "メニュー名を入力してください" }),

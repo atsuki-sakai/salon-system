@@ -62,9 +62,15 @@ export default defineSchema({
     extraCharge: v.optional(v.number()),
     description: v.optional(v.string()),
     imgFileId: v.optional(v.string()),
-    regularHolidays: v.optional(v.array(v.string()))
+    regularHolidays: v.optional(v.array(v.string())),
+    // スタッフログイン用のフィールド追加
+    email: v.optional(v.string()),
+    pinCode: v.optional(v.string()),
+    role: v.optional(v.union(v.literal("admin"), v.literal("manager"), v.literal("staff"))),
+    isActive: v.optional(v.boolean())
   })
   .index("by_salon_id", ["salonId"])
+  .index("by_email", ["email"])
   .searchIndex("search_by_salon_id", { searchField: "salonId" }),
 
   menu: defineTable({
