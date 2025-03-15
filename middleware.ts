@@ -3,8 +3,6 @@ import type { NextRequest } from "next/server";
 import { verifyStaffToken } from "@/lib/staff-auth";
 import { clerkMiddleware } from "@clerk/nextjs/server";
 
-// スタッフ関連のパス
-const staffPaths = ["/staff-auth", "/staff-portal"];
 
 // スタッフポータル関連のパス
 const staffPortalPaths = ["/staff-portal"];
@@ -17,12 +15,6 @@ const managerPaths = ["/staff-portal/manager"];
 
 // 認証不要なパス
 const publicPaths = ["/", "/sign-in", "/sign-up", "/api", "/reservation", "/staff-auth"];
-
-const isStaffPath = (pathname: string): boolean =>
-  staffPaths.some(
-    (staffPath) =>
-      pathname === staffPath || pathname.startsWith(`${staffPath}/`)
-  );
 
 const isStaffPortalPath = (pathname: string): boolean =>
   staffPortalPaths.some(
