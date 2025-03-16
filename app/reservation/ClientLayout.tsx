@@ -54,7 +54,6 @@ export function ClientLayout({ children, fontVariables }: ClientLayoutProps) {
   }, [pathname]);
 
   if (!salonId) {
-    console.warn("salonIdが取得できませんでした。Loading表示中");
     return <Loading />;
   }
   return (
