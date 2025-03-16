@@ -90,7 +90,7 @@ import { handleErrorToMessage } from "@/lib/errors";
 type OptionType = {
   id: string;
   name: string;
-  price: number;
+  price?: number;
   salePrice?: number | null;
   maxCount?: number | null;
 };
@@ -142,7 +142,7 @@ export default function SettingPage() {
   const [editingOptionId, setEditingOptionId] = useState<string | null>(null);
   const [newOption, setNewOption] = useState<Omit<OptionType, "id">>({
     name: "",
-    price: 0,
+    price: undefined,
     salePrice: null,
     maxCount: null,
   });
@@ -190,7 +190,11 @@ export default function SettingPage() {
 
   // オプションを追加する関数
   const handleAddOption = () => {
-    if (!newOption.name || newOption.price < 0) {
+    if (
+      !newOption.name ||
+      newOption.price === undefined ||
+      newOption.price < 0
+    ) {
       toast.error("オプション名と有効な価格を入力してください", {
         icon: <AlertCircle className="h-5 w-5 text-red-500" />,
       });
@@ -209,7 +213,7 @@ export default function SettingPage() {
     const formattedOptions = [...options, optionToAdd].map((opt) => ({
       id: opt.id,
       name: opt.name,
-      price: opt.price,
+      price: opt.price ?? undefined,
       salePrice: opt.salePrice || undefined,
       maxCount: opt.maxCount || undefined,
     }));
@@ -219,7 +223,7 @@ export default function SettingPage() {
     // 入力欄をリセット
     setNewOption({
       name: "",
-      price: 0,
+      price: undefined,
       salePrice: null,
       maxCount: null,
     });
@@ -287,7 +291,7 @@ export default function SettingPage() {
     setEditingOptionId(null);
     setNewOption({
       name: "",
-      price: 0,
+      price: undefined,
       salePrice: null,
       maxCount: null,
     });
@@ -433,7 +437,7 @@ export default function SettingPage() {
         const optionsWithIds = mySettings.options.map(
           (opt: {
             name: string;
-            price: number;
+            price?: number;
             salePrice?: number;
             maxCount?: number;
           }) => ({
@@ -1074,7 +1078,7 @@ export default function SettingPage() {
                               <Input
                                 id="optionPrice"
                                 type="number"
-                                value={newOption.price}
+                                value={newOption.price ?? undefined}
                                 onChange={(e) =>
                                   setNewOption({
                                     ...newOption,
@@ -1227,8 +1231,11 @@ export default function SettingPage() {
                                             {option.name}
                                           </h4>
                                           <div className="flex items-center gap-2 text-sm">
-                                            <span className="font-medium  text-gray-900">
-                                              {option.price.toLocaleString()}円
+                                            <span className="font-medium  text-slate-500 mr-2">
+                                              {option.price
+                                                ? "¥" +
+                                                  option.price.toLocaleString()
+                                                : undefined}
                                             </span>
                                             {option.salePrice && (
                                               <Badge
