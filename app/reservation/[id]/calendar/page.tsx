@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { ChevronRightIcon } from "lucide-react";
 import { LINE_LOGIN_SESSION_KEY } from "@/lib/constants";
-import { useLiff } from "@/hooks/useLiff";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, usePaginatedQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -82,7 +81,6 @@ export default function ReservationTimePicker() {
   const { id } = useParams();
   const salonId = id as string;
   const router = useRouter();
-  const { liff, isLoggedIn, profile } = useLiff();
   // カルーセルAPI状態
   const [menuCarouselApi, setMenuCarouselApi] = useState<CarouselApi | null>(
     null
@@ -148,8 +146,6 @@ export default function ReservationTimePicker() {
         }
       : "skip"
   );
-
-  console.log("optimalTimeSlots", optimalTimeSlots);
 
   const salonAccessToken = useQuery(api.salon_config.getLineAccessToken, {
     salonId,
@@ -955,20 +951,6 @@ export default function ReservationTimePicker() {
     const date = new Date(dateStr);
     return format(date, "M月d日（E）", { locale: ja });
   };
-
-  useEffect(() => {
-    console.log("liff", liff?.isLoggedIn());
-    console.log("isLoggedIn", isLoggedIn);
-    console.log("profile", profile);
-    const session = getCookie(LINE_LOGIN_SESSION_KEY);
-    console.log("session", session);
-    if (session) {
-      console.log("sessionがある");
-      const sessionData = JSON.parse(session);
-      console.log("session data", sessionData);
-    }
-  }, [isLoggedIn, profile, liff]);
-
   // パンくずリスト設定
   const breadcrumbItems = [
     { label: "LINEでログイン", href: `/reservation/${salonId}` },

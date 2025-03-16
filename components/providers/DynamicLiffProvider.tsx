@@ -24,10 +24,8 @@ export function DynamicLiffProvider({
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   // Convexクライアントの取得 - 接続状態を確認するために使用
-  const convex = useConvex();
-
-  // salonIdをログ出力して確認
-  console.log("使用しているsalonId:", salonId);
+  // 注: 接続状態の使用はconsole.logの削除に伴い不要になったため、変数を削除
+  useConvex();
 
   // 1. 初期化時にキャッシュから読み込み
   useEffect(() => {
@@ -46,7 +44,6 @@ export function DynamicLiffProvider({
         // キャッシュの有効期限をチェック（24時間）
         const isValid = Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000;
         if (isValid && parsed.liffId) {
-          console.log("キャッシュからLIFF IDを復元:", parsed.liffId);
           setLiffId(parsed.liffId);
         } else {
           // 期限切れの場合はキャッシュを削除
@@ -60,18 +57,11 @@ export function DynamicLiffProvider({
 
   // 2. Convex接続状態とクエリの実行
   // 接続状態を確認（connectionStateの型エラーを回避するため同値チェックではなく接続状態の存在確認に変更）
-  console.log("Convex接続状態:", convex?.connectionState);
 
   // 3. 接続状態に関わらずクエリを実行（効率的なリトライ処理に任せる）
   const dbLiffId = useQuery(
     api.salon_config.getLiffId,
     salonId ? { salonId } : "skip"
-  );
-
-  console.log("dbLiffId:", dbLiffId);
-  console.log(
-    "dbLiffId type:",
-    dbLiffId !== undefined ? typeof dbLiffId : "undefined"
   );
 
   // 4. クエリ結果の処理とリトライロジック
@@ -81,13 +71,11 @@ export function DynamicLiffProvider({
       // リトライ回数に達していない場合のみ処理
       if (retryCount < 5) {
         const timer = setTimeout(() => {
-          console.log(`LIFFIDの取得をリトライします (${retryCount + 1}/5)`);
           setRetryCount((prev) => prev + 1);
         }, 2000);
 
         return () => clearTimeout(timer);
       } else {
-        console.error("LIFF IDの取得に失敗しました");
         setErrorMessage(
           "このサロンのLINE連携情報を取得できませんでした。管理者にお問い合わせください。"
         );
@@ -98,7 +86,6 @@ export function DynamicLiffProvider({
 
     // dbLiffIdが取得できた場合、保存と設定
     if (dbLiffId) {
-      console.log("dbLiffIdが取得できました:", dbLiffId);
       setLiffId(dbLiffId);
       setShowError(false);
 
@@ -118,7 +105,6 @@ export function DynamicLiffProvider({
     }
     // nullが明示的に返された場合（サロンIDは正しいがLIFF IDが設定されていない）
     else if (dbLiffId === null) {
-      console.error("LIFF IDが設定されていません");
       setErrorMessage(
         "このサロンにはLINE連携が設定されていません。管理者にお問い合わせください。"
       );
@@ -126,8 +112,6 @@ export function DynamicLiffProvider({
     }
     return;
   }, [dbLiffId, retryCount, salonId]);
-
-  console.log("最終liffId:", liffId);
 
   // エラー表示å
   if (showError) {
@@ -153,7 +137,6 @@ export function DynamicLiffProvider({
 
   // ローディング表示
   if (!liffId) {
-    console.log("liffIdが存在しない場合、Loadingを表示");
     return <Loading />;
   }
 
