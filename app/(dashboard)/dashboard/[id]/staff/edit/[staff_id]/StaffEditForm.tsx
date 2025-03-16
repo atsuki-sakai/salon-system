@@ -105,6 +105,12 @@ export default function StaffEditForm() {
     id: staff_id as Id<"staff">,
   });
 
+  const staffPinCode = useQuery(api.staff_auth.getStaffPinCode, {
+    staffId: staff_id as Id<"staff">,
+  });
+
+  console.log("staffPinCode", staffPinCode);
+
   // 休暇日の状態管理
   const [vacationDates, setVacationDates] = useState<Date[]>([]);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -913,23 +919,19 @@ export default function StaffEditForm() {
                             PINコードは4桁の数字で入力してください
                           </p>
                           <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="h-3 w-3"
-                            >
-                              <circle cx="12" cy="12" r="10"></circle>
-                              <path d="M12 16v-4"></path>
-                              <path d="M12 8h.01"></path>
-                            </svg>
-                            {staff.pinCode
-                              ? "セキュリティー上表示されていませんが現在PINが設定されています。変更する場合のみ新しいPINを入力してください。"
-                              : "PINが設定されていません。新しいPINを登録してください。"}
+                            {staff.pinCode ? (
+                              <div className="text-xs text-green-700 bg-green-50 border border-green-100 rounded-md p-2 mr-4">
+                                現在PINコードは設定されています。変更する場合のみ新しいPINを入力してください。
+                                <br />
+                                ※PINコードを忘れた場合は再度生成して登録してください。
+                              </div>
+                            ) : (
+                              <div className="text-xs text-red-700 bg-red-50 border border-red-100 rounded-md p-2 mr-4">
+                                PINコードが設定されていません。新しいPINを登録してください。
+                                <br />
+                                ※PINコードを忘れた場合は再度生成して登録してください。
+                              </div>
+                            )}
                           </p>
                         </div>
                         <Button

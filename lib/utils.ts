@@ -28,31 +28,70 @@ export function formatTimestampToDate(timestamp: number): string {
 const SESSION_SECRET = process.env.NEXT_PUBLIC_COOKIE_SECRET || "";
 
 export const setCookie = (name: string, value: string, days: number) => {
-  // 値を暗号化する
-  const encryptedValue = CryptoJS.AES.encrypt(value, SESSION_SECRET).toString();
-  const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString();
-  document.cookie = `${name}=${encryptedValue}; expires=${expires}; path=/; ${
-    process.env.NODE_ENV === "production" ? "secure;" : ""
-  }`;
+  try {
+    // シークレットキーのチェック
+    if (!SESSION_SECRET) {
+      console.warn("Cookie暗号化キーが設定されていません。平文で保存します。");
+      const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString();
+      document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; ${
+        process.env.NODE_ENV === "production" ? "secure;" : ""
+      }`;
+      return;
+    }
+    
+    // 値を暗号化する
+    const encryptedValue = CryptoJS.AES.encrypt(value, SESSION_SECRET).toString();
+    const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString();
+    document.cookie = `${name}=${encryptedValue}; expires=${expires}; path=/; ${
+      process.env.NODE_ENV === "production" ? "secure;" : ""
+    }`;
+    console.log(`クッキー "${name}" を保存しました。期限: ${expires}`);
+  } catch (error) {
+    console.error("クッキーの保存中にエラーが発生しました:", error);
+    // フォールバック: 平文で保存
+    const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString();
+    document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; ${
+      process.env.NODE_ENV === "production" ? "secure;" : ""
+    }`;
+  }
 };
 
 export const getCookie = (name: string) => {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) {
-    const encryptedValue = parts.pop()?.split(";").shift();
-    if (encryptedValue) {
+  try {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    
+    if (parts.length === 2) {
+      const rawValue = parts.pop()?.split(";").shift();
+      if (!rawValue) return null;
+      
+      // シークレットキーが設定されていない場合
+      if (!SESSION_SECRET) {
+        console.warn("Cookie暗号化キーが設定されていません。平文として処理します。");
+        return decodeURIComponent(rawValue);
+      }
+      
+      // まず暗号化されたデータとして復号を試みる
       try {
-        // 暗号化された値を復号する
-        const bytes = CryptoJS.AES.decrypt(encryptedValue, SESSION_SECRET);
+        const bytes = CryptoJS.AES.decrypt(rawValue, SESSION_SECRET);
         const decryptedData = bytes.toString(CryptoJS.enc.Utf8);
-        return decryptedData;
-      } catch (error) {
-        console.error("Cookie の復号に失敗しました", error);
+        
+        // 正常に復号できた場合
+        if (decryptedData) {
+          return decryptedData;
+        }
+      } catch (decryptError) {
+        console.warn(`クッキー "${name}" の復号に失敗しました。平文として処理します:`, decryptError);
+        // 復号に失敗した場合、平文として返す
+        return decodeURIComponent(rawValue);
       }
     }
+    console.log(`クッキー "${name}" が見つかりませんでした。`);
+    return null;
+  } catch (error) {
+    console.error(`クッキー "${name}" の取得中にエラーが発生しました:`, error);
+    return null;
   }
-  return null;
 };
 
 export const deleteCookie = (name: string) => {

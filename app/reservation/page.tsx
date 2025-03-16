@@ -103,8 +103,27 @@ export default function ReserveRedirectPage() {
         console.error(errorMessage);
       }
 
+      // セッションクッキーの保存を確実に行う
+      console.log("保存するセッション情報:", newSession);
       setCookie(LINE_LOGIN_SESSION_KEY, newSession, 60);
-      router.push(computedRedirectUrl);
+
+      // 短いディレイを追加してクッキーの保存を確実にする
+      setTimeout(() => {
+        // 保存されたかを確認
+        const savedSession = getCookie(LINE_LOGIN_SESSION_KEY);
+        console.log("保存されたセッション情報:", savedSession);
+
+        if (!savedSession) {
+          console.warn(
+            "セッションの保存に失敗した可能性があります。再試行します。"
+          );
+          // 再試行
+          setCookie(LINE_LOGIN_SESSION_KEY, newSession, 60);
+        }
+
+        // リダイレクト
+        router.push(computedRedirectUrl);
+      }, 300); // 300ミリ秒待機
     }
 
     if (liff) {

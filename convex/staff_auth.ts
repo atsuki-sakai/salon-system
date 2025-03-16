@@ -80,6 +80,20 @@ export const verifyPin = action({
   },
 });
 
+export const getStaffPinCode = query({
+  args: {
+    staffId: v.id("staff"),
+  },
+  handler: async (ctx, args) => {
+    const staff = await ctx.db.get(args.staffId);
+    if (!staff) {
+      throw new ConvexError({message: "スタッフが見つかりません"});
+    }
+    return staff?.pinCode;
+  },
+});
+
+
 // スタッフの取得 - 内部クエリ用
 export const getStaffById = query({
   args: {

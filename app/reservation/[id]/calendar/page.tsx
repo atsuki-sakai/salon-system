@@ -961,7 +961,9 @@ export default function ReservationTimePicker() {
     console.log("isLoggedIn", isLoggedIn);
     console.log("profile", profile);
     const session = getCookie(LINE_LOGIN_SESSION_KEY);
+    console.log("session", session);
     if (session) {
+      console.log("sessionがある");
       const sessionData = JSON.parse(session);
       console.log("session data", sessionData);
     }
