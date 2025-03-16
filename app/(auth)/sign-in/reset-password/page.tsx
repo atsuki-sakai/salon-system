@@ -1,20 +1,75 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSignIn } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import { useZodForm } from "@/hooks/useZodForm";
 import { resetPasswordSchema } from "@/lib/validations";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { useSearchParams } from "next/navigation";
+import { Separator } from "@/components/ui/separator";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardDescription,
+  CardFooter,
+} from "@/components/ui/card";
 import { toast } from "sonner";
 import { z } from "zod";
+import {
+  Mail,
+  Lock,
+  KeyRound,
+  ArrowRight,
+  Send,
+  RefreshCw,
+  Loader2,
+  Eye,
+  EyeOff,
+  AlertCircle,
+} from "lucide-react";
+import Link from "next/link";
 import {
   UseFormRegister,
   FieldErrors,
   UseFormHandleSubmit,
 } from "react-hook-form";
+
+// アニメーションバリアント
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+  exit: {
+    opacity: 0,
+    transition: {
+      duration: 0.2,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: { type: "spring", stiffness: 100 },
+  },
+  exit: {
+    y: -20,
+    opacity: 0,
+    transition: { duration: 0.2 },
+  },
+};
 
 // フォーム共通のエラーメッセージ表示を含むリセットコード送信用コンポーネント
 function ResetCodeForm({
@@ -31,25 +86,53 @@ function ResetCodeForm({
   isSubmitting: boolean;
 }) {
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div>
-        <Label htmlFor="email">アカウントのメールアドレス</Label>
-        <Input
-          id="email"
-          type="email"
-          {...register("email")}
-          placeholder="メールアドレスを入力"
-        />
+    <motion.form
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      onSubmit={handleSubmit(onSubmit)}
+      className="space-y-4"
+    >
+      <motion.div variants={itemVariants} className="space-y-2">
+        <Label htmlFor="email" className="text-xs font-medium">
+          アカウントのメールアドレス
+        </Label>
+        <div className="relative">
+          <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+          <Input
+            id="email"
+            type="email"
+            {...register("email")}
+            placeholder="メールアドレスを入力"
+            className="pl-10"
+            autoFocus
+          />
+        </div>
         {errors.email && (
-          <p className="text-red-500 text-sm">{errors.email.message}</p>
+          <div className="flex items-center gap-2 text-red-500 text-xs mt-1">
+            <AlertCircle className="h-3 w-3" />
+            <p>{errors.email.message}</p>
+          </div>
         )}
-      </div>
-      <div className="flex justify-end">
-        <Button type="submit" disabled={isSubmitting}>
-          確認コードを送信
+      </motion.div>
+
+      <motion.div variants={itemVariants} className="flex justify-end">
+        <Button type="submit" disabled={isSubmitting} className="w-full">
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              送信中...
+            </>
+          ) : (
+            <>
+              <Send className="mr-2 h-4 w-4" />
+              確認コードを送信
+            </>
+          )}
         </Button>
-      </div>
-    </form>
+      </motion.div>
+    </motion.form>
   );
 }
 
@@ -67,64 +150,153 @@ function ResetPasswordForm({
   onSubmit: (data: z.infer<typeof resetPasswordSchema>) => void;
   isSubmitting: boolean;
 }) {
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   return (
-    <div>
-      <p className="text-sm mb-4 bg-gray-100 p-2 text-slate-700 rounded-md">
-        メールアドレスに届いた確認コードを入力してください。
-      </p>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
-          <Label htmlFor="code">確認コード</Label>
-          <Input id="code" {...register("code")} />
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+    >
+      <motion.div
+        variants={itemVariants}
+        className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-100 flex items-center gap-3"
+      >
+        <Mail className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+        <p className="text-xs text-blue-600">
+          メールアドレスに届いた確認コードを入力してください。
+        </p>
+      </motion.div>
+
+      <motion.form
+        variants={containerVariants}
+        onSubmit={handleSubmit(onSubmit)}
+        className="space-y-4"
+      >
+        <motion.div variants={itemVariants} className="space-y-2">
+          <Label htmlFor="code" className="text-xs font-medium">
+            確認コード
+          </Label>
+          <div className="relative">
+            <KeyRound className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              id="code"
+              {...register("code")}
+              className="pl-10 text-center font-mono tracking-wider"
+              placeholder="000000"
+              maxLength={6}
+              autoFocus
+            />
+          </div>
           {errors.code && (
-            <p className="text-red-500 text-sm">{errors.code.message}</p>
+            <div className="flex items-center gap-2 text-red-500 text-xs mt-1">
+              <AlertCircle className="h-3 w-3" />
+              <p>{errors.code.message}</p>
+            </div>
           )}
-        </div>
-        <div>
-          <Label htmlFor="newPassword">新しいパスワード</Label>
-          <Input
-            id="newPassword"
-            type="password"
-            {...register("newPassword")}
-          />
+        </motion.div>
+
+        <motion.div variants={itemVariants} className="space-y-2">
+          <Label htmlFor="newPassword" className="text-xs font-medium">
+            新しいパスワード
+          </Label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              id="newPassword"
+              type={showNewPassword ? "text" : "password"}
+              {...register("newPassword")}
+              className="pl-10 pr-10"
+              placeholder="新しいパスワードを入力"
+            />
+            <button
+              type="button"
+              onClick={() => setShowNewPassword(!showNewPassword)}
+              className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none transition-colors"
+            >
+              {showNewPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </button>
+          </div>
           {errors.newPassword && (
-            <p className="text-red-500 text-sm">{errors.newPassword.message}</p>
+            <div className="flex items-center gap-2 text-red-500 text-xs mt-1">
+              <AlertCircle className="h-3 w-3" />
+              <p>{errors.newPassword.message}</p>
+            </div>
           )}
-        </div>
-        <div>
-          <Label htmlFor="confirmPassword">確認用パスワード</Label>
-          <Input
-            id="confirmPassword"
-            type="password"
-            {...register("confirmPassword")}
-          />
+        </motion.div>
+
+        <motion.div variants={itemVariants} className="space-y-2">
+          <Label htmlFor="confirmPassword" className="text-xs font-medium">
+            確認用パスワード
+          </Label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              id="confirmPassword"
+              type={showConfirmPassword ? "text" : "password"}
+              {...register("confirmPassword")}
+              className="pl-10 pr-10"
+              placeholder="同じパスワードを再入力"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none transition-colors"
+            >
+              {showConfirmPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </button>
+          </div>
           {errors.confirmPassword && (
-            <p className="text-red-500 text-sm">
-              {errors.confirmPassword.message}
-            </p>
+            <div className="flex items-center gap-2 text-red-500 text-xs mt-1">
+              <AlertCircle className="h-3 w-3" />
+              <p>{errors.confirmPassword.message}</p>
+            </div>
           )}
-        </div>
-        <div className="flex justify-end">
-          <Button type="submit" disabled={isSubmitting}>
-            パスワードをリセット
+        </motion.div>
+
+        <motion.div variants={itemVariants} className="flex justify-end pt-2">
+          <Button type="submit" disabled={isSubmitting} className="w-full">
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                処理中...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                パスワードをリセット
+              </>
+            )}
           </Button>
-        </div>
-      </form>
-    </div>
+        </motion.div>
+      </motion.form>
+    </motion.div>
   );
 }
 
 export default function ResetPasswordPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const email = searchParams.get("email");
   const { signIn, setActive, isLoaded: signInLoaded } = useSignIn();
   const [emailSent, setEmailSent] = useState(false);
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useZodForm(resetPasswordSchema);
-
   // リセットコード送信処理
   const handleSendResetCode = async (
     data: z.infer<typeof resetPasswordSchema>
@@ -180,27 +352,61 @@ export default function ResetPasswordPage() {
     }
   };
 
+  useEffect(() => {
+    if (email) {
+      setValue("email", email);
+    }
+  }, [email, setValue]);
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center">
-      <h2 className="text-xl mb-4 font-bold">パスワードリセット</h2>
-      <div className="max-w-xl min-w-[280px] mx-auto">
-        {!emailSent ? (
-          <ResetCodeForm
-            register={register}
-            errors={errors}
-            handleSubmit={handleSubmit}
-            onSubmit={handleSendResetCode}
-            isSubmitting={isSubmitting}
-          />
-        ) : (
-          <ResetPasswordForm
-            register={register}
-            errors={errors}
-            handleSubmit={handleSubmit}
-            onSubmit={handleResetPassword}
-            isSubmitting={isSubmitting}
-          />
-        )}
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="w-full max-w-md p-2">
+        <Card className="border-0 shadow-lg shadow-blue-100/20 dark:shadow-gray-900/40 backdrop-blur-sm bg-white/90 dark:bg-gray-900/80">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-bold text-center">
+              パスワードリセット
+            </CardTitle>
+            <CardDescription className="text-center text-gray-500 dark:text-gray-400">
+              {!emailSent
+                ? "メールアドレスを入力して確認コードを受け取ってください"
+                : "新しいパスワードを設定してください"}
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent>
+            <AnimatePresence mode="wait">
+              {!emailSent ? (
+                <ResetCodeForm
+                  key="reset-code-form"
+                  register={register}
+                  errors={errors}
+                  handleSubmit={handleSubmit}
+                  onSubmit={handleSendResetCode}
+                  isSubmitting={isSubmitting}
+                />
+              ) : (
+                <ResetPasswordForm
+                  key="reset-password-form"
+                  register={register}
+                  errors={errors}
+                  handleSubmit={handleSubmit}
+                  onSubmit={handleResetPassword}
+                  isSubmitting={isSubmitting}
+                />
+              )}
+            </AnimatePresence>
+          </CardContent>
+          <Separator className="my-2 w-1/2 mx-auto" />
+          <CardFooter className="flex justify-center pt-2">
+            <Link
+              href="/sign-in"
+              className="text-xs text-blue-500 flex items-center gap-1"
+            >
+              ログインページに戻る
+              <ArrowRight className="h-3 w-3 ml-2" />
+            </Link>
+          </CardFooter>
+        </Card>
       </div>
     </div>
   );
