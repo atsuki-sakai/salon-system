@@ -75,8 +75,23 @@ export async function POST(request: NextRequest) {
         return response;
       } catch (pinError) {
         console.error("Error in PIN verification:", pinError);
+        
+        // ConvexErrorの場合のメッセージ抽出を改善
+        let errorMessage = 'PINコードの検証に失敗しました';
+        
+        if (pinError && typeof pinError === 'object' && 'data' in pinError) {
+          // ConvexError形式のエラー
+          const errorData = (pinError as {data?: {message?: string}}).data;
+          if (errorData && errorData.message) {
+            errorMessage = errorData.message;
+          }
+        } else if (pinError instanceof Error) {
+          // 一般的なエラー
+          errorMessage = pinError.message;
+        }
+        
         return NextResponse.json(
-          { error: pinError instanceof Error ? pinError.message : 'PINコードの検証に失敗しました' },
+          { error: errorMessage },
           { status: 401 }
         );
       }
@@ -135,8 +150,23 @@ export async function POST(request: NextRequest) {
       console.log("PIN verification successful:", staffData);
     } catch (error: unknown) {
       console.error('PIN verification failed:', error);
+      
+      // ConvexErrorの場合のメッセージ抽出を改善
+      let errorMessage = 'PINコードの検証に失敗しました';
+      
+      if (error && typeof error === 'object' && 'data' in error) {
+        // ConvexError形式のエラー
+        const errorData = (error as {data?: {message?: string}}).data;
+        if (errorData && errorData.message) {
+          errorMessage = errorData.message;
+        }
+      } else if (error instanceof Error) {
+        // 一般的なエラー
+        errorMessage = error.message;
+      }
+      
       return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'PINコードの検証に失敗しました' },
+        { error: errorMessage },
         { status: 401 }
       );
     }

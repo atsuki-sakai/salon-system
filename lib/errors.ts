@@ -55,6 +55,7 @@ export function handleError(error: unknown): AppError {
       );
     }
     
+    
     return new AppError(error.message);
   }
   
@@ -97,13 +98,28 @@ export function convertErrorMessage(error: AppError): string {
   }
 }
 
-
-
 export function handleErrorToMessage(error: unknown): string {
   if (error instanceof ConvexError) {
-    // error.dataからメッセージを取得
-    const errorData = error.data as { message?: string };
-    return errorData.message || "予期せぬエラーが発生しました";
+    // ConvexErrorの場合、data属性から詳細情報を取得
+    if (typeof error.data === 'object' && error.data !== null) {
+      // dataがオブジェクトの場合、messageプロパティを探す
+      if ('message' in error.data && typeof error.data.message === 'string') {
+        return error.data.message;
+      } else {
+        // messageプロパティがない場合はJSONシリアライズしてみる
+        try {
+          return JSON.stringify(error.data);
+        } catch {
+          return "予期せぬエラーが発生しました";
+        }
+      }
+    } else if (typeof error.data === 'string') {
+      // dataが文字列の場合はそのまま返す
+      return error.data;
+    } else {
+      // その他の場合は汎用メッセージ
+      return "予期せぬエラーが発生しました";
+    }
   } else if (error instanceof Error) {
     // 一般的なエラー
     return error.message || "予期せぬエラーが発生しました";
