@@ -2,10 +2,12 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useParams } from "next/navigation";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { handleErrorToMessage } from "@/lib/errors";
+import { Separator } from "@/components/ui/separator";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -16,11 +18,16 @@ import {
 } from "@/components/ui/card";
 import { useZodForm } from "@/hooks/useZodForm";
 import { toast } from "sonner";
-import { AlertTriangle } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import { useClerk } from "@clerk/nextjs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // 環境変数からConvex URLを取得
 const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
@@ -35,6 +42,11 @@ const emailFormSchema = z.object({
     .email("有効なメールアドレスを入力してください"),
 });
 
+// サロン選択バリデーション
+const salonSelectSchema = z.object({
+  selectedSalonId: z.string().min(1, "サロンを選択してください"),
+});
+
 // PINコード入力バリデーション
 const pinFormSchema = z.object({
   pin: z
@@ -44,67 +56,39 @@ const pinFormSchema = z.object({
     .regex(/^\d{4}$/, "PINコードは4桁の数字で入力してください"),
 });
 
+// スタッフ情報の型定義
+interface StaffData {
+  _id: string;
+  name?: string;
+  email: string;
+  salonId: string;
+  role?: string;
+}
+
+// サロン情報の型定義
+interface SalonInfo {
+  salonId: string;
+  salonName: string;
+}
+
 export default function StaffLoginForm() {
   const router = useRouter();
-  const params = useParams();
   const { signOut } = useClerk();
-  const staffSalonId = params.staff_salon_id as string;
-  const [step, setStep] = useState<"email" | "pin">("email");
+  const [step, setStep] = useState<"email" | "salon" | "pin">("email");
 
   // ステップ切り替え関数
-  const changeStep = (newStep: "email" | "pin") => {
+  const changeStep = (newStep: "email" | "salon" | "pin") => {
     if (newStep === "pin") {
       resetPinForm({ pin: "" });
     }
     setStep(newStep);
   };
+
   const [isLoading, setIsLoading] = useState(false);
-  const [salonName, setSalonName] = useState<string | null>(null);
-  const [salonLoading, setSalonLoading] = useState(true);
-  const [salonError, setSalonError] = useState<string | null>(null);
-  const [staffData, setStaffData] = useState<{
-    staffId: string;
-    name?: string;
-    email: string;
-  } | null>(null);
-
-  // サロン情報を取得
-  useEffect(() => {
-    const fetchSalonInfo = async () => {
-      if (!staffSalonId) return;
-
-      setSalonLoading(true);
-      try {
-        // サロン情報を取得
-        const salonConfig = await convex
-          .query(api.salon_config.getSalonConfigBySalonId, {
-            salonId: staffSalonId,
-          })
-          .catch((error) => {
-            console.error("Salon fetch error:", error);
-            return null;
-          });
-
-        if (salonConfig) {
-          setSalonName(salonConfig.salonName || "不明なサロン");
-          setSalonError(null);
-        } else {
-          setSalonError(
-            "サロンが見つかりません。URLが正しいか確認してください。"
-          );
-        }
-      } catch (error) {
-        console.error("Error fetching salon:", error);
-        setSalonError(
-          "サロン情報の取得に失敗しました。URLが正しいか確認してください。"
-        );
-      } finally {
-        setSalonLoading(false);
-      }
-    };
-
-    fetchSalonInfo();
-  }, [staffSalonId]);
+  const [staffList, setStaffList] = useState<StaffData[]>([]);
+  const [salonList, setSalonList] = useState<SalonInfo[]>([]);
+  const [selectedStaff, setSelectedStaff] = useState<StaffData | null>(null);
+  const [selectedSalonId, setSelectedSalonId] = useState<string | null>(null);
 
   const {
     register: registerEmail,
@@ -117,7 +101,19 @@ export default function StaffLoginForm() {
     },
   });
 
-  // ステップ2: PINコードフォーム
+  // サロン選択フォーム
+  const {
+    handleSubmit: handleSalonSubmit,
+    formState: { errors: salonErrors },
+    setValue: setSalonValue,
+  } = useZodForm(salonSelectSchema, {
+    mode: "onChange",
+    defaultValues: {
+      selectedSalonId: "",
+    },
+  });
+
+  // ステップ3: PINコードフォーム
   const {
     register: registerPin,
     handleSubmit: handlePinSubmit,
@@ -132,72 +128,92 @@ export default function StaffLoginForm() {
 
   // メールアドレス検証処理
   const onEmailSubmit = async (data: z.infer<typeof emailFormSchema>) => {
-    if (!staffSalonId) {
-      toast.error("サロンIDが見つかりません");
-      return;
-    }
-
-    if (salonError) {
-      toast.error(salonError);
-      return;
-    }
-
     setIsLoading(true);
     try {
-      // 最初のステップのAPI呼び出し（メールアドレス検証のみ）
-      const response = await fetch("/api/staff/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: data.email,
-          pin: "0000", // ダミーPIN（このステップではメールアドレスのみ検証）
-          salonId: staffSalonId,
-        }),
-      });
-
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          responseData.error || "メールアドレスの検証に失敗しました"
-        );
-      }
-
-      // スタッフ情報を保存してPINコード入力ステップへ
-      setStaffData({
-        staffId: responseData.staffData.staffId,
-        name: responseData.staffData.name,
+      // メールアドレスからスタッフ情報を取得
+      const staffListResult = await convex.query(api.staff.getStaffByEmail, {
         email: data.email,
       });
 
-      // PINステップに移動（フォームは自動的にリセットされる）
-      changeStep("pin");
+      if (!staffListResult || staffListResult.length === 0) {
+        toast.error("このメールアドレスで登録されたスタッフが見つかりません");
+        return;
+      }
+
+      // スタッフリストを保存
+      setStaffList(staffListResult as StaffData[]);
+
+      // サロン情報を取得
+      const salonInfoList: SalonInfo[] = [];
+      for (const staff of staffListResult as StaffData[]) {
+        try {
+          const salonConfig = await convex.query(
+            api.salon_config.getSalonConfigBySalonId,
+            {
+              salonId: staff.salonId,
+            }
+          );
+
+          if (salonConfig) {
+            salonInfoList.push({
+              salonId: staff.salonId,
+              salonName: salonConfig.salonName || "不明なサロン",
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching salon info:", error);
+        }
+      }
+
+      setSalonList(salonInfoList);
+
+      // スタッフが1つのサロンにのみ所属している場合は自動選択
+      if (staffListResult.length === 1) {
+        const staff = staffListResult[0] as StaffData;
+        setSelectedStaff(staff);
+        setSelectedSalonId(staff.salonId);
+        // PINステップに直接移動
+        changeStep("pin");
+      } else {
+        // 複数サロンがある場合はサロン選択ステップへ
+        changeStep("salon");
+      }
     } catch (error: unknown) {
-      console.error("Login error:", error);
-      toast.error(
-        error instanceof Error ? error.message : "ログイン処理に失敗しました"
-      );
+      console.error("Staff lookup error:", error);
+      toast.error(handleErrorToMessage(error));
     } finally {
       setIsLoading(false);
     }
   };
 
+  // サロン選択処理
+  const onSalonSubmit = async (data: z.infer<typeof salonSelectSchema>) => {
+    if (!data.selectedSalonId) {
+      toast.error("サロンを選択してください");
+      return;
+    }
+
+    // 選択されたサロンに対応するスタッフを特定
+    const selectedStaffMember = staffList.find(
+      (staff) => staff.salonId === data.selectedSalonId
+    );
+    if (!selectedStaffMember) {
+      toast.error("選択されたサロンのスタッフ情報が見つかりません");
+      return;
+    }
+
+    setSelectedStaff(selectedStaffMember);
+    setSelectedSalonId(data.selectedSalonId);
+
+    // PINステップに移動
+    changeStep("pin");
+  };
+
   // PINコード検証処理
   const onPinSubmit = async (data: z.infer<typeof pinFormSchema>) => {
-    if (!staffData) {
+    if (!selectedStaff || !selectedSalonId) {
+      toast.error("スタッフ情報が不足しています");
       setStep("email");
-      return;
-    }
-
-    if (!staffSalonId) {
-      toast.error("サロンIDが見つかりません");
-      return;
-    }
-
-    if (salonError) {
-      toast.error(salonError);
       return;
     }
 
@@ -210,10 +226,10 @@ export default function StaffLoginForm() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: staffData.email,
+          email: selectedStaff.email,
           pin: data.pin,
-          salonId: staffSalonId,
-          staffId: staffData.staffId,
+          salonId: selectedSalonId,
+          staffId: selectedStaff._id,
         }),
       });
 
@@ -242,15 +258,22 @@ export default function StaffLoginForm() {
       }
 
       // ダッシュボードへリダイレクト
-      router.push(`/dashboard/${staffSalonId}`);
+      router.push(`/dashboard/${selectedSalonId}`);
     } catch (error: unknown) {
       console.error("PIN verification error:", error);
-      toast.error(
-        error instanceof Error ? error.message : "ログイン処理に失敗しました"
-      );
+      console.log("error", typeof error);
+      const errorMessage = handleErrorToMessage(error);
+      console.log("errorMessage", errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // サロン選択のハンドラー
+  const handleSalonSelect = (salonId: string) => {
+    setSelectedSalonId(salonId);
+    setSalonValue("selectedSalonId", salonId);
   };
 
   // ステップが変わったときにPINフォームをリセット
@@ -260,39 +283,37 @@ export default function StaffLoginForm() {
     }
   }, [step, resetPinForm]);
 
+  // 選択中のサロン名を取得
+  const getSelectedSalonName = () => {
+    if (!selectedSalonId) return "";
+    const salon = salonList.find((s) => s.salonId === selectedSalonId);
+    return salon ? salon.salonName : "不明なサロン";
+  };
+
   return (
     <Card className="w-full max-w-md shadow-lg">
       <CardHeader className="space-y-1 text-center">
         <CardTitle className="text-2xl flex items-center justify-center gap-2">
-          <span>スタッフログイン</span>
+          <span>スタッフ用ログインページ</span>
         </CardTitle>
-        {salonLoading ? (
-          <CardDescription>サロン情報を読み込み中...</CardDescription>
-        ) : salonError ? (
-          <Alert variant="destructive" className="mt-2">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>{salonError}</AlertDescription>
-          </Alert>
-        ) : (
-          <CardDescription className="flex flex-col items-center gap-1">
-            <span className="font-medium text-blue-600">{salonName}</span>
-            {step === "email"
-              ? "メールアドレスを入力してください"
-              : `${staffData?.name || "スタッフ"}様、PINコードを入力してください`}
-          </CardDescription>
-        )}
+        <CardDescription className="flex flex-col items-center gap-1">
+          {step === "email" && "メールアドレスを入力してください"}
+          {step === "salon" && "所属サロンを選択してください"}
+          {step === "pin" && (
+            <>
+              <span className="font-medium text-blue-600">
+                {getSelectedSalonName()}
+              </span>
+              <span>
+                {selectedStaff?.name || "スタッフ"}
+                様、PINコードを入力してください
+              </span>
+            </>
+          )}
+        </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
-        {salonError ? (
-          <div className="p-4 text-center">
-            <p className="text-sm text-red-500 mb-2">
-              サロンが見つかりませんでした
-            </p>
-            <p className="text-xs text-gray-500">
-              URLが正しいか確認してください
-            </p>
-          </div>
-        ) : step === "email" ? (
+        {step === "email" ? (
           <form
             onSubmit={handleEmailSubmit(onEmailSubmit)}
             className="space-y-4"
@@ -306,7 +327,7 @@ export default function StaffLoginForm() {
                 type="email"
                 autoComplete="email"
                 placeholder="example@example.com"
-                disabled={isLoading || salonLoading}
+                disabled={isLoading}
                 {...registerEmail("email", {
                   required: "メールアドレスを入力してください",
                 })}
@@ -338,13 +359,59 @@ export default function StaffLoginForm() {
               </p>
             </div>
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading || salonLoading}
-            >
+            <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "確認中..." : "次へ"}
             </Button>
+          </form>
+        ) : step === "salon" ? (
+          <form
+            onSubmit={handleSalonSubmit(onSalonSubmit)}
+            className="space-y-4"
+          >
+            <div className="flex flex-col gap-2">
+              <label htmlFor="salon" className="text-sm text-gray-700">
+                所属サロンを選択
+              </label>
+              <Select
+                onValueChange={handleSalonSelect}
+                value={selectedSalonId || ""}
+              >
+                <SelectTrigger id="salon">
+                  <SelectValue placeholder="サロンを選択してください" />
+                </SelectTrigger>
+                <SelectContent>
+                  {salonList.map((salon) => (
+                    <SelectItem key={salon.salonId} value={salon.salonId}>
+                      {salon.salonName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {salonErrors?.selectedSalonId && (
+                <p className="text-red-500 text-sm">
+                  {salonErrors.selectedSalonId.message}
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                disabled={isLoading}
+                onClick={() => changeStep("email")}
+              >
+                戻る
+              </Button>
+              <Button
+                type="submit"
+                className="flex-1"
+                disabled={isLoading || !selectedSalonId}
+              >
+                次へ
+              </Button>
+            </div>
           </form>
         ) : (
           <form onSubmit={handlePinSubmit(onPinSubmit)} className="space-y-4">
@@ -399,7 +466,11 @@ export default function StaffLoginForm() {
                 variant="outline"
                 className="flex-1"
                 disabled={isLoading}
-                onClick={() => changeStep("email")}
+                onClick={() =>
+                  staffList.length > 1
+                    ? changeStep("salon")
+                    : changeStep("email")
+                }
               >
                 戻る
               </Button>
@@ -414,9 +485,11 @@ export default function StaffLoginForm() {
         <p className="text-xs text-muted-foreground">
           スタッフ専用ログイン画面です
         </p>
-        {!salonError && (
-          <p className="text-xs text-blue-500">サロンID: {staffSalonId}</p>
-        )}
+        <Separator className="w-1/2 mx-auto my-2" />
+
+        <Link href="/sign-in" className="text-blue-500 text-xs">
+          オーナーアカウントでログイン
+        </Link>
       </CardFooter>
     </Card>
   );
