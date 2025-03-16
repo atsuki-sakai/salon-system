@@ -37,48 +37,29 @@ export function DynamicLiffProvider({
       return;
     }
 
-    let hasLocalStorageAccess = false;
-    
-    // まずローカルストレージへのアクセスが可能か確認
     try {
-      // テストキーで書き込みテスト
-      const testKey = `test_storage_${Date.now()}`;
-      localStorage.setItem(testKey, "test");
-      localStorage.removeItem(testKey);
-      hasLocalStorageAccess = true;
-      console.log("ローカルストレージアクセス: 成功");
-    } catch (err) {
-      console.warn("ローカルストレージアクセス不可:", err);
-      hasLocalStorageAccess = false;
-    }
-
-    // ローカルストレージにアクセスできる場合のみキャッシュを試す
-    if (hasLocalStorageAccess) {
-      try {
-        // キャッシュされたLIFF IDを確認
-        const storageKey = getStorageKey(salonId);
-        const cachedData = localStorage.getItem(storageKey);
-        if (cachedData) {
-          const parsed = JSON.parse(cachedData);
-          // キャッシュの有効期限をチェック（24時間）
-          const isValid = Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000;
-          if (isValid && parsed.liffId) {
-            console.log("キャッシュからLIFF IDを復元:", parsed.liffId);
-            setLiffId(parsed.liffId);
-          } else {
-            // 期限切れの場合はキャッシュを削除
-            localStorage.removeItem(storageKey);
-          }
+      // まずキャッシュされたLIFF IDを確認
+      const storageKey = getStorageKey(salonId);
+      const cachedData = localStorage.getItem(storageKey);
+      if (cachedData) {
+        const parsed = JSON.parse(cachedData);
+        // キャッシュの有効期限をチェック（24時間）
+        const isValid = Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000;
+        if (isValid && parsed.liffId) {
+          console.log("キャッシュからLIFF IDを復元:", parsed.liffId);
+          setLiffId(parsed.liffId);
+        } else {
+          // 期限切れの場合はキャッシュを削除
+          localStorage.removeItem(storageKey);
         }
-      } catch (err) {
-        console.error("キャッシュ読み込みエラー:", err);
       }
+    } catch (err) {
+      console.error("キャッシュ読み込みエラー:", err);
     }
   }, [salonId]);
 
   // 2. Convex接続状態とクエリの実行
   // 接続状態を確認（connectionStateの型エラーを回避するため同値チェックではなく接続状態の存在確認に変更）
-  const isConnected = !!convex && convex.connectionState !== undefined;
   console.log("Convex接続状態:", convex?.connectionState);
 
   // 3. 接続状態に関わらずクエリを実行（効率的なリトライ処理に任せる）
@@ -123,12 +104,6 @@ export function DynamicLiffProvider({
 
       // キャッシュに保存
       try {
-        // まずローカルストレージへのアクセスが可能か確認
-        const testKey = `test_storage_${Date.now()}`;
-        localStorage.setItem(testKey, "test");
-        localStorage.removeItem(testKey);
-        
-        // アクセス可能なら本来のデータを保存
         const storageKey = getStorageKey(salonId);
         localStorage.setItem(
           storageKey,
@@ -137,7 +112,6 @@ export function DynamicLiffProvider({
             timestamp: Date.now(),
           })
         );
-        console.log("LIFFIDをキャッシュに保存しました");
       } catch (err) {
         console.error("キャッシュ保存エラー:", err);
       }
@@ -154,7 +128,7 @@ export function DynamicLiffProvider({
 
   console.log("最終liffId:", liffId);
 
-  // エラー表示
+  // エラー表示å
   if (showError) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-50">
