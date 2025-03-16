@@ -201,7 +201,7 @@ export const salonConfigSchema = z.object({
   options: z.array(z.object({
     id: z.string(),
     name: z.string(),
-    price: z.number(),
+    price: z.number().optional(),
     salePrice: z.number().optional(),
     maxCount: z.number().optional(),
   })).optional(),

@@ -16,7 +16,7 @@ export const add = mutation({
     options: v.optional(v.array(v.object({
       id: v.string(),
       name: v.string(),
-      price: v.number(),
+      price: v.optional(v.number()),
       salePrice: v.optional(v.number()),
       maxCount: v.optional(v.number()),
     }))),
@@ -101,7 +101,7 @@ export const update = mutation({
     options: v.optional(v.array(v.object({
       id: v.string(),
       name: v.string(),
-      price: v.number(),
+      price: v.optional(v.number()),
       salePrice: v.optional(v.number()),
       maxCount: v.optional(v.number()),
     }))),
