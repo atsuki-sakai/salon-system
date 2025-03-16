@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { ConvexError } from "convex/values";
 
 export const add = mutation({
   args: {
@@ -160,7 +161,7 @@ export const update = mutation({
       .first();
     
     if (!salonConfig) {
-      throw new Error("SalonConfig not found");
+      throw new ConvexError({message: "このサロン設定は存在しません"});
     }
 
     const updatedSalonConfigData = await ctx.db.patch(salonConfig._id, {...args});

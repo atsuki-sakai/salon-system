@@ -36,7 +36,7 @@ export interface StaffAuthState {
 
 export function useStaffAuth() {
   const router = useRouter();
-  
+
   // 認証状態
   const [auth, setAuth] = useState<StaffAuthState>({
     isAuthenticated: false,
@@ -115,6 +115,7 @@ export function useStaffAuth() {
     // Cookieから削除
     try {
       Cookies.remove(STAFF_TOKEN_COOKIE, { path: '/' });
+
       console.log("Token removed from cookie");
     } catch (e) {
       console.error('Failed to remove cookie:', e);

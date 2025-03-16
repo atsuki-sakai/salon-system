@@ -150,3 +150,19 @@ export const getStaffByIds = query({
     return staffs;
   },
 });
+
+export const getStaffByEmail = query({
+  args: {
+    email: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // メールアドレスからスタッフ情報を取得
+    const staffList = await ctx.db
+      .query("staff")
+      .filter(q => q.eq(q.field("email"), args.email))
+      .collect();
+    
+    // スタッフ情報とサロン情報を一緒に返す
+    return staffList;
+  },
+});

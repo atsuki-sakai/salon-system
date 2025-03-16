@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { ConvexError } from "convex/values";
 import { api } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
+
 // 注意：ConvexではESM形式でのインポートが必要
 import bcryptjs from "bcryptjs";
 
@@ -35,7 +36,7 @@ export const verifyEmail = mutation({
       .first();
 
     if (!staff) {
-      throw new ConvexError("メールアドレスが見つかりません");
+      throw new ConvexError({message: "メールアドレスが見つかりません"});
     }
 
     return {
@@ -60,14 +61,14 @@ export const verifyPin = action({
     });
     
     if (!staff || !staff.pinCode) {
-      throw new ConvexError("スタッフが見つかりません");
+      throw new ConvexError({message: "スタッフが見つかりません"});
     }
     
     // PINコードの検証 - アクション内でbcryptjsを使用
     const isValid = await verifyPinCode(args.pin, staff.pinCode);
     
     if (!isValid) {
-      throw new ConvexError("PINコードが正しくありません");
+      throw new ConvexError({message: "PINコードが正しくありません"});
     }
     
     return {
@@ -98,7 +99,7 @@ export const getStaffProfile = query({
     const staff = await ctx.db.get(args.staffId);
     
     if (!staff) {
-      throw new ConvexError("スタッフが見つかりません");
+      throw new ConvexError({message: "スタッフが見つかりません"});
     }
     
     // パスワードハッシュなど機密情報を除外
@@ -121,7 +122,7 @@ export const updateStaffPin = action({
     });
     
     if (!staff) {
-      throw new ConvexError("スタッフが見つかりません");
+      throw new ConvexError({message: "スタッフが見つかりません"});
     }
     
     // PINコードをハッシュ化 - アクション内でbcryptjsを使用
@@ -163,7 +164,7 @@ export const updateStaffLoginInfo = mutation({
     const staff = await ctx.db.get(args.staffId);
     
     if (!staff) {
-      throw new ConvexError("スタッフが見つかりません");
+      throw new ConvexError({message: "スタッフが見つかりません"});
     }
     
     const updates: Record<string, unknown> = {};

@@ -1,115 +1,17 @@
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 import { verifyStaffToken } from "@/lib/staff-auth";
 import { clerkMiddleware } from "@clerk/nextjs/server";
 
 
-// スタッフポータル関連のパス
-const staffPortalPaths = ["/staff-portal"];
-
-// 管理者ロールが必要なパス
-const adminPaths = ["/staff-portal/admin"];
-
-// マネージャーロールが必要なパス
-const managerPaths = ["/staff-portal/manager"];
-
 // 認証不要なパス
-const publicPaths = ["/", "/sign-in", "/sign-up", "/api", "/reservation", "/staff-auth"];
+const publicPaths = ["/", "/sign-in", "/sign-up", "/api", "/reservation/:path*", "/staff/login"];
 
-const isStaffPortalPath = (pathname: string): boolean =>
-  staffPortalPaths.some(
-    (portalPath) =>
-      pathname === portalPath || pathname.startsWith(`${portalPath}/`)
-  );
 
-const isAdminPath = (pathname: string): boolean =>
-  adminPaths.some(
-    (adminPath) =>
-      pathname === adminPath || pathname.startsWith(`${adminPath}/`)
-  );
-
-const isManagerPath = (pathname: string): boolean =>
-  managerPaths.some(
-    (managerPath) =>
-      pathname === managerPath || pathname.startsWith(`${managerPath}/`)
-  );
-
-const isPublicPath = (pathname: string): boolean =>
+const isPublicPath = (pathname: string): boolean => 
   publicPaths.some(
-    (publicPath) =>
+    (publicPath) => 
       pathname === publicPath || pathname.startsWith(`${publicPath}/`)
   );
-
-// スタッフ認証ミドルウェア
-async function handleStaffAuth(req: NextRequest) {
-  const { pathname } = req.nextUrl;
-  // スタッフ認証トークンを取得
-  const staffToken = req.cookies.get("staff_token")?.value;
-  
-  if (!staffToken) {
-    // ダッシュボードへのアクセスで認証がない場合
-    if (pathname.startsWith('/dashboard/')) {
-      // Clerkの認証がないと仮定し、そのまま処理を続行（Clerkミドルウェアで処理される）
-      return NextResponse.next();
-    }
-    
-    // スタッフポータルへのアクセスで認証がない場合
-    if (isStaffPortalPath(pathname)) {
-      const loginUrl = new URL(`/staff-auth/error`, req.url);
-      return NextResponse.redirect(loginUrl);
-    }
-    
-    // 認証がないその他のスタッフパスは通常通り処理
-    return NextResponse.next();
-  }
-  
-  try {
-    const payload = await verifyStaffToken(staffToken);
-    
-    if (!payload) {
-      // 無効なトークンの場合はスタッフログインへリダイレクト
-      const loginUrl = new URL("/staff-auth", req.url);
-      return NextResponse.redirect(loginUrl);
-    }
-    
-    // スタッフポータルへのアクセスの場合は権限チェック
-    if (isStaffPortalPath(pathname)) {
-      // 管理者ロールが必要なパスの権限チェック
-      if (isAdminPath(pathname) && payload.role !== "admin") {
-        // 権限がない場合はスタッフポータルトップへリダイレクト
-        const portalUrl = new URL("/staff-portal", req.url);
-        return NextResponse.redirect(portalUrl);
-      }
-      
-      // マネージャーロールが必要なパスの権限チェック
-      if (isManagerPath(pathname) && (payload.role !== "admin" && payload.role !== "manager")) {
-        // 権限がない場合はスタッフポータルトップへリダイレクト
-        const portalUrl = new URL("/staff-portal", req.url);
-        return NextResponse.redirect(portalUrl);
-      }
-      
-      // スタッフでログイン中なら共通ダッシュボードにリダイレクト
-      if (pathname === "/staff-portal") {
-        const dashboardUrl = new URL(`/dashboard/${payload.salonId}`, req.url);
-        return NextResponse.redirect(dashboardUrl);
-      }
-    }
-    
-    // スタッフがログイン済みでスタッフ認証ページにアクセスした場合
-    if (pathname.startsWith('/staff-auth/')) {
-      // ダッシュボードへリダイレクト
-      const dashboardUrl = new URL(`/dashboard/${payload.salonId}`, req.url);
-      return NextResponse.redirect(dashboardUrl);
-    }
-    
-    return NextResponse.next();
-  } catch (err) {
-    // エラーが発生した場合はスタッフログインへリダイレクト
-    console.error('Staff token verification error:', err);
-    const loginUrl = new URL("/staff-auth", req.url);
-    return NextResponse.redirect(loginUrl);
-  }
-}
 
 // 注意: 下記の handleStaffAuth 関数はリファクタリングの過程で一部の機能が置き換えられました
 // 将来的には完全に新しい実装に統合するといいでしょう
@@ -119,6 +21,8 @@ export default clerkMiddleware(
   async (auth, req) => {
     const { userId } = await auth();
     const { pathname } = req.nextUrl;
+    
+    console.log(`[Middleware] Processing request: ${pathname}, userId: ${userId ? 'logged-in' : 'not-logged-in'}`);
     
     // サインイン/サインアップページへの特別処理
     // ログイン済みの場合はダッシュボードへリダイレクト
@@ -132,13 +36,14 @@ export default clerkMiddleware(
     if (staffToken) {
       try {
         staffPayload = await verifyStaffToken(staffToken);
+        console.log(`[Middleware] Staff token verified for salonId: ${staffPayload?.salonId}`);
       } catch (err) {
         console.error('Staff token verification error:', err);
       }
     }
     
     // 認証ページ（sign-in, sign-up）またはスタッフログインページでログイン済みの場合はダッシュボードへリダイレクト
-    if (isAuthPath || pathname.startsWith('/staff-auth/')) {
+    if (isAuthPath || pathname.startsWith('/staff/login')) {
       // オーナーとしてログイン済み
       if (userId) {
         const dashboardUrl = new URL(`/dashboard/${userId}`, req.url);
@@ -158,6 +63,7 @@ export default clerkMiddleware(
 
     // LIFF環境では認証をスキップ
     if (isLiffBrowser) {
+      console.log('[Middleware] LIFF browser detected, skipping auth');
       return NextResponse.next();
     }
 
@@ -179,18 +85,24 @@ export default clerkMiddleware(
       }
     }
 
-    // スタッフポータルパスの場合のみスタッフ認証を処理
-    // staff-authは上のロジックでカバー済み
-    if (isStaffPortalPath(pathname)) {
-      return handleStaffAuth(req);
-    }
-
     // 通常のブラウザでの処理
     if (isPublicPath(pathname)) {
+      console.log(`[Middleware] Public path detected: ${pathname}`);
+      console.log(`[Middleware] isPublicPath check result: ${isPublicPath(pathname)}`);
+      
+      // 予約ページは認証の有無にかかわらずアクセス可能にする
+      if (pathname.startsWith('/reservation/')) {
+        console.log('[Middleware] Reservation path detected, allowing access without redirect');
+        return NextResponse.next();
+      }
+      
+      // それ以外の公開パス（トップページなど）は認証済みならダッシュボードへリダイレクト
       if (userId) {
+        console.log(`[Middleware] User is authenticated, redirecting to dashboard: /dashboard/${userId}`);
         const dashboardUrl = new URL(`/dashboard/${userId}`, req.url);
         return NextResponse.redirect(dashboardUrl);
       }
+      console.log('[Middleware] Allowing public path access');
       return NextResponse.next();
     }
 
@@ -198,10 +110,12 @@ export default clerkMiddleware(
     
     // 公開パス以外の場合、未認証ならサインインページへリダイレクト
     if (!userId) {
+      console.log('[Middleware] User not authenticated, redirecting to sign-in');
       const signInUrl = new URL("/sign-in", req.url);
       return NextResponse.redirect(signInUrl);
     }
 
+    console.log('[Middleware] Proceeding to next middleware/handler');
     return NextResponse.next();
   },
   () => ({
@@ -212,5 +126,5 @@ export default clerkMiddleware(
 
 // matcher に公開パスとスタッフポータルパスを追加
 export const config = {
-  matcher: ["/", "/dashboard/:path*", "/sign-in", "/sign-up", "/staff-auth/:path*", "/staff-portal/:path*", "/reservation/:path*"],
+  matcher: ["/", "/dashboard/:path*", "/sign-in", "/sign-up", "/staff/login", "/reservation/:path*"],
 };
