@@ -124,6 +124,7 @@ export function DynamicLiffProvider({
       );
       setShowError(true);
     }
+    return;
   }, [dbLiffId, retryCount, salonId]);
 
   console.log("最終liffId:", liffId);
