@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSignIn } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -284,7 +284,8 @@ function ResetPasswordForm({
   );
 }
 
-export default function ResetPasswordPage() {
+// クライアントコンポーネントでuseSearchParamsを使用するコンポーネント
+function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
@@ -297,6 +298,7 @@ export default function ResetPasswordPage() {
     setValue,
     formState: { errors, isSubmitting },
   } = useZodForm(resetPasswordSchema);
+
   // リセットコード送信処理
   const handleSendResetCode = async (
     data: z.infer<typeof resetPasswordSchema>
@@ -409,5 +411,37 @@ export default function ResetPasswordPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+// ローディング表示用コンポーネント
+function ResetPasswordLoading() {
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="w-full max-w-md p-2">
+        <Card className="border-0 shadow-lg shadow-blue-100/20 dark:shadow-gray-900/40 backdrop-blur-sm bg-white/90 dark:bg-gray-900/80">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-bold text-center">
+              パスワードリセット
+            </CardTitle>
+            <CardDescription className="text-center text-gray-500 dark:text-gray-400">
+              読み込み中...
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// メインページコンポーネント
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<ResetPasswordLoading />}>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }
